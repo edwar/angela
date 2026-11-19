@@ -73,6 +73,44 @@ export const apiKey = {
   },
 };
 
+/**
+ * "Mis componentes": componentes creados en el laboratorio, con nombre, para reutilizarlos
+ * dentro de otros. `uses` guarda los ids de los componentes propios que incluye.
+ * @typedef {LabFiles & { name: string, uses: string[], updatedAt: number }} MyComponent
+ */
+const MINE = `${PREFIX}mis-componentes`;
+
+export const myComponents = {
+  /** @returns {Record<string, MyComponent>} */
+  all: () => read(local(), MINE, {}),
+  /** @returns {MyComponent | null} */
+  get: (id) => myComponents.all()[id] ?? null,
+  /** @param {string} id @param {Omit<MyComponent, 'updatedAt'>} record */
+  save(id, record) {
+    const all = myComponents.all();
+    all[id] = { ...record, updatedAt: Date.now() };
+    return write(local(), MINE, all);
+  },
+  /** Elimina el componente y lo quita de los que lo usaban. */
+  remove(id) {
+    const all = myComponents.all();
+    delete all[id];
+    for (const record of Object.values(all)) record.uses = (record.uses ?? []).filter((u) => u !== id);
+    return write(local(), MINE, all);
+  },
+};
+
+/** Nombre → id seguro ("Tarjeta de producto" → "tarjeta-de-producto"). */
+export function toComponentId(name) {
+  return name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40);
+}
+
 export const settings = {
   get: () => ({ model: 'claude-opus-5-5', ...read(local(), SETTINGS, {}) }),
   set: (value) => write(local(), SETTINGS, { ...settings.get(), ...value }),

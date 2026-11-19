@@ -1,0 +1,187 @@
+/*
+ * Tipografía: separa el ASPECTO del texto de su NIVEL semántico.
+ * Un título de tarjeta puede ser <h3> por el esquema de la página y verse como "lg".
+ *
+ * <h3 class="heading" data-size="lg">Laptop</h3>
+ * <p class="text" data-muted>Potencia para crear.</p>
+ * <p class="text" data-size="2xl" data-weight="bold" data-numeric>$18.999</p>
+ *
+ * .heading  título: negrita, interlineado ajustado y líneas equilibradas (por defecto "xl").
+ * .text     texto de lectura: interlineado cómodo y sin viudas (por defecto "md").
+ *   data-size="xs|sm|md|lg|xl|2xl|3xl|4xl"   tamaño (tokens --fs-*)
+ *   data-weight="regular|medium|bold"         peso
+ *   data-tone="brand|success|warning|danger|info|neutral"   color de estado (texto ≥ 4.5:1)
+ *   data-muted                                texto secundario
+ *   data-numeric                              cifras tabulares, para precios y columnas
+ *   data-truncate                             una sola línea con "…"
+ *   data-lines="2|3|4"                        corta tras N líneas con "…"
+ *   data-align="start|center|end"             alineación (lógica: respeta RTL)
+ * .prose    contenedor de texto largo: medida legible y ritmo entre elementos.
+ *
+ * Sin márgenes propios en .heading y .text: el espacio lo pone el contenedor (.stack, .prose…).
+ */
+@layer angela.components {
+  :where(.heading, .text) {
+    --_size: var(--fs-md);
+    --_weight: var(--fw-regular);
+    --_leading: var(--lh-normal);
+
+    margin: 0;
+    font-size: var(--_size);
+    font-weight: var(--_weight);
+    line-height: var(--_leading);
+    /* Las URL y palabras largas no desbordan su caja (sin scroll horizontal a 320 px). */
+    overflow-wrap: break-word;
+  }
+
+  :where(.heading) {
+    --_size: var(--fs-xl);
+    --_weight: var(--fw-bold);
+    --_leading: var(--lh-tight);
+
+    color: var(--color-text);
+    /* Líneas equilibradas en títulos cortos. Se ignora donde no hay soporte. */
+    text-wrap: balance;
+  }
+
+  :where(.text) {
+    text-wrap: pretty;
+  }
+
+  :is(.heading, .text) {
+    /* Tamaños. Los títulos grandes se aprietan un poco: a más tamaño, menos interlineado. */
+    &[data-size="xs"] {
+      --_size: var(--fs-xs);
+    }
+    &[data-size="sm"] {
+      --_size: var(--fs-sm);
+    }
+    &[data-size="md"] {
+      --_size: var(--fs-md);
+    }
+    &[data-size="lg"] {
+      --_size: var(--fs-lg);
+    }
+    &[data-size="xl"] {
+      --_size: var(--fs-xl);
+    }
+    &[data-size="2xl"] {
+      --_size: var(--fs-2xl);
+      --_leading: var(--lh-snug);
+    }
+    &[data-size="3xl"] {
+      --_size: var(--fs-3xl);
+      --_leading: var(--lh-tight);
+    }
+    &[data-size="4xl"] {
+      --_size: var(--fs-4xl);
+      --_leading: var(--lh-tight);
+    }
+
+    &[data-weight="regular"] {
+      --_weight: var(--fw-regular);
+    }
+    &[data-weight="medium"] {
+      --_weight: var(--fw-medium);
+    }
+    &[data-weight="bold"] {
+      --_weight: var(--fw-bold);
+    }
+
+    /* Color: secundario o de un rol. El estado nunca va solo en el color (añade texto o ícono). */
+    &[data-muted] {
+      color: var(--color-text-muted);
+    }
+    &[data-tone] {
+      color: var(--tone-text);
+    }
+
+    &[data-numeric] {
+      font-variant-numeric: tabular-nums lining-nums;
+    }
+
+    &[data-align="start"] {
+      text-align: start;
+    }
+    &[data-align="center"] {
+      text-align: center;
+    }
+    &[data-align="end"] {
+      text-align: end;
+    }
+
+    /* Recorte. Úsalo solo si el texto completo está a mano (enlace al detalle, tooltip
+       accesible por teclado…): `title` por sí solo no llega con teclado ni en táctil. */
+    &[data-truncate] {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    &[data-lines] {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: var(--_lines, 2);
+      line-clamp: var(--_lines, 2);
+      overflow: hidden;
+    }
+    &[data-lines="3"] {
+      --_lines: 3;
+    }
+    &[data-lines="4"] {
+      --_lines: 4;
+    }
+  }
+
+  /*
+   * Texto largo (artículos, ayudas, notas de versión). Los elementos de dentro no
+   * necesitan clases: el ritmo vertical sale del contenedor.
+   */
+  .prose {
+    max-inline-size: var(--measure);
+    line-height: var(--lh-normal);
+
+    & > * {
+      margin-block: 0;
+    }
+    & > * + * {
+      margin-block-start: var(--space-4);
+    }
+
+    /* Más aire antes de un título que después: el título pertenece a lo que sigue. */
+    & > :is(h2, h3, h4, h5, h6) {
+      margin-block-start: var(--space-8);
+    }
+    & > :is(h2, h3, h4, h5, h6) + * {
+      margin-block-start: var(--space-2);
+    }
+    & > :first-child {
+      margin-block-start: 0;
+    }
+
+    & :is(ul, ol) {
+      padding-inline-start: var(--space-6);
+    }
+    & li + li {
+      margin-block-start: var(--space-1);
+    }
+
+    & blockquote {
+      margin-inline: 0;
+      padding-inline-start: var(--space-4);
+      border-inline-start: 3px solid var(--color-border-strong);
+      color: var(--color-text-muted);
+    }
+
+    & figcaption {
+      margin-block-start: var(--space-2);
+      color: var(--color-text-muted);
+      font-size: var(--fs-sm);
+    }
+  }
+
+  @media (forced-colors: active) {
+    :is(.heading, .text)[data-tone] {
+      color: CanvasText;
+    }
+  }
+}

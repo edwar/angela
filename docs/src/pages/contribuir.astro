@@ -1,0 +1,256 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { icon } from '../data/icons.js';
+import { MANUAL_CHECKS } from '../lib/lab/review.js';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const href = (p: string) => `${base}${p}`;
+
+const REPO = 'https://github.com/edwar/angela';
+
+const parametros = [
+  [
+    'Contenido',
+    'data-slot',
+    'Marca el elemento que recibe lo que va dentro. Al insertar el componente en el laboratorio, el cursor queda ahí.',
+  ],
+  ['Variantes', 'data-variant · data-tone · data-size', 'Un número cerrado de opciones. Nunca clases tipo .boton--rojo.'],
+  ['Medidas y ajustes', '--mi-componente-algo', 'Lo que quien lo use pueda querer cambiar: anchos, separaciones, duraciones.'],
+  ['Estado', 'Atributos y pseudoclases nativas', ':hover, :focus-visible, [aria-pressed], [disabled], :user-invalid…'],
+];
+
+const pasos = [
+  [
+    'Créalo en el laboratorio',
+    'Escribe el HTML, el CSS y, solo si hace falta, el JavaScript. Pruébalo en claro y oscuro, y con el fondo de la vista previa.',
+  ],
+  [
+    'Pasa la revisión',
+    'El panel de Revisión comprueba las reglas que se pueden verificar con código. Corrige los avisos rojos y repasa los naranjas.',
+  ],
+  [
+    'Haz las comprobaciones manuales',
+    'Teclado, lector de pantalla, zoom al 200 % y 320 px de ancho. Esto no lo puede revisar ningún programa por ti.',
+  ],
+  [
+    'Descarga los archivos',
+    'Con «Descargar pestaña» en cada una de las tres. El CSS es el archivo del componente; el HTML son los ejemplos para la documentación.',
+  ],
+  [
+    'Abre el pull request',
+    'Desde tu copia del repositorio, en una rama feat/…. El pull request queda a tu nombre y se revisa antes de mezclarlo.',
+  ],
+];
+---
+
+<Layout
+  title="Cómo aportar un componente"
+  description="Las reglas de angela, cómo se pasan parámetros a un componente y qué debe llevar tu pull request."
+>
+  <section class="doc-section prose" aria-labelledby="idea">
+    <h2 id="idea">La idea</h2>
+    <p>
+      Un componente de angela es, casi siempre, <strong>un archivo CSS y un trozo de marcado</strong>. No hay clases de
+      JavaScript ni envoltorios: el HTML nativo hace el trabajo y el CSS lo viste. Por eso aportar uno es sencillo, y por eso
+      hay unas pocas reglas que no se negocian.
+    </p>
+    <p>
+      Lo escribes en el <a href={href('/laboratorio')}>laboratorio</a>, lo pruebas ahí mismo y, cuando pase la revisión,
+      abres un pull request en <a href={REPO}>el repositorio</a>. Queda a tu nombre y se mezcla cuando esté revisado.
+    </p>
+  </section>
+
+  <section class="doc-section prose" aria-labelledby="reglas">
+    <h2 id="reglas">Las reglas</h2>
+    <ol>
+      <li>
+        <strong>La plataforma primero.</strong> Antes de escribir JavaScript, comprueba si HTML y CSS ya lo resuelven:
+        <code>&lt;dialog&gt;</code>, <code>popover</code>, <code>command</code>/<code>commandfor</code>,
+        <code>&lt;details name&gt;</code>, <code>:user-invalid</code>, <code>focusgroup</code>.
+      </li>
+      <li>
+        <strong>Todo el CSS en capas.</strong> Dentro de <code>@layer angela.components</code>, para que el CSS de quien
+        use la librería siempre gane sin pelear con la especificidad.
+      </li>
+      <li>
+        <strong>Valores por defecto en <code>:where()</code>.</strong> Así los <code>data-*</code> y el CSS de quien lo use
+        pueden sobrescribirlos.
+      </li>
+      <li>
+        <strong>Solo tokens.</strong> Nada de <code>#hex</code> ni de <code>24px</code> sueltos: <code>var(--color-…)</code>,
+        <code>var(--space-…)</code>, <code>var(--radius-…)</code>, <code>var(--fs-…)</code>.
+      </li>
+      <li><strong>Variantes con atributos</strong>, no con clases <code>.bloque--modificador</code>.</li>
+      <li>
+        <strong>Propiedades lógicas</strong> (<code>inline-size</code>, <code>padding-inline-start</code>), para que
+        funcione también en árabe o hebreo.
+      </li>
+      <li>
+        <strong>Accesibilidad AA como mínimo:</strong> <code>:focus-visible</code>, <code>forced-colors</code>,
+        <code>prefers-reduced-motion</code>, y el estado nunca solo con color.
+      </li>
+      <li>
+        <strong>El JavaScript es opcional y mínimo.</strong> Un módulo por función, sin dependencias, que devuelva su
+        limpieza y aguante el renderizado en servidor.
+      </li>
+    </ol>
+    <p>
+      La <a href={href('/guia')}>guía de diseño</a> tiene el detalle de colores, tipografía, espacio y movimiento.
+    </p>
+  </section>
+
+  <section class="doc-section" aria-labelledby="parametros">
+    <h2 id="parametros">Cómo se le pasan parámetros a un componente</h2>
+    <p class="prose">
+      En HTML nativo no hay <em>props</em>. Lo que hay son cuatro mecanismos, y cada uno sirve para una cosa distinta.
+    </p>
+    <div class="card" data-flush>
+      <div class="table-wrap" role="region" aria-labelledby="parametros-cap" tabindex="0">
+        <table class="table">
+          <caption id="parametros-cap" class="visually-hidden">Mecanismos para parametrizar un componente</caption>
+          <thead>
+            <tr>
+              <th scope="col">Qué quieres pasar</th>
+              <th scope="col">Con qué</th>
+              <th scope="col">Cuándo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              parametros.map(([que, con, cuando]) => (
+                <tr>
+                  <th scope="row">{que}</th>
+                  <td><code>{con}</code></td>
+                  <td>{cuando}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="doc-section prose" aria-labelledby="slot">
+    <h2 id="slot">Contenido: <code>data-slot</code></h2>
+    <p>
+      Cuando tu componente envuelve a otros (una rejilla que recibe tarjetas, un panel con acciones), marca con
+      <code>data-slot</code> el elemento que los contiene:
+    </p>
+    <pre tabindex="0"><code>{`<section class="cards" data-slot>
+  <article class="card">Inserta aquí tus tarjetas.</article>
+</section>`}</code></pre>
+    <p>
+      Lo que escribas dentro es tu ejemplo: se ve en la vista previa mientras lo editas. Al insertar el componente en otro,
+      ese ejemplo se descarta y <strong>el cursor queda en el hueco</strong>, listo para escribir o para insertar otro
+      componente. Si tenías algo seleccionado, se envuelve con él.
+    </p>
+    <div class="callout" data-tone="info">
+      <Fragment set:html={icon('info')} />
+      <div>
+        <p class="callout-title">Un solo hueco por componente</p>
+        <p>
+          Se usa el primer <code>data-slot</code> que aparezca. Si tu componente necesita dos zonas distintas (cabecera y
+          cuerpo, por ejemplo), pártelo en dos componentes, como hacen <code>.card</code> y <code>.card-header</code>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="doc-section prose" aria-labelledby="variables">
+    <h2 id="variables">Medidas: propiedades personalizadas</h2>
+    <p>
+      Lo que quien use el componente pueda querer cambiar se declara como una variable con su valor por defecto. El nombre
+      lleva por delante el del componente, para que no choque con nada:
+    </p>
+    <pre tabindex="0"><code>{`@layer angela.components {
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--cards-min, 16rem)), 1fr));
+    gap: var(--cards-gap, var(--space-6));
+  }
+}`}</code></pre>
+    <p>Y quien lo usa solo cambia lo que necesita, sin tocar tu CSS:</p>
+    <pre tabindex="0"><code>{`<section class="cards" style="--cards-min: 14rem">`}</code></pre>
+    <p>
+      El <code>min(100%, …)</code> no es un adorno: sin él, una tarjeta de 16rem desborda la pantalla por debajo de 320 px.
+    </p>
+  </section>
+
+  <section class="doc-section prose" aria-labelledby="relacionados">
+    <h2 id="relacionados">Componentes que se complementan</h2>
+    <p>
+      A veces hacen falta dos: un contenedor y lo que va dentro. La regla es que <strong>cada uno funcione solo</strong>, y
+      que se entiendan por una variable, no por conocerse las clases.
+    </p>
+    <p>
+      En el efecto 3D, por ejemplo, la perspectiva tiene que estar en el padre y la rotación en el hijo. El contenedor pone
+      la perspectiva y avisa de que ya lo ha hecho:
+    </p>
+    <pre tabindex="0"><code>{`/* contenedor */
+.cards {
+  perspective: var(--cards-perspective, 900px);
+  --card-3d-perspective: none;   /* contrato: la pongo yo */
+}
+
+/* tarjeta: sola usa la suya, dentro del contenedor hereda none */
+.card-3d {
+  --_fuga: perspective(var(--card-3d-perspective, 900px));
+  transform: var(--_fuga);
+}`}</code></pre>
+    <p>
+      La tarjeta nunca nombra a <code>.cards</code>, así que puedes usarla suelta. Y el contenedor acepta cualquier hijo. En
+      el laboratorio, al insertar uno dentro de otro, los dos quedan registrados en «Usa:» y su CSS se carga junto.
+    </p>
+  </section>
+
+  <section class="doc-section" aria-labelledby="pasos">
+    <h2 id="pasos">Pasos para aportarlo</h2>
+    <ol class="lab-steps">
+      {
+        pasos.map(([titulo, texto]) => (
+          <li>
+            <p class="heading" data-size="md">{titulo}</p>
+            <p class="text" data-size="sm" data-muted>{texto}</p>
+          </li>
+        ))
+      }
+    </ol>
+    <div class="callout" data-tone="warning">
+      <Fragment set:html={icon('alert')} />
+      <div>
+        <p class="callout-title">Lo que ningún programa revisa por ti</p>
+        <ul>
+          {MANUAL_CHECKS.map((item) => <li>{item}</li>)}
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="doc-section prose" aria-labelledby="pr">
+    <h2 id="pr">Qué debe llevar el pull request</h2>
+    <ul>
+      <li>
+        <code>packages/angela/src/components/&lt;nombre&gt;.css</code> — tu componente, con un comentario arriba que
+        explique el marcado y los atributos.
+      </li>
+      <li>
+        Una línea <code>@import</code> en <code>packages/angela/src/angela.css</code>, en el orden en el que aparecen los
+        demás.
+      </li>
+      <li>
+        Una entrada en <code>docs/src/data/components.js</code> con ejemplos, tabla de API y notas de accesibilidad: es lo
+        que genera su página de documentación.
+      </li>
+      <li>Si lleva JavaScript: un módulo en <code>packages/angela/src/js/</code> con su test.</li>
+      <li>Si encaja, su envoltorio en <code>packages/angela-react</code>.</li>
+    </ul>
+    <p>
+      Rama <code>feat/…</code>, commits en español siguiendo Conventional Commits, y antes de subir:
+      <code>pnpm test</code> y <code>pnpm check:contrast</code>.
+    </p>
+    <p>
+      <a class="button" data-variant="outline" data-tone="neutral" href={`${REPO}/compare`}>Abrir un pull request</a>
+    </p>
+  </section>
+</Layout>

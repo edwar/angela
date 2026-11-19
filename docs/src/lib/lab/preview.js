@@ -5,8 +5,9 @@
  * Se ejecuta en un <iframe sandbox="allow-scripts allow-forms"> SIN allow-same-origin:
  * el documento tiene un origen opaco, así que no puede leer el localStorage de la
  * página (donde vive la clave de la IA), ni sus cookies, ni su DOM.
- * Además lleva una CSP que bloquea toda conexión de red (fetch, imágenes remotas,
- * scripts externos, envío de formularios), de modo que tampoco puede sacar datos fuera.
+ * Además lleva una CSP que bloquea la red (fetch, scripts y estilos externos, envío de
+ * formularios). Solo se permiten imágenes por https, sin referer: el documento no guarda
+ * nada sensible (ni clave ni cookies), así que una imagen no tiene qué sacar.
  */
 
 // Fuentes de angela, tal cual están en el paquete (una sola fuente de verdad).
@@ -45,9 +46,26 @@ export const componentSources = {
   avisos: { css: 'components/feedback.css' },
   tarjeta: { css: 'components/layout.css' },
   tabla: { css: 'components/layout.css' },
+  tipografia: { css: 'components/typography.css' },
 };
 
-const IMPORT_LINE = /^@import\s+["']\.\/([^"']+)["'];\s*$/gm;
+/**
+ * Vocabulario de angela para el autocompletado del editor: clases públicas y tokens.
+ * Se extrae del propio CSS, así nunca se desincroniza. Los privados (`--_x`) quedan fuera.
+ * @returns {{ classes: string[], tokens: string[] }}
+ */
+export function angelaVocabulary(sources = angelaCss) {
+  const classes = new Set();
+  const tokens = new Set();
+  for (const css of Object.values(sources)) {
+    const code = css.replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const [, name] of code.matchAll(/\.([a-z][\w-]*)(?=[^{};]*\{)/g)) classes.add(name);
+    for (const [, name] of code.matchAll(/(--[a-z][\w-]*)\s*:/g)) tokens.add(name);
+  }
+  return { classes: [...classes].sort(), tokens: [...tokens].sort() };
+}
+
+const IMPORT_LINE =/^@import\s+["']\.\/([^"']+)["'];\s*$/gm;
 
 /**
  * Une el CSS de angela igual que scripts/build.mjs, opcionalmente sin un archivo
@@ -73,7 +91,8 @@ export const PREVIEW_CSP = [
   "default-src 'none'",
   "style-src 'unsafe-inline'",
   "script-src 'unsafe-inline' blob:",
-  'img-src data: blob:',
+  // Imágenes externas (placeholders, CDNs) sí: son parte normal de un componente.
+  'img-src https: data: blob:',
   'font-src data:',
   'media-src data: blob:',
   "connect-src 'none'",
@@ -131,9 +150,10 @@ const consoleBridge = `
  * Carga los módulos de angela desde blobs (dentro del iframe, sin red) y luego el JS del editor.
  * Si el editor tiene el código de un módulo de angela (p. ej. tabs.js), lo sustituye.
  */
-function moduleLoader({ modules, userJs, userModule }) {
+function moduleLoader({ modules, userJs, userModule, dependencyJs = [] }) {
   return `
 const files = ${scriptJson(modules)};
+const dependencyJs = ${scriptJson(dependencyJs)};
 const userJs = ${scriptJson(userJs)};
 const userModule = ${scriptJson(userModule ?? null)};
 if (userModule) files[userModule] = userJs;
@@ -150,6 +170,15 @@ try {
   angela({ polyfills: false });
 } catch (error) {
   console.error('No se pudo cargar angela/js:', error);
+}
+// JS de los componentes propios que se usan, antes que el del editor.
+for (const [index, { name, js }] of dependencyJs.entries()) {
+  try {
+    files['__uso' + index + '.js'] = js;
+    await import(load('__uso' + index + '.js'));
+  } catch (error) {
+    console.error('Error en el componente «' + name + '»:', error);
+  }
 }
 if (!userModule && userJs.trim()) {
   try {
@@ -169,15 +198,28 @@ if (!userModule && userJs.trim()) {
  *   scheme?: 'light' | 'dark',
  *   jsModule?: string | null,
  *   modules?: Record<string, string>,
+ *   dependencies?: { name: string, css: string, js: string }[],
  * }} input
  */
-export function buildPreviewDocument({ html, css, js, baseCss, scheme = 'light', jsModule = null, modules = angelaJs }) {
+export function buildPreviewDocument({
+  html,
+  css,
+  js,
+  baseCss,
+  scheme = 'light',
+  jsModule = null,
+  modules = angelaJs,
+  dependencies = [],
+}) {
+  const dependencyCss = dependencies.map((d) => `/* Componente: ${d.name.replace(/\*\//g, '')} */\n${d.css}`).join('\n\n');
+  const dependencyJs = dependencies.filter((d) => d.js.trim()).map(({ name, js: code }) => ({ name, js: code }));
   return `<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${PREVIEW_CSP}">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="${scheme === 'dark' ? 'dark' : 'light'}">
 <script>${consoleBridge}</script>
 <style>${escapeClosingTag(baseCss, 'style')}
@@ -185,11 +227,14 @@ export function buildPreviewDocument({ html, css, js, baseCss, scheme = 'light',
   body { margin: 0; padding: 1.5rem; }
   body > * + * { margin-block-start: 2rem; }
 }</style>
+<style>${escapeClosingTag(dependencyCss, 'style')}</style>
 <style>${escapeClosingTag(css, 'style')}</style>
+<!-- En el <head> y no tras el HTML del editor: un atributo o comentario sin cerrar no puede
+     tragárselo. Los módulos se ejecutan al terminar de analizar el documento. -->
+<script type="module">${escapeClosingTag(moduleLoader({ modules, userJs: js, userModule: jsModule, dependencyJs }), 'script')}</script>
 </head>
 <body>
 ${html}
-<script type="module">${escapeClosingTag(moduleLoader({ modules, userJs: js, userModule: jsModule }), 'script')}</script>
 </body>
 </html>`;
 }
@@ -208,7 +253,11 @@ export function riskyPatterns(code) {
     [/<script[^>]+src=|import\s*\(\s*["'`]https?:|\bimport\s+[^;]*from\s*["'`]https?:/, 'Carga scripts externos.'],
     [/window\.(top|parent|opener)|\bparent\.|postMessage/, 'Intenta hablar con otras ventanas.'],
     [/<[a-z][^>]*\son[a-z]+\s*=/i, 'Tiene manejadores de eventos en línea (onclick, onerror…).'],
-    [/https?:\/\/(?!www\.w3\.org)/, 'Contiene direcciones externas.'],
+    [/https?:\/\/(?!www\.w3\.org)/, 'Contiene direcciones externas (además de imágenes).'],
   ];
-  return checks.filter(([pattern]) => pattern.test(code)).map(([, message]) => message);
+  // Las imágenes por https están permitidas: no cuentan como dirección sospechosa.
+  const withoutImages = code.replace(/<img\b[^>]*>/gi, '').replace(/<source\b[^>]*>/gi, '');
+  return checks
+    .filter(([pattern], index) => pattern.test(index === checks.length - 1 ? withoutImages : code))
+    .map(([, message]) => message);
 }

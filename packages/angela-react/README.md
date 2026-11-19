@@ -53,9 +53,10 @@ En una SPA sin SSR (Vite): importa `angela/css` en `main.tsx`, monta `<Angela />
 | `Disclosure`, `Accordion` | `<details>` con `summary`. |
 | `Callout`, `Badge`, `Progress`, `Meter` | El aviso siempre lleva ícono además del color. |
 | `Card`, `CardHeader`, `TableWrap`, `Table` | `Card`: `as`, `flush`, `elevated`. `TableWrap` con `aria-labelledby` se vuelve una región desplazable con el teclado. |
+| `Heading`, `Text`, `Prose` | `Heading` exige `as` (el nivel) y elige el aspecto con `size`. Ambos: `weight`, `tone`, `muted`, `numeric`, `truncate`, `lines`, `align`. |
 | `ThemeScript`, `ThemeToggle`, `Angela`, `useAngela` | Tema y capa JS. |
 
-Sin estado (sirven tal cual en Server Components): `ButtonLink`, `buttonProps`, `Disclosure`, `Accordion`, `Callout`, `Badge`, `Progress`, `Meter`, `Card`, `CardHeader`, `TableWrap`, `Table`, `ThemeScript`, `ThemeToggle`. El resto son componentes de cliente, y también se pueden usar desde un Server Component.
+Sin estado (sirven tal cual en Server Components): `ButtonLink`, `buttonProps`, `Disclosure`, `Accordion`, `Callout`, `Badge`, `Progress`, `Meter`, `Card`, `CardHeader`, `TableWrap`, `Table`, `Heading`, `Text`, `Prose`, `ThemeScript`, `ThemeToggle`. El resto son componentes de cliente, y también se pueden usar desde un Server Component.
 
 ## Patrones
 

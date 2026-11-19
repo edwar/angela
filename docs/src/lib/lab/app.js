@@ -4,9 +4,19 @@
  * Todo se muestra con textContent o se ejecuta dentro del iframe aislado (ver preview.js).
  */
 import { components } from '../../data/components.js';
-import { angelaCss, angelaJs, bundleAngelaCss, buildPreviewDocument, componentSources, riskyPatterns } from './preview.js';
-import { apiKey, drafts, settings, versions } from './storage.js';
+import {
+  angelaCss,
+  angelaJs,
+  angelaVocabulary,
+  bundleAngelaCss,
+  buildPreviewDocument,
+  componentSources,
+  riskyPatterns,
+} from './preview.js';
+import { apiKey, drafts, myComponents, settings, toComponentId, versions } from './storage.js';
 import { getRenderedScheme } from 'angela/js/theme';
+import { CARET, createCodeEditor } from './editor.js';
+import { reviewComponent } from './review.js';
 
 const FILES = ['html', 'css', 'js'];
 
@@ -94,11 +104,29 @@ export function startLab() {
     proposalTry: $('lab-proposal-try'),
     proposalDiscard: $('lab-proposal-discard'),
     proposalApply: $('lab-proposal-apply'),
+    baseMine: $('lab-base-mine'),
+    reset: $('lab-reset'),
+    uses: $('lab-uses'),
+    usesList: $('lab-uses-list'),
+    insert: $('lab-insert'),
+    insertMine: $('lab-insert-mine'),
+    insertMineEmpty: $('lab-insert-mine-empty'),
+    saveComponentOpen: $('lab-save-component-open'),
+    saveComponent: $('lab-save-component'),
+    saveComponentForm: $('lab-save-component-form'),
+    componentName: $('lab-component-name'),
+    deleteComponent: $('lab-delete-component'),
+    confirmDeleteComponent: $('lab-confirm-delete-component'),
+    confirmDeleteComponentDesc: $('lab-confirm-delete-component-desc'),
+    reviewList: $('lab-review-list'),
+    reviewCount: $('lab-review-count'),
   };
 
   const state = {
+    // '' = nuevo, 'boton' = componente de angela, 'mio:tarjeta' = componente propio.
     slug: '',
     files: { ...STARTER },
+    uses: [],
     proposal: null,
     trying: false,
     scheme: 'light',
@@ -111,8 +139,38 @@ export function startLab() {
   const on = (target, type, fn) => target.addEventListener(type, fn, { signal: abort.signal });
   const setStatus = (text) => (el.status.textContent = text);
 
+  const MINE_PREFIX = 'mio:';
+  const mineId = (slug = state.slug) => (slug.startsWith(MINE_PREFIX) ? slug.slice(MINE_PREFIX.length) : null);
   const sources = () => componentSources[state.slug] ?? {};
-  const componentInfo = () => components.find((c) => c.slug === state.slug) ?? null;
+  const componentInfo = () => {
+    const id = mineId();
+    if (id) return { title: myComponents.get(id)?.name ?? id };
+    return components.find((c) => c.slug === state.slug) ?? null;
+  };
+
+  /**
+   * Componentes propios que usa el actual, con sus dependencias primero y sin repetir.
+   * Un ciclo (A usa B y B usa A) se corta: cada componente se incluye una sola vez.
+   */
+  function dependencies(uses = state.uses, seen = new Set([mineId()])) {
+    const list = [];
+    for (const id of uses) {
+      if (seen.has(id)) continue;
+      seen.add(id);
+      const record = myComponents.get(id);
+      if (!record) continue;
+      list.push(...dependencies(record.uses ?? [], seen), { id, ...record });
+    }
+    return list;
+  }
+
+  /** ¿Usar `id` dentro del actual crearía un ciclo? */
+  function wouldCycle(id) {
+    const current = mineId();
+    if (!current) return false;
+    if (id === current) return true;
+    return dependencies([id], new Set()).some((d) => d.id === current);
+  }
 
   function original(slug) {
     const component = components.find((c) => c.slug === slug);
@@ -151,6 +209,7 @@ export function startLab() {
         baseCss: baseCss(),
         scheme: state.scheme,
         jsModule: sources().js ?? null,
+        dependencies: dependencies().map(({ name, css, js }) => ({ name, css, js })),
       });
     } catch (error) {
       logEntry({ level: 'error', text: `No se pudo preparar la vista previa: ${error.message}` });
@@ -183,23 +242,113 @@ export function startLab() {
 
   /* ---------- Editor ---------- */
 
+  const LANGUAGE_NAMES = { html: 'HTML', css: 'CSS', js: 'JavaScript' };
+  const ideCursor = $('lab-ide-cursor');
+  const ideLang = $('lab-ide-lang');
+  const ideSaved = $('lab-ide-saved');
+
+  const baseVocabulary = angelaVocabulary();
+  const vocabulary = { ...baseVocabulary, origin: {} };
+  /** Añade al autocompletado las clases de los componentes propios. */
+  function refreshVocabulary() {
+    const mineCss = Object.fromEntries(Object.entries(myComponents.all()).map(([id, r]) => [id, r.css ?? '']));
+    const mine = angelaVocabulary(mineCss);
+    vocabulary.classes = [...new Set([...baseVocabulary.classes, ...mine.classes])].sort();
+    vocabulary.origin = Object.fromEntries(
+      mine.classes.filter((c) => !baseVocabulary.classes.includes(c)).map((c) => [c, 'mi componente']),
+    );
+  }
+  const editors = Object.fromEntries(
+    FILES.map((f) => [
+      f,
+      createCodeEditor(el.code[f], {
+        language: f,
+        value: '',
+        label: el.code[f].dataset.label,
+        describedBy: 'lab-code-hint',
+        vocabulary,
+        onChange(value) {
+          state.files[f] = value;
+          if (state.trying) setTrying(false);
+          ideSaved.textContent = 'Editando…';
+          saveDraft();
+          renderSoon();
+          reviewSoon();
+        },
+        onCursor({ line, column, selected }) {
+          if (activeFile() !== f) return;
+          ideCursor.textContent = `Lín. ${line}, col. ${column}${selected ? ` (${selected} seleccionados)` : ''}`;
+        },
+      }),
+    ]),
+  );
+
   function fillEditor() {
-    for (const f of FILES) el.code[f].value = state.files[f];
+    for (const f of FILES) editors[f].setValue(state.files[f]);
   }
 
+  function showFileStatus() {
+    const file = activeFile();
+    ideLang.textContent = LANGUAGE_NAMES[file];
+    editors[file].refresh();
+    editors[file].reportCursor();
+  }
+
+  function updateFileNames() {
+    for (const f of FILES) {
+      const name = el.tabs.querySelector(`[data-name="${f}"]`);
+      if (name) name.textContent = fileName(f);
+    }
+  }
+
+  // Las pestañas ocultas miden cero: al mostrarse, el editor recalcula su tamaño.
+  on(el.tabs, 'tabchange', () => requestAnimationFrame(showFileStatus));
+
   function load(slug) {
-    state.slug = components.some((c) => c.slug === slug) ? slug : '';
+    const requested = mineId(slug);
+    if (requested) state.slug = myComponents.get(requested) ? slug : '';
+    else state.slug = components.some((c) => c.slug === slug) ? slug : '';
     el.base.value = state.slug;
-    state.files = { ...original(state.slug), ...pickFiles(drafts.get(state.slug)) };
+    const mine = mineId() ? myComponents.get(mineId()) : null;
+    const draft = mine ? null : drafts.get(state.slug);
+    state.files = mine ? { ...STARTER, ...pickFiles(mine) } : { ...original(state.slug), ...pickFiles(draft) };
+    state.uses = (mine ? mine.uses : draft?.uses) ?? [];
+    el.reset.hidden = Boolean(mine);
+    el.deleteComponent.hidden = !mine;
+    renderUses();
+    renderInsertMine();
+    renderReview();
     discardProposal({ silent: true });
     fillEditor();
+    updateFileNames();
+    showFileStatus();
+    ideSaved.textContent = '';
     renderVersions();
     render();
     const url = new URL(location.href);
     if (state.slug) url.searchParams.set('componente', state.slug);
     else url.searchParams.delete('componente');
     history.replaceState(null, '', url);
-    setStatus(drafts.get(state.slug) ? 'Borrador recuperado de este navegador.' : '');
+    setStatus(
+      mine
+        ? `Editando «${mine.name}». Los cambios se guardan solos.`
+        : draft
+          ? 'Borrador recuperado de este navegador.'
+          : '',
+    );
+  }
+
+  /** Guarda lo que hay en el editor: en el componente propio o en el borrador. */
+  function persist() {
+    const id = mineId();
+    if (id) {
+      const record = myComponents.get(id);
+      if (!record) return false;
+      const ok = myComponents.save(id, { ...record, ...state.files, uses: state.uses });
+      refreshVocabulary();
+      return ok;
+    }
+    return drafts.set(state.slug, { ...state.files, uses: state.uses });
   }
 
   function pickFiles(value) {
@@ -208,37 +357,20 @@ export function startLab() {
   }
 
   const saveDraft = debounce(() => {
-    if (!drafts.set(state.slug, state.files)) setStatus('No se pudo guardar el borrador en este navegador.');
+    if (persist()) ideSaved.textContent = mineId() ? 'Guardado' : 'Borrador guardado';
+    else {
+      ideSaved.textContent = 'Sin guardar';
+      setStatus('No se pudo guardar el borrador en este navegador.');
+    }
   }, 600);
-
-  for (const f of FILES) {
-    const area = el.code[f];
-    let escaped = false;
-    on(area, 'input', () => {
-      state.files[f] = area.value;
-      if (state.trying) setTrying(false);
-      saveDraft();
-      renderSoon();
-    });
-    on(area, 'keydown', (event) => {
-      if (event.key === 'Escape') {
-        escaped = true;
-        return;
-      }
-      if (event.key === 'Tab' && !event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey && !escaped) {
-        event.preventDefault();
-        area.setRangeText('  ', area.selectionStart, area.selectionEnd, 'end');
-        area.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-      escaped = false;
-    });
-  }
 
   function activeFile() {
     return el.tabs.querySelector('[role="tab"][aria-selected="true"]')?.dataset.file ?? 'html';
   }
 
   function fileName(file) {
+    const id = mineId();
+    if (id) return `${id}.${file}`;
     const src = sources();
     if (file === 'css') return src.css?.split('/').pop() ?? 'componente.css';
     if (file === 'js') return src.js ?? 'componente.js';
@@ -283,6 +415,261 @@ export function startLab() {
   on(el.reload, 'click', render);
   on(el.consoleClear, 'click', clearConsole);
 
+  /* ---------- Revisión ---------- */
+
+  const TONES = { error: 'danger', warn: 'warning' };
+
+  function renderReview() {
+    const hallazgos = reviewComponent(state.files);
+    const errores = hallazgos.filter((h) => h.level === 'error').length;
+    el.reviewCount.textContent = hallazgos.length ? `${hallazgos.length}` : 'Sin avisos';
+    el.reviewCount.dataset.tone = errores ? 'danger' : hallazgos.length ? 'warning' : 'success';
+
+    if (!hallazgos.length) {
+      const ok = document.createElement('li');
+      ok.className = 'callout';
+      ok.dataset.tone = 'success';
+      const texto = document.createElement('div');
+      const titulo = document.createElement('p');
+      titulo.className = 'callout-title';
+      titulo.textContent = 'Cumple las reglas que se pueden revisar con código';
+      const cuerpo = document.createElement('p');
+      cuerpo.textContent = 'Repasa las comprobaciones manuales antes de proponerlo al proyecto.';
+      texto.append(titulo, cuerpo);
+      ok.append(texto);
+      el.reviewList.replaceChildren(ok);
+      return;
+    }
+
+    el.reviewList.replaceChildren(
+      ...hallazgos.map(({ level, text }) => {
+        const item = document.createElement('li');
+        item.className = 'callout';
+        item.dataset.tone = TONES[level];
+        const cuerpo = document.createElement('div');
+        const etiqueta = document.createElement('p');
+        etiqueta.className = 'callout-title';
+        etiqueta.textContent = level === 'error' ? 'Hay que corregirlo' : 'Revísalo';
+        const detalle = document.createElement('p');
+        detalle.textContent = text;
+        cuerpo.append(etiqueta, detalle);
+        item.append(cuerpo);
+        return item;
+      }),
+    );
+  }
+  const reviewSoon = debounce(renderReview, 500);
+
+  /* ---------- Mis componentes y reutilización ---------- */
+
+  const sortedMine = () =>
+    Object.entries(myComponents.all())
+      .map(([id, record]) => ({ id, ...record }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
+  function renderBaseOptions() {
+    const mine = sortedMine();
+    el.baseMine.hidden = mine.length === 0;
+    el.baseMine.replaceChildren(
+      ...mine.map(({ id, name }) => Object.assign(document.createElement('option'), { value: MINE_PREFIX + id, textContent: name })),
+    );
+    el.base.value = state.slug;
+  }
+
+  function renderUses() {
+    const used = state.uses.map((id) => ({ id, record: myComponents.get(id) })).filter((u) => u.record);
+    el.uses.hidden = used.length === 0;
+    el.usesList.replaceChildren(
+      ...used.map(({ id, record }) => {
+        const item = document.createElement('li');
+        item.className = 'lab-use';
+        const name = document.createElement('span');
+        name.textContent = record.name;
+        const remove = button('', { variant: 'ghost', tone: 'neutral' });
+        remove.dataset.iconOnly = '';
+        remove.setAttribute('aria-label', `Dejar de usar ${record.name}`);
+        remove.textContent = '×';
+        on(remove, 'click', () => {
+          state.uses = state.uses.filter((u) => u !== id);
+          persist();
+          renderUses();
+          render();
+          setStatus(`Ya no se cargan los estilos de «${record.name}». Su marcado sigue en el HTML.`);
+        });
+        item.append(name, remove);
+        return item;
+      }),
+    );
+  }
+
+  function renderInsertMine() {
+    const available = sortedMine().filter(({ id }) => !wouldCycle(id));
+    el.insertMineEmpty.hidden = available.length > 0;
+    el.insertMineEmpty.textContent =
+      sortedMine().length === 0
+        ? 'Aún no tienes componentes propios. Crea uno y pulsa «Guardar como componente».'
+        : 'No hay otros componentes propios que puedas insertar aquí.';
+    el.insertMine.replaceChildren(
+      ...available.map(({ id, name }) => {
+        const item = document.createElement('li');
+        const b = button(name, { variant: 'soft', tone: 'brand' });
+        const record = myComponents.get(id);
+        const hasSlot = Boolean(record && slotRange(record.html));
+        if (hasSlot) {
+          const mark = document.createElement('span');
+          mark.className = 'badge';
+          mark.dataset.variant = 'outline';
+          mark.dataset.tone = 'neutral';
+          mark.textContent = 'hueco';
+          b.append(' ', mark);
+        }
+        b.setAttribute('aria-label', `Insertar ${name}${hasSlot ? ', acepta contenido dentro' : ''}`);
+        on(b, 'click', () => insertMine(id));
+        item.append(b);
+        return item;
+      }),
+    );
+  }
+
+  /** Lleva el marcado a la pestaña HTML, en el cursor. */
+  /**
+   * Hueco de contenido: el primer elemento con data-slot. Devuelve dónde empieza y acaba
+   * lo que hay dentro, contando anidamientos del mismo elemento.
+   * @returns {{ start: number, end: number } | null}
+   */
+  function slotRange(html) {
+    const open = /<([a-z][\w-]*)\b[^>]*\bdata-slot\b[^>]*>/i.exec(html);
+    if (!open) return null;
+    const tag = open[1];
+    const pairs = new RegExp(`</?${tag}\\b[^>]*>`, 'gi');
+    pairs.lastIndex = open.index + open[0].length;
+    let depth = 1;
+    for (let m = pairs.exec(html); m; m = pairs.exec(html)) {
+      depth += m[0][1] === '/' ? -1 : 1;
+      if (depth === 0) return { start: open.index + open[0].length, end: m.index };
+    }
+    return null;
+  }
+
+  /** Vuelve a sangrar un bloque desde cero, con `pad` por delante de cada línea. */
+  function reindent(text, pad) {
+    const lines = text.replaceAll('\t', '  ').split('\n');
+    const widths = lines.filter((l) => l.trim()).map((l) => /^ */.exec(l)[0].length);
+    const base = widths.length ? Math.min(...widths) : 0;
+    return lines.map((l) => (l.trim() ? pad + l.slice(base) : '')).join('\n');
+  }
+
+  /**
+   * Prepara el marcado que se va a insertar. Si el componente declara un hueco (data-slot),
+   * dentro va lo que esté seleccionado; si no hay selección, ahí queda el cursor.
+   */
+  function withChildren(html, children) {
+    const slot = slotRange(html);
+    if (!slot) return `${html}\n`;
+    const inner = children.trim() ? `\n${reindent(children, '  ')}\n` : `\n  ${CARET}\n`;
+    return `${html.slice(0, slot.start)}${inner}${html.slice(slot.end)}\n`;
+  }
+
+  function insertSnippet(html) {
+    el.insert.close();
+    el.tabs.querySelector('[role="tab"][data-file="html"]')?.click();
+    // Inmediato (no en un rAF): el texto debe ir al componente que está abierto ahora.
+    const hasSlot = Boolean(slotRange(html));
+    editors.html.insert(withChildren(html.trim(), editors.html.selection));
+    return hasSlot;
+  }
+
+  function insertMine(id) {
+    const record = myComponents.get(id);
+    if (!record || wouldCycle(id)) return;
+    if (!state.uses.includes(id)) state.uses = [...state.uses, id];
+    const hasSlot = insertSnippet(record.html);
+    persist();
+    renderUses();
+    setStatus(
+      hasSlot
+        ? `Insertado «${record.name}». El cursor está en su hueco: escribe ahí dentro o inserta otro componente.`
+        : `Insertado «${record.name}». Sus estilos y su JS se cargan con este componente.`,
+    );
+  }
+
+  for (const trigger of document.querySelectorAll('[data-insert-angela]')) {
+    on(trigger, 'click', () => {
+      const component = components.find((c) => c.slug === trigger.dataset.insertAngela);
+      const example = component?.examples[Number(trigger.dataset.insertExample)];
+      if (!example) return;
+      const hasSlot = insertSnippet(example.code);
+      setStatus(`Insertado: ${component.title} · ${example.title}.${hasSlot ? ' El cursor está en su hueco.' : ''}`);
+    });
+  }
+
+  // Guardar como componente propio.
+  const nameError = document.getElementById('lab-component-name-error');
+  function validateName() {
+    const id = toComponentId(el.componentName.value);
+    const message = !id
+      ? 'Escribe un nombre con al menos una letra o número.'
+      : myComponents.get(id)
+        ? 'Ya tienes un componente con ese nombre. Elige otro.'
+        : '';
+    el.componentName.setCustomValidity(message);
+    if (message) nameError.textContent = message;
+    return id;
+  }
+
+  on(el.saveComponentOpen, 'click', () => {
+    const current = componentInfo();
+    el.componentName.value = mineId() ? `${current.title} (copia)` : current ? `Mi ${current.title.toLowerCase()}` : '';
+    validateName();
+    el.saveComponent.showModal();
+  });
+  on(el.componentName, 'input', validateName);
+
+  // En el submit (síncrono) y no en el close del diálogo: así se guarda justo lo que hay en el editor.
+  on(el.saveComponentForm, 'submit', (event) => {
+    const id = validateName();
+    if (!id || el.componentName.validationMessage) {
+      event.preventDefault();
+      el.componentName.reportValidity();
+      return;
+    }
+    const name = el.componentName.value.trim();
+    if (!myComponents.save(id, { name, ...state.files, uses: [...state.uses] })) {
+      setStatus('No se pudo guardar el componente en este navegador.');
+      return;
+    }
+    if (state.slug === '') drafts.clear('');
+    refreshVocabulary();
+    renderBaseOptions();
+    renderInsertMine();
+    load(MINE_PREFIX + id);
+    setStatus(`Guardado «${name}». Ya puedes insertarlo en otros componentes.`);
+  });
+
+  // Eliminar un componente propio (con confirmación).
+  on(el.deleteComponent, 'click', () => {
+    const id = mineId();
+    const record = id && myComponents.get(id);
+    if (!record) return;
+    const users = sortedMine().filter((r) => (r.uses ?? []).includes(id));
+    el.confirmDeleteComponentDesc.textContent =
+      `Se elimina «${record.name}» de este navegador. No se puede deshacer.` +
+      (users.length ? ` Lo usan ${users.map((u) => `«${u.name}»`).join(', ')}: dejarán de cargar sus estilos.` : '');
+  });
+
+  on(el.confirmDeleteComponent, 'close', () => {
+    if (el.confirmDeleteComponent.returnValue !== 'confirmar') return;
+    el.confirmDeleteComponent.returnValue = '';
+    const id = mineId();
+    const name = myComponents.get(id)?.name ?? id;
+    myComponents.remove(id);
+    refreshVocabulary();
+    renderBaseOptions();
+    renderInsertMine();
+    load('');
+    setStatus(`Componente «${name}» eliminado.`);
+  });
+
   /* ---------- Versiones ---------- */
 
   let pendingDelete = null;
@@ -309,7 +696,7 @@ export function startLab() {
           versions.add(state.slug, { label: 'Antes de restaurar', ...state.files });
           state.files = { ...state.files, ...pickFiles(version) };
           fillEditor();
-          drafts.set(state.slug, state.files);
+          persist();
           renderVersions();
           render();
           setStatus(`Restaurada «${version.label}». El estado anterior quedó guardado como versión.`);
@@ -437,6 +824,7 @@ export function startLab() {
         instruction,
         component: info ? { title: info.title, cssFile: src.css, jsFile: src.js } : null,
         files: { ...state.files },
+        dependencies: dependencies().map(({ name, html, css }) => ({ name, html, css })),
         signal: state.request.signal,
       });
       showProposal(proposal);
@@ -495,7 +883,7 @@ export function startLab() {
     versions.add(state.slug, { label: 'Antes de aplicar la IA', ...state.files });
     state.files = { ...state.proposal };
     fillEditor();
-    drafts.set(state.slug, state.files);
+    persist();
     discardProposal();
     renderVersions();
     setStatus('Propuesta aplicada. La versión anterior quedó en Versiones.');
@@ -506,11 +894,14 @@ export function startLab() {
   state.scheme = getRenderedScheme();
   el.scheme.setAttribute('aria-pressed', String(state.scheme === 'dark'));
   refreshAiState();
+  refreshVocabulary();
+  renderBaseOptions();
   load(new URLSearchParams(location.search).get('componente') ?? '');
 
   return () => {
     abort.abort();
     state.request?.abort();
     state.port?.close();
+    for (const editor of Object.values(editors)) editor.destroy();
   };
 }
