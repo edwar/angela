@@ -33,12 +33,12 @@ const pasos = [
     'Teclado, lector de pantalla, zoom al 200 % y 320 px de ancho. Esto no lo puede revisar ningún programa por ti.',
   ],
   [
-    'Descarga los archivos',
-    'Con «Descargar pestaña» en cada una de las tres. El CSS es el archivo del componente; el HTML son los ejemplos para la documentación.',
+    'Ponle nombre y cuenta qué aporta',
+    'En el diálogo de «Proponer al proyecto». Añade también las notas de accesibilidad: es lo único que no se puede leer del código.',
   ],
   [
     'Abre el pull request',
-    'Desde tu copia del repositorio, en una rama feat/…. El pull request queda a tu nombre y se revisa antes de mezclarlo.',
+    'Con «Proponer al proyecto». Sube el CSS, su @import y la página de documentación, y abre el pull request a tu nombre con tu token de GitHub.',
   ],
 ];
 ---
@@ -258,8 +258,9 @@ const pasos = [
         demás.
       </li>
       <li>
-        Una entrada en <code>docs/src/data/components.js</code> con ejemplos, tabla de API y notas de accesibilidad: es lo
-        que genera su página de documentación.
+        <code>docs/src/data/componentes/&lt;nombre&gt;.js</code> — su página de documentación. La escribe el laboratorio
+        al proponer el componente, con el ejemplo y la tabla de API sacada del propio CSS; tú repasas el texto y añades
+        los ejemplos que falten. El catálogo la carga sola, así que al mezclar el pull request ya está en la web.
       </li>
       <li>Si lleva JavaScript: un módulo en <code>packages/angela/src/js/</code> con su test.</li>
       <li>Si encaja, su envoltorio en <code>packages/angela-react</code>.</li>

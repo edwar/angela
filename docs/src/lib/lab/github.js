@@ -17,6 +17,7 @@ const API = 'https://api.github.com';
 const COMPONENTS_DIR = 'packages/angela/src/components';
 const JS_DIR = 'packages/angela/src/js';
 const ENTRY = 'packages/angela/src/angela.css';
+const DOCS_DIR = 'docs/src/data/componentes';
 
 export class GitHubError extends Error {}
 
@@ -125,6 +126,7 @@ export async function verifyToken(token, { signal } = {}) {
 
 const cssPath = (id) => `${COMPONENTS_DIR}/${id}.css`;
 const jsPath = (id) => `${JS_DIR}/${id}.js`;
+const docsPath = (id) => `${DOCS_DIR}/${id}.js`;
 
 /**
  * ¿El JavaScript tiene algo más que comentarios? La pestaña arranca con un comentario de
@@ -191,10 +193,8 @@ function prBody({ partes, id, nuevo, resumen, html, js, hallazgos }) {
     '',
     '## Falta por hacer al integrarlo',
     '',
-    conjunto
-      ? `- [ ] Entrada en \`docs/src/data/components.js\`, documentando que ${partes
-          .map((p) => `\`${p.id}\``)
-          .join(' y ')} se usan juntos.`
+    docsEntry
+      ? `- [x] Página de documentación en \`${docsPath(id)}\`: repásala y añade los ejemplos que falten.`
       : `- [ ] Entrada en \`docs/src/data/components.js\` (ejemplos, API y accesibilidad).`,
     hasCode(js) ? `- [ ] Test del módulo JS y llamada desde \`src/js/index.js\`.` : '',
     `- [ ] Si encaja, envoltorio en \`packages/angela-react\`.`,
@@ -214,13 +214,25 @@ function prBody({ partes, id, nuevo, resumen, html, js, hallazgos }) {
  * @param {{
  *   token: string, id: string, name: string, summary: string,
  *   parts: { id: string, css: string }[],
+ *   docsEntry?: string | null,
  *   files: { html: string, css: string, js: string },
  *   findings?: { level: string, text: string }[],
  *   onStep?: (text: string) => void, signal?: AbortSignal,
  * }} input
  * @returns {Promise<{ url: string, nuevo: boolean }>}
  */
-export async function proposeComponent({ token, id, name, summary, parts, files, findings = [], onStep = () => {}, signal }) {
+export async function proposeComponent({
+  token,
+  id,
+  name,
+  summary,
+  parts,
+  files,
+  docsEntry = null,
+  findings = [],
+  onStep = () => {},
+  signal,
+}) {
   const paso = (text) => onStep(text);
   const opts = { token, signal };
 
@@ -309,6 +321,11 @@ export async function proposeComponent({ token, id, name, summary, parts, files,
       }
     }
     if (cambiado) await put(ENTRY, css, `chore(${id}): importa ${conjunto ? 'los componentes' : 'el componente'} en angela.css`);
+  }
+
+  if (docsEntry) {
+    paso('Escribiendo la página de documentación…');
+    await put(docsPath(id), docsEntry, `docs(${id}): página del componente`);
   }
 
   if (hasCode(files.js)) {
