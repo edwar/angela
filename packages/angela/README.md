@@ -99,6 +99,6 @@ En React 19 escribe esos atributos en minúsculas (`commandfor`, no `commandFor`
 
 ## Componentes
 
-Botón · Campos (input, select, textarea) · Casillas, radios e interruptor · Diálogo (`.dialog-form` para envolver cabecera, cuerpo y pie en un formulario) · Popover · Pestañas · Desplegable/acordeón · Aviso · Etiqueta · Progreso · Tarjeta · Tabla.
+Botón · Campos (input, select, textarea) · Casillas, radios e interruptor · Diálogo (`.dialog-form` para envolver cabecera, cuerpo y pie en un formulario) · Popover · Pestañas · Desplegable/acordeón · Aviso · Etiqueta · Progreso · Tarjeta · Tabla · Tipografía (`.heading`, `.text`, `.prose`).
 
 Ejemplos, API y notas de accesibilidad: documentación (`pnpm dev` en la raíz).

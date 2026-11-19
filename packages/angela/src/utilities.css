@@ -61,9 +61,7 @@
     padding-inline: var(--space-4);
   }
 
-  .prose {
-    max-inline-size: var(--measure);
-  }
+  /* .prose vive ahora en components/typography.css (medida + ritmo vertical). */
 
   .muted {
     color: var(--color-text-muted);

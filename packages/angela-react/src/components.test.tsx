@@ -17,6 +17,9 @@ import {
   Switch,
   Tabs,
   ThemeScript,
+  Heading,
+  Text,
+  Prose,
 } from './index.js';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -253,5 +256,41 @@ describe('Callout y ThemeScript', () => {
     const out = renderToString(<ThemeScript />);
     expect(out.indexOf('name="color-scheme"')).toBeLessThan(out.indexOf('<script'));
     expect(out).toContain('localStorage');
+  });
+});
+
+describe('Tipografía', () => {
+  it('Heading separa el nivel (as) del tamaño (size)', () => {
+    const d = html(<Heading as="h3" size="lg">Laptop</Heading>);
+    const h = d.querySelector('h3')!;
+    expect(h.className).toBe('heading');
+    expect(h.dataset.size).toBe('lg');
+  });
+
+  it('Text traduce las opciones a atributos y omite las que no se usan', () => {
+    const d = html(
+      <Text size="2xl" weight="bold" numeric muted lines={2}>
+        $18.999
+      </Text>,
+    );
+    const p = d.querySelector('p.text')!;
+    expect(p.getAttribute('data-size')).toBe('2xl');
+    expect(p.getAttribute('data-weight')).toBe('bold');
+    expect(p.hasAttribute('data-numeric')).toBe(true);
+    expect(p.hasAttribute('data-muted')).toBe(true);
+    expect(p.getAttribute('data-lines')).toBe('2');
+    expect(p.hasAttribute('data-truncate')).toBe(false);
+    expect(p.hasAttribute('data-tone')).toBe(false);
+  });
+
+  it('Text y Prose aceptan otro elemento con as', () => {
+    const d = html(
+      <Prose as="article">
+        <Text as="span" tone="success">
+          Pagado
+        </Text>
+      </Prose>,
+    );
+    expect(d.querySelector('article.prose > span.text[data-tone="success"]')).not.toBeNull();
   });
 });

@@ -10,6 +10,7 @@
 @import "./tokens/scale.css";
 @import "./base.css";
 @import "./components/tone.css";
+@import "./components/typography.css";
 @import "./components/button.css";
 @import "./components/field.css";
 @import "./components/choice.css";

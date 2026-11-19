@@ -9,5 +9,6 @@ export * from './dialog.js';
 export * from './popover.js';
 export * from './tabs.js';
 export * from './content.js';
+export * from './typography.js';
 export * from './theme.js';
 export type { Size, Tone } from './utils.js';
