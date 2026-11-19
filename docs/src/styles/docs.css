@@ -461,7 +461,7 @@
 /* Laboratorio */
 
 /* Los componentes fijan su display; el atributo hidden debe ganar igualmente. */
-:is(.lab-toolbar, .lab-workspace, .lab-ai, #lab-ai-config, #lab-insert) [hidden]:not([hidden="until-found"]) {
+:is(.lab-toolbar, .lab-workspace, .lab-ai, #lab-settings, #lab-propose) [hidden]:not([hidden="until-found"]) {
   display: none;
 }
 
@@ -680,85 +680,6 @@
   font-size: var(--fs-xs);
 }
 
-.lab-versions {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-
-  & li {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-2) var(--space-4);
-    padding-block: var(--space-3);
-    border-block-end: 1px solid var(--color-border);
-  }
-}
-
-.lab-confirm-title {
-  margin: 0;
-  font-size: var(--fs-lg);
-}
-
-.lab-uses {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  flex-basis: 100%;
-  font-size: var(--fs-sm);
-
-  & ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-}
-
-.lab-use {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding-inline-start: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-surface);
-}
-
-.lab-insert-group {
-  & h3 {
-    margin: 0 0 var(--space-2);
-    font-size: var(--fs-md);
-  }
-
-  & p {
-    margin: 0;
-  }
-
-  & ul {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-}
-
-.lab-insert-list {
-  display: grid;
-  gap: var(--space-3);
-  margin: 0;
-
-  & dt {
-    margin-block-end: var(--space-1);
-    font-size: var(--fs-sm);
-    font-weight: var(--fw-medium);
-  }
-
-  & dd {
-    margin: 0;
-  }
-}
-
 .lab-review {
   display: grid;
   gap: var(--space-3);
@@ -799,4 +720,32 @@
     font-size: var(--fs-sm);
     font-weight: var(--fw-bold);
   }
+}
+
+/* Tema de la vista previa: ambos estados en el HTML, el CSS oculta el que no toca. */
+#lab-scheme > [data-when] {
+  display: contents;
+}
+
+#lab-scheme > [data-when="dark"] {
+  display: none;
+}
+
+#lab-scheme[data-scheme="dark"] {
+  & > [data-when="dark"] {
+    display: contents;
+  }
+
+  & > [data-when="light"] {
+    display: none;
+  }
+}
+
+.lab-parts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--fs-sm);
 }
