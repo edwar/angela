@@ -3,6 +3,10 @@ import Layout from '../layouts/Layout.astro';
 import { components } from '../data/components.js';
 import { icon } from '../data/icons.js';
 import { MODELS } from '../lib/lab/ai.js';
+import { MANUAL_CHECKS as manualChecks } from '../lib/lab/review.js';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const href = (p: string) => `${base}${p}`;
 
 const quickPrompts = [
   ['Refactorizar', 'Refactoriza el código para que sea más simple y legible, sin cambiar su comportamiento.'],
@@ -12,9 +16,9 @@ const quickPrompts = [
 ];
 
 const tabs = [
-  { id: 'html', label: 'HTML' },
-  { id: 'css', label: 'CSS' },
-  { id: 'js', label: 'JavaScript' },
+  { id: 'html', label: 'HTML', file: 'index.html', glyph: '<>' },
+  { id: 'css', label: 'CSS', file: 'componente.css', glyph: '#' },
+  { id: 'js', label: 'JavaScript', file: 'componente.js', glyph: 'JS' },
 ];
 ---
 
@@ -27,8 +31,7 @@ const tabs = [
     <div>
       <h1 id="contenido" tabindex="-1">Laboratorio</h1>
       <p class="page-lead">
-        Evoluciona un componente de angela o crea uno nuevo. El código se ejecuta aislado, sin acceso a esta página ni a
-        la red.
+        Evoluciona un componente de angela o crea uno nuevo. El código se ejecuta aislado: sin acceso a esta página ni a la red, salvo imágenes por https.
       </p>
     </div>
     <button class="button" type="button" data-variant="outline" data-tone="neutral" commandfor="lab-ai-config" command="show-modal">
@@ -41,20 +44,36 @@ const tabs = [
       <label for="lab-base">Punto de partida</label>
       <select class="input" id="lab-base">
         <option value="">Componente nuevo, desde cero</option>
-        {components.map((c) => <option value={c.slug}>{c.title}</option>)}
+        <optgroup label="Mis componentes" id="lab-base-mine" hidden></optgroup>
+        <optgroup label="angela">
+          {components.map((c) => <option value={c.slug}>{c.title}</option>)}
+        </optgroup>
       </select>
     </div>
     <div class="cluster">
-      <button class="button" type="button" data-variant="outline" data-tone="neutral" id="lab-save">Guardar versión</button>
+      <button class="button" type="button" data-variant="outline" data-tone="neutral" commandfor="lab-insert" command="show-modal">
+        <Fragment set:html={icon('plus')} /> Insertar componente
+      </button>
+      <button class="button" type="button" data-variant="outline" data-tone="neutral" id="lab-save-component-open">
+        Guardar como componente
+      </button>
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-save">Guardar versión</button>
       <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-copy">
         <Fragment set:html={icon('copy')} /> Copiar pestaña
       </button>
       <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-download">
         <Fragment set:html={icon('download')} /> Descargar pestaña
       </button>
-      <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-confirm-reset" command="show-modal">
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-reset" commandfor="lab-confirm-reset" command="show-modal">
         Restaurar original
       </button>
+      <button class="button" type="button" data-variant="ghost" data-tone="danger" id="lab-delete-component" commandfor="lab-confirm-delete-component" command="show-modal" hidden>
+        <Fragment set:html={icon('trash')} /> Eliminar componente
+      </button>
+    </div>
+    <div class="lab-uses" id="lab-uses" hidden>
+      <span class="muted" id="lab-uses-label">Usa:</span>
+      <ul class="cluster" role="list" aria-labelledby="lab-uses-label" id="lab-uses-list"></ul>
     </div>
     <p class="muted lab-status" id="lab-status" role="status"></p>
   </section>
@@ -62,37 +81,35 @@ const tabs = [
   <div class="lab-workspace">
     <section class="lab-pane" aria-labelledby="lab-editor-title">
       <h2 class="visually-hidden" id="lab-editor-title">Editor</h2>
-      <angela-tabs class="tabs lab-tabs" id="lab-tabs">
-        <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label="Archivos">
+      <div class="lab-ide">
+        <angela-tabs class="tabs lab-ide-tabs" id="lab-tabs">
+          <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label="Archivos">
+            {
+              tabs.map((t, i) => (
+                <button type="button" role="tab" id={`lab-tab-${t.id}`} aria-selected={i === 0 ? 'true' : 'false'} data-file={t.id} focusgroupstart={i === 0 ? '' : undefined}>
+                  <span class="lab-ide-glyph" data-lang={t.id} aria-hidden="true">{t.glyph}</span>
+                  <span class="lab-ide-name" data-name={t.id}>{t.file}</span>
+                </button>
+              ))
+            }
+          </div>
           {
             tabs.map((t, i) => (
-              <button type="button" role="tab" id={`lab-tab-${t.id}`} aria-selected={i === 0 ? 'true' : 'false'} data-file={t.id} focusgroupstart={i === 0 ? '' : undefined}>
-                {t.label}
-              </button>
+              <div role="tabpanel" aria-labelledby={`lab-tab-${t.id}`} hidden={i === 0 ? undefined : 'until-found'}>
+                <div class="lab-ide-editor" id={`lab-code-${t.id}`} data-file={t.id} data-label={`Código ${t.label}`}></div>
+              </div>
             ))
           }
+        </angela-tabs>
+        <div class="lab-ide-status">
+          <span id="lab-ide-cursor">Lín. 1, col. 1</span>
+          <span>Espacios: 2</span>
+          <span>UTF-8</span>
+          <span id="lab-ide-lang">HTML</span>
+          <span class="lab-ide-saved" id="lab-ide-saved"></span>
         </div>
-        {
-          tabs.map((t, i) => (
-            <div role="tabpanel" aria-labelledby={`lab-tab-${t.id}`} hidden={i === 0 ? undefined : 'until-found'}>
-              <label class="visually-hidden" for={`lab-code-${t.id}`}>
-                Código {t.label}
-              </label>
-              <textarea
-                class="lab-code"
-                id={`lab-code-${t.id}`}
-                data-file={t.id}
-                spellcheck="false"
-                autocapitalize="off"
-                autocomplete="off"
-                wrap="off"
-                aria-describedby="lab-code-hint"
-              />
-            </div>
-          ))
-        }
-      </angela-tabs>
-      <p class="hint" id="lab-code-hint">Tab inserta sangría. Pulsa Esc y luego Tab para salir del editor.</p>
+      </div>
+      <p class="hint" id="lab-code-hint">Emmet: escribe una abreviatura (por ejemplo .tarjeta o ul>li*3) y pulsa Tab. Tab también sangra; Esc y luego Tab sale del editor.</p>
     </section>
 
     <section class="lab-pane" aria-labelledby="lab-preview-title">
@@ -121,6 +138,29 @@ const tabs = [
       </details>
     </section>
   </div>
+
+  <section class="doc-section" aria-labelledby="lab-review-title">
+    <div class="lab-pane-head">
+      <h2 id="lab-review-title">Revisión</h2>
+      <span class="badge" id="lab-review-count" data-tone="neutral">—</span>
+      <div class="cluster">
+        <a class="button" data-variant="ghost" data-tone="neutral" data-size="sm" href={href('/contribuir')}>
+          Cómo aportar un componente
+        </a>
+      </div>
+    </div>
+    <p class="muted">
+      Comprueba el componente contra las reglas de angela. Es una ayuda, no un juez: lo que no se puede revisar con código
+      queda abajo.
+    </p>
+    <ul class="lab-review" id="lab-review-list" role="list" aria-live="polite"></ul>
+    <details class="disclosure">
+      <summary>Comprobaciones que hay que hacer a mano</summary>
+      <ul>
+        {manualChecks.map((item) => <li>{item}</li>)}
+      </ul>
+    </details>
+  </section>
 
   <section class="doc-section lab-ai" aria-labelledby="lab-ai-title">
     <h2 id="lab-ai-title">Asistente de IA</h2>
@@ -230,6 +270,98 @@ const tabs = [
       <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-ai-config" command="close">Cancelar</button>
       <button class="button" type="submit" form="lab-ai-config-form" value="guardar">Guardar</button>
     </footer>
+  </dialog>
+
+  <dialog class="dialog" id="lab-insert" data-size="lg" aria-labelledby="lab-insert-title" closedby="any">
+    <header class="dialog-header">
+      <h2 id="lab-insert-title">Insertar componente</h2>
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-icon-only commandfor="lab-insert" command="close" aria-label="Cerrar" set:html={icon('x')} />
+    </header>
+    <div class="dialog-body stack">
+      <p class="muted">
+        Se inserta el marcado en la pestaña HTML, donde esté el cursor. Los estilos de angela ya están cargados; los de tus
+        componentes se añaden solos al usarlos.
+      </p>
+      <div class="callout" data-tone="info">
+        <Fragment set:html={icon('info')} />
+        <div>
+          <p class="callout-title">Componentes que reciben contenido</p>
+          <p>
+            Pon <code>data-slot</code> en el elemento que debe contener a los demás:
+            <code>{'<section class="cards" data-slot>…</section>'}</code>. Al insertarlo, el cursor queda dentro de ese
+            hueco, listo para escribir o para insertar otro componente. Si tenías texto seleccionado, se envuelve con él.
+          </p>
+        </div>
+      </div>
+      <section class="lab-insert-group" aria-labelledby="lab-insert-mine-title">
+        <h3 id="lab-insert-mine-title">Mis componentes</h3>
+        <p class="muted" id="lab-insert-mine-empty">
+          Aún no tienes componentes propios. Crea uno y pulsa «Guardar como componente».
+        </p>
+        <ul class="cluster" role="list" id="lab-insert-mine"></ul>
+      </section>
+      <section class="lab-insert-group" aria-labelledby="lab-insert-angela-title">
+        <h3 id="lab-insert-angela-title">De angela</h3>
+        <dl class="lab-insert-list">
+          {
+            components.map((c) => (
+              <div>
+                <dt>{c.title}</dt>
+                <dd>
+                  <ul class="cluster" role="list">
+                    {c.examples.map((ex, i) => (
+                      <li>
+                        <button class="button" type="button" data-variant="soft" data-tone="neutral" data-size="sm" data-insert-angela={c.slug} data-insert-example={i} aria-label={`Insertar ${c.title}: ${ex.title}`}>
+                          {ex.title}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </div>
+            ))
+          }
+        </dl>
+      </section>
+    </div>
+    <footer class="dialog-footer">
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-insert" command="close">Cancelar</button>
+    </footer>
+  </dialog>
+
+  <dialog class="dialog" id="lab-save-component" aria-labelledby="lab-save-component-title" closedby="any">
+    <form class="dialog-form" method="dialog" id="lab-save-component-form">
+      <header class="dialog-header">
+        <h2 id="lab-save-component-title">Guardar como componente</h2>
+        <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-icon-only commandfor="lab-save-component" command="close" aria-label="Cerrar" set:html={icon('x')} />
+      </header>
+      <div class="dialog-body stack">
+        <div class="field">
+          <label for="lab-component-name">Nombre</label>
+          <p class="hint" id="lab-component-name-hint">
+            Por ejemplo «Tarjeta de producto». Se guarda en este navegador y podrás insertarlo en otros componentes. Con
+            <code>data-slot</code> en el HTML, el componente acepta contenido dentro.
+          </p>
+          <input class="input" id="lab-component-name" name="nombre" required maxlength="40" autocomplete="off" aria-describedby="lab-component-name-hint lab-component-name-error" data-error="lab-component-name-error" autofocus />
+          <p class="error" id="lab-component-name-error">Escribe un nombre con al menos una letra o número que no esté en uso.</p>
+        </div>
+      </div>
+      <footer class="dialog-footer">
+        <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-save-component" command="close">Cancelar</button>
+        <button class="button" type="submit" value="guardar">Guardar componente</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog class="dialog" id="lab-confirm-delete-component" data-size="sm" aria-labelledby="lab-confirm-delete-component-title" aria-describedby="lab-confirm-delete-component-desc">
+    <div class="dialog-body stack" style="--stack-gap: var(--space-2)">
+      <h2 id="lab-confirm-delete-component-title" class="lab-confirm-title">¿Eliminar este componente?</h2>
+      <p id="lab-confirm-delete-component-desc" class="muted"></p>
+    </div>
+    <form class="dialog-footer" method="dialog">
+      <button class="button" value="cancelar" data-variant="ghost" data-tone="neutral" autofocus>Cancelar</button>
+      <button class="button" value="confirmar" data-tone="danger">Eliminar</button>
+    </form>
   </dialog>
 
   <dialog class="dialog" id="lab-confirm-reset" data-size="sm" aria-labelledby="lab-confirm-reset-title" aria-describedby="lab-confirm-reset-desc">
