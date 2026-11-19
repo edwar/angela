@@ -20,6 +20,7 @@ import { aiKey, drafts, githubToken, settings, toComponentId } from './storage.j
 import { getRenderedScheme } from 'angela/js/theme';
 import { createCodeEditor } from './editor.js';
 import { reviewComponent } from './review.js';
+import { buildDocsEntry } from './docs-entry.js';
 import { guessFormat } from './ai.js';
 
 const FILES = ['html', 'css', 'js'];
@@ -118,6 +119,7 @@ export function startLab() {
     proposeWarnings: $('lab-propose-warnings'),
     proposeWarningsText: $('lab-propose-warnings-text'),
     proposeStep: $('lab-propose-step'),
+    proposeA11y: $('lab-propose-a11y'),
     proposeParts: $('lab-propose-parts'),
     proposePartsField: $('lab-propose-parts-field'),
     partsState: $('lab-parts-state'),
@@ -703,6 +705,7 @@ export function startLab() {
     const info = componentInfo();
     el.proposeName.value = info ? info.title : '';
     el.proposeSummary.value = '';
+    el.proposeA11y.value = '';
     el.proposeStep.textContent = '';
     el.proposeKind.textContent = info
       ? `Partes de «${info.title}», así que se propondrá como un cambio sobre ese componente.`
@@ -742,6 +745,20 @@ export function startLab() {
         name: el.proposeName.value.trim(),
         summary: el.proposeSummary.value.trim(),
         parts: currentParts().map(({ id: parteId, css }) => ({ id: parteId, css })),
+        docsEntry: buildDocsEntry({
+          id,
+          title: el.proposeName.value.trim(),
+          summary: el.proposeSummary.value.trim(),
+          files: { ...state.files },
+          a11y: el.proposeA11y.value
+            .split('\n')
+            .map((linea) => linea.trim())
+            .filter(Boolean),
+          // Si el conjunto define varias piezas, la página dice con cuáles se usa.
+          relatedTo: currentParts()
+            .filter((p) => p.declared && p.id !== id)
+            .map((p) => p.id),
+        }),
         files: { ...state.files },
         findings: state.findings,
         onStep: (text) => (el.proposeStep.textContent = text),

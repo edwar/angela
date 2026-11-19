@@ -59,7 +59,8 @@ export function angelaVocabulary(sources = angelaCss) {
   const tokens = new Set();
   for (const css of Object.values(sources)) {
     const code = css.replace(/\/\*[\s\S]*?\*\//g, '');
-    for (const [, name] of code.matchAll(/\.([a-z][\w-]*)(?=[^{};]*\{)/g)) classes.add(name);
+    // (?<![\w-]) deja fuera el nombre de la capa en «@layer angela.components {».
+    for (const [, name] of code.matchAll(/(?<![\w-])\.([a-z][\w-]*)(?=[^{};]*\{)/g)) classes.add(name);
     for (const [, name] of code.matchAll(/(--[a-z][\w-]*)\s*:/g)) tokens.add(name);
   }
   return { classes: [...classes].sort(), tokens: [...tokens].sort() };

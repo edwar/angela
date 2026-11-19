@@ -4,7 +4,7 @@ import { icon } from './icons.js';
  * Catálogo de componentes. Cada ejemplo es HTML real: se renderiza en vivo y se muestra su código.
  * Los ids deben ser únicos dentro de la página del componente.
  */
-export const components = [
+const nucleo = [
   {
     slug: 'boton',
     title: 'Botón',
@@ -730,3 +730,14 @@ export const components = [
     ],
   },
 ];
+
+/**
+ * Componentes aportados desde el laboratorio: un archivo por componente en ./componentes/.
+ * Se cargan solos, así que al mezclar su pull request ya aparecen en la web, en el índice
+ * y en el selector de punto de partida, sin que nadie tenga que tocar este archivo.
+ */
+const aportados = Object.values(import.meta.glob("./componentes/*.js", { eager: true, import: "default" }))
+  .filter((entry) => entry?.slug && entry?.title)
+  .sort((a, b) => a.title.localeCompare(b.title, "es"));
+
+export const components = [...nucleo, ...aportados];

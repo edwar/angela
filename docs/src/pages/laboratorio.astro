@@ -337,6 +337,14 @@ const tabs = [
           <p class="hint" id="lab-propose-summary-hint">Una o dos frases. Es lo primero que lee quien revisa.</p>
           <textarea class="input" id="lab-propose-summary" name="resumen" rows="3" required aria-describedby="lab-propose-summary-hint"></textarea>
         </div>
+        <div class="field">
+          <label for="lab-propose-a11y">Notas de accesibilidad</label>
+          <p class="hint" id="lab-propose-a11y-hint">
+            Una por línea: qué hay que saber para usarlo bien (nombres accesibles, teclado, estados). Opcional, pero es
+            lo que no se puede leer del código.
+          </p>
+          <textarea class="input" id="lab-propose-a11y" name="accesibilidad" rows="3" aria-describedby="lab-propose-a11y-hint"></textarea>
+        </div>
         <div class="callout" data-tone="warning" id="lab-propose-warnings" hidden>
           <Fragment set:html={icon('alert')} />
           <div>
