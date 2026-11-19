@@ -1,0 +1,52 @@
+/* @componente card-3d
+ * Tarjeta que se inclina al pasar el ratón o al enfocar algo dentro con el teclado.
+ * Sola pone su propia perspectiva; dentro de .cards usa la del contenedor.
+ * Parámetros: --card-3d-perspective · --card-3d-x · --card-3d-y · --card-3d-z
+ */
+@layer angela.components {
+  :where(.card-3d) {
+    --card-3d-x: 12deg;
+    --card-3d-y: 8deg;
+    --card-3d-z: 20px;
+    --_fuga: perspective(var(--card-3d-perspective, 900px));
+  }
+
+  .card-3d {
+    transform: var(--_fuga);
+    transition-property: transform, box-shadow;
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  /* Las acciones, siempre abajo aunque los textos midan distinto. */
+  .card-3d-actions {
+    margin-block-start: auto;
+    padding-block-start: var(--space-2);
+  }
+
+  /* Solo donde hay ratón y si no se pidió menos movimiento. */
+  @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+    .card-3d:hover,
+    .card-3d:has(:focus-visible) {
+      transform: var(--_fuga) rotateY(var(--card-3d-x))
+        rotateX(calc(var(--card-3d-y))) translateZ(var(--card-3d-z));
+      box-shadow: var(--elevation-3);
+    }
+  }
+
+  /* Con movimiento reducido el realce se nota igual: solo cambia la sombra. */
+  @media (prefers-reduced-motion: reduce) {
+    .card-3d:hover,
+    .card-3d:has(:focus-visible) {
+      box-shadow: var(--elevation-2);
+    }
+  }
+
+  /* En colores forzados las sombras desaparecen: el realce pasa a ser un borde. */
+  @media (forced-colors: active) {
+    .card-3d:hover,
+    .card-3d:has(:focus-visible) {
+      outline: 2px solid CanvasText;
+    }
+  }
+}

@@ -1,0 +1,29 @@
+/* @componente cards
+ * Rejilla de tarjetas con un punto de fuga compartido: todas giran hacia el mismo
+ * punto, como si fueran una sola escena.
+ * Parámetros: --cards-min · --cards-gap · --cards-perspective
+ */
+@layer angela.components {
+  :where(.cards) {
+    --cards-min: 16rem;
+    --cards-gap: var(--space-6);
+    --cards-perspective: 900px;
+
+    /* Contrato con la tarjeta: la perspectiva la pongo yo, que no la repita. */
+    --card-3d-perspective: none;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--cards-min)), 1fr));
+    gap: var(--cards-gap);
+    perspective: var(--cards-perspective);
+  }
+
+  .cards :where(img) {
+    inline-size: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+  }
+}
