@@ -16,6 +16,9 @@
     align-items: center;
     justify-content: center;
     gap: var(--space-2);
+    /* En un bloque normal (no flex), un botón solo-ícono no tiene línea base de texto y,
+       alineado por la base, quedaba desplazado respecto a los botones con texto. */
+    vertical-align: middle;
     min-block-size: var(--_h);
     padding-block: var(--space-1);
     padding-inline: var(--_px);
