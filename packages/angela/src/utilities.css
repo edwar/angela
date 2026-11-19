@@ -1,0 +1,71 @@
+@layer angela.utilities {
+  /* Oculta visualmente pero mantiene el contenido en el árbol de accesibilidad.
+     Si el contenido recibe foco (p. ej. un skip link) vuelve a ser visible. */
+  .visually-hidden:where(:not(:focus-within, :active)) {
+    position: absolute !important;
+    clip-path: inset(50%) !important;
+    overflow: hidden !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  /* Enlace para saltar al contenido principal (WCAG 2.4.1). */
+  .skip-link {
+    position: fixed;
+    inset-block-start: var(--space-2);
+    inset-inline-start: var(--space-2);
+    z-index: 100;
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    color: var(--color-brand-text);
+    box-shadow: var(--elevation-2);
+    border: 1px solid var(--color-border-strong);
+
+    /* Oculto hasta que recibe el foco con el teclado (no hace falta añadir .visually-hidden). */
+    &:where(:not(:focus)) {
+      clip-path: inset(50%);
+      overflow: hidden;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      border: 0;
+      white-space: nowrap;
+    }
+  }
+
+  /* Primitivas de layout mínimas. */
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--stack-gap, var(--space-4));
+  }
+
+  .cluster {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--cluster-gap, var(--space-2));
+  }
+
+  .container {
+    box-sizing: border-box;
+    inline-size: 100%;
+    max-inline-size: var(--container-size, 72rem);
+    margin-inline: auto;
+    padding-inline: var(--space-4);
+  }
+
+  .prose {
+    max-inline-size: var(--measure);
+  }
+
+  .muted {
+    color: var(--color-text-muted);
+  }
+}

@@ -1,0 +1,23 @@
+/*
+ * angela — componentes sobre HTML nativo.
+ *
+ * Todo vive en capas de cascada (@layer). Cualquier CSS tuyo sin capa gana siempre,
+ * sin pelear con especificidad ni usar !important.
+ */
+@layer angela.tokens, angela.base, angela.components, angela.utilities;
+
+@import "./tokens/palette.css";
+@import "./tokens/scale.css";
+@import "./base.css";
+@import "./components/tone.css";
+@import "./components/button.css";
+@import "./components/field.css";
+@import "./components/choice.css";
+@import "./components/dialog.css";
+@import "./components/popover.css";
+@import "./components/tabs.css";
+@import "./components/disclosure.css";
+@import "./components/feedback.css";
+@import "./components/layout.css";
+@import "./components/theme-toggle.css";
+@import "./utilities.css";

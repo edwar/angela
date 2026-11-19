@@ -1,0 +1,13 @@
+{
+  "name": "angela-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.2.2",
+  "scripts": {
+    "dev": "pnpm --filter docs dev",
+    "build": "pnpm --filter angela build && pnpm --filter angela-react build && pnpm --filter docs build",
+    "test": "pnpm --filter angela test && pnpm --filter angela-react test",
+    "check:contrast": "pnpm --filter angela check:contrast",
+    "typecheck": "pnpm --filter angela build:types && pnpm --filter angela-react typecheck"
+  }
+}

@@ -1,0 +1,129 @@
+/*
+ * Panel desplegable anclado a su botón, sobre la API Popover nativa.
+ * NO es un menú ARIA (role="menu"): es un grupo de acciones o contenido que se recorre con Tab.
+ *
+ * <button class="button" type="button" commandfor="p1" command="toggle-popover">Opciones</button>
+ * <div class="popover" id="p1" popover>
+ *   <button class="popover-item" type="button">Duplicar</button>
+ *   <hr>
+ *   <button class="popover-item" type="button" data-tone="danger">Eliminar</button>
+ * </div>
+ */
+@layer angela.components {
+  .popover {
+    box-sizing: border-box;
+    min-inline-size: 12rem;
+    max-inline-size: min(22rem, 100vw - 2 * var(--space-4));
+    padding: var(--space-1-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--elevation-2);
+
+    & > hr {
+      margin-block: var(--space-1-5);
+      margin-inline: calc(var(--space-1-5) * -1);
+    }
+
+    &[data-padding="lg"] {
+      padding: var(--space-4);
+    }
+  }
+
+  /* Anclaje con CSS Anchor Positioning. El ancla implícita la crea commandfor / popovertarget.
+     Va dentro de @supports: sin soporte, inset:auto dejaría el panel perdido en (0,0). */
+  @supports (position-area: block-end) {
+    .popover {
+      inset: auto;
+      margin: var(--space-1) 0;
+      position-area: block-end span-inline-end;
+      position-try-fallbacks: flip-block, flip-inline, flip-block flip-inline;
+    }
+  }
+
+  /* Sin anclaje (p. ej. Firefox): el panel aparece como hoja inferior, cómodo también en móvil. */
+  @supports not (position-area: block-end) {
+    .popover {
+      position: fixed;
+      inset: auto 0 0 0;
+      inline-size: auto;
+      max-inline-size: none;
+      max-block-size: 70dvh;
+      margin: 0;
+      padding-block-end: max(var(--space-2), env(safe-area-inset-bottom));
+      border-end-start-radius: 0;
+      border-end-end-radius: 0;
+      overflow-y: auto;
+    }
+  }
+
+  /* Valores por defecto con especificidad 0 para que data-tone="danger" los sobrescriba. */
+  :where(.popover-item) {
+    --tone-text: var(--color-text);
+    --tone-subtle: var(--color-surface-hover);
+  }
+
+  .popover-item {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    inline-size: 100%;
+    min-block-size: var(--control-h-sm);
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--tone-text);
+    font: inherit;
+    font-size: var(--fs-sm);
+    text-align: start;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:hover:not(:disabled, [aria-disabled="true"]) {
+      background-color: var(--tone-subtle);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-width) solid var(--color-focus);
+      outline-offset: -2px;
+    }
+
+    &:disabled,
+    &[aria-disabled="true"] {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    & :where(svg) {
+      flex: none;
+      inline-size: 1.1em;
+      block-size: 1.1em;
+    }
+
+    & .popover-hint {
+      margin-inline-start: auto;
+      color: var(--color-text-muted);
+      font-size: var(--fs-xs);
+    }
+  }
+
+  /* Animación corta, solo opacidad y un pequeño desplazamiento. */
+  .popover:is(:popover-open, .\:popover-open) {
+    opacity: 1;
+
+    @starting-style {
+      opacity: 0;
+    }
+  }
+
+  .popover {
+    opacity: 0;
+    transition-property: opacity, display, overlay;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-standard);
+    transition-behavior: allow-discrete;
+  }
+}

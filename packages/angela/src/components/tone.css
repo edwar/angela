@@ -1,0 +1,77 @@
+/*
+ * Tonos: un componente con tono (botón, badge, aviso...) lee siempre --tone-*.
+ * data-tone="brand|neutral|success|warning|danger|info" cambia los siete valores a la vez.
+ * El tono por defecto de cada componente se declara con :where() (especificidad 0),
+ * así [data-tone] siempre lo sobrescribe.
+ */
+@layer angela.components {
+  :where(.button, .tone) {
+    --tone-solid: var(--color-brand-solid);
+    --tone-solid-hover: var(--color-brand-solid-hover);
+    --tone-on-solid: var(--color-brand-on-solid);
+    --tone-subtle: var(--color-brand-subtle);
+    --tone-subtle-hover: var(--color-brand-subtle-hover);
+    --tone-border: var(--color-brand-border);
+    --tone-text: var(--color-brand-text);
+  }
+
+  [data-tone="brand"] {
+    --tone-solid: var(--color-brand-solid);
+    --tone-solid-hover: var(--color-brand-solid-hover);
+    --tone-on-solid: var(--color-brand-on-solid);
+    --tone-subtle: var(--color-brand-subtle);
+    --tone-subtle-hover: var(--color-brand-subtle-hover);
+    --tone-border: var(--color-brand-border);
+    --tone-text: var(--color-brand-text);
+  }
+
+  [data-tone="neutral"] {
+    --tone-solid: var(--color-neutral-solid);
+    --tone-solid-hover: var(--color-neutral-solid-hover);
+    --tone-on-solid: var(--color-neutral-on-solid);
+    --tone-subtle: var(--color-neutral-subtle);
+    --tone-subtle-hover: var(--color-neutral-subtle-hover);
+    --tone-border: var(--color-neutral-border);
+    --tone-text: var(--color-neutral-text);
+  }
+
+  [data-tone="success"] {
+    --tone-solid: var(--color-success-solid);
+    --tone-solid-hover: var(--color-success-solid-hover);
+    --tone-on-solid: var(--color-success-on-solid);
+    --tone-subtle: var(--color-success-subtle);
+    --tone-subtle-hover: var(--color-success-subtle-hover);
+    --tone-border: var(--color-success-border);
+    --tone-text: var(--color-success-text);
+  }
+
+  [data-tone="warning"] {
+    --tone-solid: var(--color-warning-solid);
+    --tone-solid-hover: var(--color-warning-solid-hover);
+    --tone-on-solid: var(--color-warning-on-solid);
+    --tone-subtle: var(--color-warning-subtle);
+    --tone-subtle-hover: var(--color-warning-subtle-hover);
+    --tone-border: var(--color-warning-border);
+    --tone-text: var(--color-warning-text);
+  }
+
+  [data-tone="danger"] {
+    --tone-solid: var(--color-danger-solid);
+    --tone-solid-hover: var(--color-danger-solid-hover);
+    --tone-on-solid: var(--color-danger-on-solid);
+    --tone-subtle: var(--color-danger-subtle);
+    --tone-subtle-hover: var(--color-danger-subtle-hover);
+    --tone-border: var(--color-danger-border);
+    --tone-text: var(--color-danger-text);
+  }
+
+  [data-tone="info"] {
+    --tone-solid: var(--color-info-solid);
+    --tone-solid-hover: var(--color-info-solid-hover);
+    --tone-on-solid: var(--color-info-on-solid);
+    --tone-subtle: var(--color-info-subtle);
+    --tone-subtle-hover: var(--color-info-subtle-hover);
+    --tone-border: var(--color-info-border);
+    --tone-text: var(--color-info-text);
+  }
+}

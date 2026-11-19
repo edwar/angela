@@ -1,0 +1,73 @@
+{
+  "name": "angela",
+  "version": "0.1.0",
+  "description": "Componentes accesibles sobre HTML nativo, con modo claro/oscuro y paleta adaptable.",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.js"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/css.d.ts",
+      "default": "./dist/angela.css"
+    },
+    "./css": {
+      "types": "./src/css.d.ts",
+      "default": "./dist/angela.css"
+    },
+    "./source.css": {
+      "types": "./src/css.d.ts",
+      "default": "./src/angela.css"
+    },
+    "./tailwind.css": {
+      "types": "./src/css.d.ts",
+      "default": "./src/tailwind.css"
+    },
+    "./palette": {
+      "types": "./dist/types/palette.d.ts",
+      "default": "./src/palette.js"
+    },
+    "./js": {
+      "types": "./dist/types/js/index.d.ts",
+      "default": "./src/js/index.js"
+    },
+    "./js/*": {
+      "types": "./dist/types/js/*.d.ts",
+      "default": "./src/js/*.js"
+    },
+    "./jsx": {
+      "types": "./src/jsx.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build-palette.mjs && node scripts/build.mjs && tsc -p tsconfig.types.json",
+    "build:palette": "node scripts/build-palette.mjs",
+    "check:contrast": "node scripts/check-contrast.mjs",
+    "test": "vitest run",
+    "build:types": "tsc -p tsconfig.types.json"
+  },
+  "dependencies": {
+    "@oddbird/popover-polyfill": "^0.7.3",
+    "invokers-polyfill": "^1.0.4"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "happy-dom": "^21.0.4",
+    "typescript": "^7.0.2",
+    "vitest": "~5.0.5"
+  },
+  "peerDependencies": {
+    "@types/react": ">=19"
+  },
+  "peerDependenciesMeta": {
+    "@types/react": {
+      "optional": true
+    }
+  }
+}

@@ -1,0 +1,376 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { icon } from '../data/icons.js';
+import { roles } from 'angela/palette';
+
+const surfaceTokens = ['canvas', 'surface', 'surface-sunken', 'surface-hover', 'text', 'text-muted', 'border', 'border-strong', 'focus'];
+const toneTokens = ['solid', 'solid-hover', 'on-solid', 'subtle', 'subtle-hover', 'border', 'text'];
+const toneNames = {
+  brand: 'Marca',
+  neutral: 'Neutral',
+  success: 'Éxito',
+  warning: 'Aviso',
+  danger: 'Peligro',
+  info: 'Información',
+};
+
+const typeScale = [
+  ['--fs-4xl', 'Título de página'],
+  ['--fs-3xl', 'Título de sección'],
+  ['--fs-2xl', 'Subtítulo'],
+  ['--fs-xl', 'Encabezado menor'],
+  ['--fs-lg', 'Texto destacado'],
+  ['--fs-md', 'Texto de lectura (16px)'],
+  ['--fs-sm', 'Controles y texto secundario'],
+  ['--fs-xs', 'Etiquetas y metadatos'],
+];
+const spaceScale = ['--space-1', '--space-2', '--space-3', '--space-4', '--space-5', '--space-6', '--space-8', '--space-12', '--space-16'];
+
+const controls = [
+  { id: 'brand-h', label: 'Tono de marca', min: 0, max: 360, step: 1, value: roles.brand.h, role: 'brand', key: 'h' },
+  { id: 'brand-c', label: 'Croma de marca', min: 0, max: 0.2, step: 0.005, value: roles.brand.c, role: 'brand', key: 'c' },
+  { id: 'neutral-c', label: 'Tinte de los neutros', min: 0, max: 0.03, step: 0.001, value: roles.neutral.c, role: 'neutral', key: 'c' },
+  { id: 'success-h', label: 'Tono de éxito', min: 0, max: 360, step: 1, value: roles.success.h, role: 'success', key: 'h' },
+  { id: 'warning-h', label: 'Tono de aviso', min: 0, max: 360, step: 1, value: roles.warning.h, role: 'warning', key: 'h' },
+  { id: 'danger-h', label: 'Tono de peligro', min: 0, max: 360, step: 1, value: roles.danger.h, role: 'danger', key: 'h' },
+  { id: 'info-h', label: 'Tono de información', min: 0, max: 360, step: 1, value: roles.info.h, role: 'info', key: 'h' },
+];
+
+const previewHtml = `
+  <div class="cluster">
+    <button class="button" type="button">Guardar</button>
+    <button class="button" type="button" data-variant="soft">Vista previa</button>
+    <button class="button" type="button" data-variant="outline">Exportar</button>
+    <button class="button" type="button" data-variant="ghost" data-tone="neutral">Cancelar</button>
+  </div>
+  <div class="cluster">
+    <button class="button" type="button" data-size="sm" data-tone="success">Aprobar</button>
+    <button class="button" type="button" data-size="sm" data-tone="warning">Revisar</button>
+    <button class="button" type="button" data-size="sm" data-tone="danger">Eliminar</button>
+    <span class="badge" data-tone="success" data-dot>Activo</span>
+    <span class="badge" data-tone="info">Nuevo</span>
+  </div>
+  <div class="callout" data-tone="warning">${icon('alert')}<div><p class="callout-title">Atención</p><p>Tu plan vence en 3 días.</p></div></div>
+  <div class="field">
+    <label>Correo <input class="input" value="ana@" aria-invalid="true" tabindex="-1"></label>
+    <p class="error">Escribe un correo válido.</p>
+  </div>
+  <p style="margin: 0">Texto normal con un <a href="#color">enlace</a> y <span class="muted">texto secundario</span>.</p>`;
+---
+
+<Layout
+  title="Guía de diseño"
+  description="Las reglas visuales y de accesibilidad de angela: color, tipografía, espaciado, forma, movimiento y cómo crear componentes nuevos."
+>
+  <section class="doc-section" aria-labelledby="principios">
+    <h2 id="principios">Principios</h2>
+    <ol>
+      <li><strong>La plataforma primero.</strong> Antes de escribir un componente, busca el elemento nativo: <code>&lt;dialog&gt;</code>, <code>popover</code>, <code>&lt;details&gt;</code>, validación de formularios, <code>focusgroup</code>. El CSS lo viste; el JS solo completa lo que falta.</li>
+      <li><strong>Accesibilidad no negociable.</strong> WCAG 2.2 AA es el mínimo, no la meta. Todo se prueba con teclado, lector de pantalla, zoom al 200 %, alto contraste y movimiento reducido.</li>
+      <li><strong>El color comunica, no decora.</strong> El color solo indica intención o estado (marca, éxito, aviso, peligro, información) y nunca va solo: siempre con texto, ícono o forma.</li>
+      <li><strong>Menos es más.</strong> Una acción primaria por vista. Radios moderados. Sombras solo para lo que flota. Nada de cajas dentro de cajas.</li>
+      <li><strong>Móvil primero.</strong> Sin scroll horizontal en la página, objetivos táctiles de 44 px en pantallas táctiles, y diseños que se adaptan al espacio.</li>
+    </ol>
+  </section>
+
+  <section class="doc-section" aria-labelledby="color">
+    <h2 id="color">Color</h2>
+    <p>
+      Toda la paleta se calcula en <strong>OKLCH</strong> a partir de dos números por rol: el <strong>tono</strong> (0–360) y el
+      <strong>croma</strong> (0–0.2). Cada token tiene una luminosidad fija para claro y otra para oscuro, por eso el contraste
+      no depende del tono que elijas: está verificado para <em>cualquier</em> tono y cualquier croma hasta 0.2.
+    </p>
+    <pre tabindex="0" aria-label="Variables de entrada del tema"><code>{`:root {
+  --angela-brand-h: ${roles.brand.h};    --angela-brand-c: ${roles.brand.c};
+  --angela-neutral-c: ${roles.neutral.c};  /* el tono neutro sigue al de marca */
+  --angela-success-h: ${roles.success.h};  --angela-warning-h: ${roles.warning.h};
+  --angela-danger-h: ${roles.danger.h};    --angela-info-h: ${roles.info.h};
+}`}</code></pre>
+
+    <h3 id="playground-titulo">Prueba tu paleta</h3>
+    <p>Mueve los controles: se aplica a toda esta página. Abajo ves los componentes en claro y en oscuro a la vez y el contraste real de los pares clave.</p>
+
+    <div class="playground card" role="group" aria-labelledby="playground-titulo">
+      <div class="playground-controls">
+        {
+          controls.map((c) => (
+            <div class="range-field">
+              <label for={`pg-${c.id}`}>
+                {c.label} <output id={`pg-${c.id}-out`} for={`pg-${c.id}`}>{c.value}</output>
+              </label>
+              <input
+                type="range"
+                id={`pg-${c.id}`}
+                min={c.min}
+                max={c.max}
+                step={c.step}
+                value={c.value}
+                data-role={c.role}
+                data-key={c.key}
+              />
+            </div>
+          ))
+        }
+      </div>
+
+      <div class="preview-pair">
+        <div class="preview-pane" data-scheme="light">
+          <h4>Claro</h4>
+          <Fragment set:html={previewHtml} />
+        </div>
+        <div class="preview-pane" data-scheme="dark">
+          <h4>Oscuro</h4>
+          <Fragment set:html={previewHtml} />
+        </div>
+      </div>
+
+      <div class="preview-pair">
+        <div>
+          <h4 style="margin: 0 0 var(--space-2)">Contraste en claro</h4>
+          <ul class="contrast-list" id="pg-contrast-light" role="list"></ul>
+        </div>
+        <div>
+          <h4 style="margin: 0 0 var(--space-2)">Contraste en oscuro</h4>
+          <ul class="contrast-list" id="pg-contrast-dark" role="list"></ul>
+        </div>
+      </div>
+
+      <div class="stack" style="--stack-gap: var(--space-2)">
+        <h4 style="margin: 0">Tu CSS</h4>
+        <pre tabindex="0" aria-label="CSS de la paleta"><code id="pg-css"></code></pre>
+        <div class="cluster">
+          <button class="button" type="button" id="pg-copy"><Fragment set:html={icon('copy')} /> Copiar CSS</button>
+          <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="pg-reset">Restablecer</button>
+          <p role="status" id="pg-status" class="muted" style="margin: 0"></p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Roles y tokens</h3>
+    <p>
+      Los componentes no usan colores sueltos: usan <strong>tokens semánticos</strong>. Las superficies y el texto derivan del rol
+      neutral; cada rol de color tiene siete tokens. Un componente con tono lee <code>--tone-*</code> y
+      <code>data-tone</code> elige el rol.
+    </p>
+    <h4>Superficies y texto</h4>
+    <ul class="swatches" role="list">
+      {
+        surfaceTokens.map((t) => (
+          <li class="swatch">
+            <div class="swatch-color" style={`background-color: var(--color-${t})`} />
+            <div class="swatch-label">--color-{t}</div>
+          </li>
+        ))
+      }
+    </ul>
+    {
+      Object.entries(toneNames).map(([role, name]) => (
+        <>
+          <h4>
+            {name} <code>{role}</code>
+          </h4>
+          <ul class="swatches" role="list">
+            {toneTokens.map((t) => (
+              <li class="swatch">
+                <div class="swatch-color" style={`background-color: var(--color-${role}-${t})`} />
+                <div class="swatch-label">
+                  --color-{role}-{t}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ))
+    }
+
+    <h3>Reglas de uso</h3>
+    <ul>
+      <li><code>solid</code> + <code>on-solid</code>: la acción principal. Una por vista.</li>
+      <li><code>subtle</code> + <code>text</code>: fondos teñidos (avisos, etiquetas, botones soft).</li>
+      <li><code>border</code>: bordes que delimitan un control (contraste ≥ 3:1). <code>--color-border</code> (neutral) es solo decorativo: separadores y contornos de tarjetas.</li>
+      <li><code>text-muted</code> cumple 4.5:1 en todas las superficies: úsalo para texto secundario, nunca para información crítica.</li>
+      <li>Para cambiar un token concreto, sobrescríbelo en <code>:root</code>. Para tematizar una zona, pon <code>data-angela-theme</code> en el contenedor y redefine allí las variables <code>--angela-*</code>.</li>
+      <li>Para fijar el esquema en una zona (p. ej. un bloque de código siempre oscuro), usa <code>data-scheme="dark"</code>.</li>
+    </ul>
+  </section>
+
+  <section class="doc-section" aria-labelledby="tipografia">
+    <h2 id="tipografia">Tipografía</h2>
+    <p>Fuente del sistema (<code>--font-body</code>) para rendimiento y familiaridad, y monoespaciada del sistema para código. Los tamaños grandes son fluidos. Interlineado de lectura 1.55 y medida máxima de 68 caracteres.</p>
+    <div>
+      {
+        typeScale.map(([token, label]) => (
+          <div class="scale-row">
+            <code>{token}</code>
+            <span style={`font-size: var(${token}); line-height: var(--lh-tight)`}>{label}</span>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="doc-section" aria-labelledby="espaciado">
+    <h2 id="espaciado">Espaciado</h2>
+    <p>Escala en múltiplos de 4 px. La distancia entre una etiqueta y su control siempre es menor que la distancia entre grupos.</p>
+    <div>
+      {
+        spaceScale.map((token) => (
+          <div class="scale-row">
+            <code>{token}</code>
+            <div class="space-bar" style={`inline-size: var(${token})`} />
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="doc-section" aria-labelledby="forma">
+    <h2 id="forma">Forma y elevación</h2>
+    <p>Radios moderados: <code>--radius-lg</code> en contenedores (tarjetas, diálogos, popovers) y <code>--radius-md</code> en controles. <code>--radius-full</code> solo para avatares, puntos de estado e interruptores.</p>
+    <div class="cluster" style="--cluster-gap: var(--space-4)">
+      <div class="radius-box" style="border-radius: var(--radius-sm)">sm</div>
+      <div class="radius-box" style="border-radius: var(--radius-md)">md</div>
+      <div class="radius-box" style="border-radius: var(--radius-lg)">lg</div>
+    </div>
+    <p>La sombra solo indica que algo flota sobre la página. Todo componente elevado lleva además borde, porque en modo de alto contraste las sombras desaparecen.</p>
+    <div class="cluster" style="--cluster-gap: var(--space-6)">
+      <div class="elevation-box" style="border-radius: var(--radius-lg); box-shadow: var(--elevation-1)">elevation-1</div>
+      <div class="elevation-box" style="border-radius: var(--radius-lg); box-shadow: var(--elevation-2)">elevation-2</div>
+      <div class="elevation-box" style="border-radius: var(--radius-lg); box-shadow: var(--elevation-3)">elevation-3</div>
+    </div>
+  </section>
+
+  <section class="doc-section" aria-labelledby="movimiento">
+    <h2 id="movimiento">Movimiento</h2>
+    <ul>
+      <li>Duraciones cortas: <code>--duration-fast</code> (120 ms) para estados y <code>--duration-normal</code> (200 ms) para entrar y salir.</li>
+      <li>Solo se animan opacidad, desplazamientos pequeños y tamaño. Nada que parpadee ni se mueva solo.</li>
+      <li>Los desplazamientos y escalas van dentro de <code>@media (prefers-reduced-motion: no-preference)</code>; con movimiento reducido solo queda un fundido breve.</li>
+      <li>Las animaciones nunca retrasan el foco ni la interacción con teclado.</li>
+    </ul>
+  </section>
+
+  <section class="doc-section" aria-labelledby="accesibilidad">
+    <h2 id="accesibilidad">Compromisos de accesibilidad</h2>
+    <ul>
+      <li><strong>Contraste:</strong> texto ≥ 4.5:1 y bordes de controles, foco e indicadores ≥ 3:1, en claro y oscuro (<code>pnpm check:contrast</code> lo verifica en todos los tonos).</li>
+      <li><strong>Foco:</strong> siempre visible con <code>:focus-visible</code>, anillo de 2 px y separación de 2 px.</li>
+      <li><strong>Teclado:</strong> todo se opera con Tab, Mayús+Tab, Enter, Espacio, Esc y flechas donde el patrón lo pide.</li>
+      <li><strong>Objetivos:</strong> 40 px de alto en controles (44 px en pantallas táctiles), por encima de los 24 px de WCAG 2.5.8.</li>
+      <li><strong>Nombres:</strong> cada control tiene un nombre accesible que incluye su texto visible.</li>
+      <li><strong>Estado:</strong> nunca solo con color. Errores con texto e ícono; pestañas con subrayado; página actual con barra lateral.</li>
+      <li><strong>Preferencias del sistema:</strong> <code>prefers-color-scheme</code>, <code>prefers-reduced-motion</code>, <code>prefers-contrast: more</code> y <code>forced-colors</code>.</li>
+      <li><strong>Idiomas:</strong> propiedades lógicas (<code>inline</code>/<code>block</code>) para que todo funcione en escritura de derecha a izquierda.</li>
+    </ul>
+  </section>
+
+  <section class="doc-section" aria-labelledby="soporte">
+    <h2 id="soporte">Soporte de navegadores</h2>
+    <p>
+      Objetivo: <strong>Baseline “ampliamente disponible”</strong>. Las características más nuevas se usan como mejora progresiva,
+      con una alternativa que mantiene el componente usable:
+    </p>
+    <ul>
+      <li><strong>Invoker Commands y Popover:</strong> <code>angela/js</code> carga polyfills solo si el navegador no los tiene.</li>
+      <li><strong>Anchor Positioning:</strong> sin soporte, el popover se muestra como hoja inferior.</li>
+      <li><strong>focusgroup:</strong> sin soporte, <code>&lt;angela-tabs&gt;</code> implementa las flechas y el tabindex itinerante.</li>
+      <li><strong>closedby="any":</strong> sin soporte, <code>angela/js</code> añade el cierre al hacer clic fuera.</li>
+      <li><strong>accent-color, field-sizing, interpolate-size, animaciones de salida:</strong> sin soporte se ve el control nativo, el textarea no crece solo o la transición es instantánea. Nada se rompe.</li>
+    </ul>
+  </section>
+
+  <section class="doc-section" aria-labelledby="nuevo-componente">
+    <h2 id="nuevo-componente">Cómo crear un componente nuevo</h2>
+    <ol>
+      <li>Busca el elemento o la API nativa. Si no existe, consulta el patrón en las WAI-ARIA Authoring Practices.</li>
+      <li>Escribe el CSS en <code>packages/angela/src/components/</code>, dentro de <code>@layer angela.components</code>, con una clase base y atributos <code>data-*</code> para variantes. Valores por defecto en <code>:where()</code>.</li>
+      <li>Usa solo tokens. Si necesitas un color nuevo, añádelo a la receta en <code>src/palette.js</code> con sus pares de contraste.</li>
+      <li>Propiedades lógicas, <code>:focus-visible</code>, estados <code>:disabled</code>/<code>aria-disabled</code>, <code>forced-colors</code> y <code>prefers-reduced-motion</code>.</li>
+      <li>JS solo si el HTML no basta: en <code>src/js/</code>, sin dependencias, seguro en SSR y con prueba en Vitest.</li>
+      <li>Documenta ejemplos, API y notas de accesibilidad en <code>docs/src/data/components.js</code>.</li>
+      <li>Prueba con teclado, lector de pantalla, zoom al 200 %, 320 px de ancho, alto contraste y movimiento reducido.</li>
+    </ol>
+  </section>
+
+  <script>
+    import { auditPalette, contrastRatio, resolvePalette, roles } from 'angela/palette';
+
+    const root = document.documentElement;
+    const inputs = [...document.querySelectorAll<HTMLInputElement>('.playground-controls input[type="range"]')];
+    const cssOut = document.getElementById('pg-css')!;
+    const status = document.getElementById('pg-status')!;
+
+    const pairs: [string, string, string, number][] = [
+      ['Texto / fondo', 'text', 'canvas', 4.5],
+      ['Texto secundario / superficie', 'text-muted', 'surface', 4.5],
+      ['Botón: texto / fondo', 'brand-on-solid', 'brand-solid', 4.5],
+      ['Enlace / fondo', 'brand-text', 'canvas', 4.5],
+      ['Texto / fondo teñido', 'brand-text', 'brand-subtle', 4.5],
+      ['Error / fondo', 'danger-text', 'surface', 4.5],
+      ['Borde de control / superficie', 'border-strong', 'surface', 3],
+      ['Foco / fondo', 'focus', 'canvas', 3],
+    ];
+
+    function currentValues() {
+      const values: Record<string, { h: number; c: number }> = structuredClone(roles);
+      for (const input of inputs) {
+        values[input.dataset.role!][input.dataset.key as 'h' | 'c'] = Number(input.value);
+      }
+      values.neutral.h = values.brand.h;
+      return values;
+    }
+
+    function renderContrast(mode: 'light' | 'dark', values: ReturnType<typeof currentValues>) {
+      const palette = resolvePalette(mode, values);
+      const list = document.getElementById(`pg-contrast-${mode}`)!;
+      list.replaceChildren(
+        ...pairs.map(([label, fg, bg, min]) => {
+          const ratio = contrastRatio(palette[fg], palette[bg]);
+          const ok = ratio >= min;
+          const li = document.createElement('li');
+          li.innerHTML = `<span>${label}</span><span class="ratio"><span class="badge" data-tone="${ok ? 'success' : 'danger'}">${ok ? 'Cumple' : 'No cumple'}</span> ${ratio.toFixed(2)}:1</span>`;
+          return li;
+        }),
+      );
+      return auditPalette(mode, values).length;
+    }
+
+    function update() {
+      const values = currentValues();
+      const lines: string[] = [];
+      for (const input of inputs) {
+        const name = `--angela-${input.dataset.role}-${input.dataset.key}`;
+        root.style.setProperty(name, input.value);
+        document.getElementById(`${input.id}-out`)!.textContent = input.value;
+        if (Number(input.value) !== (roles as any)[input.dataset.role!][input.dataset.key!]) {
+          lines.push(`  ${name}: ${input.value};`);
+        }
+      }
+      cssOut.textContent = lines.length ? `:root {\n${lines.join('\n')}\n}` : '/* Valores por defecto: no necesitas sobrescribir nada. */';
+      const failures = renderContrast('light', values) + renderContrast('dark', values);
+      status.textContent = failures ? `${failures} pares no cumplen WCAG AA.` : '';
+    }
+
+    inputs.forEach((input) => input.addEventListener('input', update));
+
+    document.getElementById('pg-copy')!.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(cssOut.textContent ?? '');
+        status.textContent = 'CSS copiado al portapapeles.';
+      } catch {
+        status.textContent = 'No se pudo copiar. Selecciona el texto y cópialo a mano.';
+      }
+    });
+
+    document.getElementById('pg-reset')!.addEventListener('click', () => {
+      for (const input of inputs) {
+        input.value = String((roles as any)[input.dataset.role!][input.dataset.key!]);
+        root.style.removeProperty(`--angela-${input.dataset.role}-${input.dataset.key}`);
+      }
+      update();
+      status.textContent = 'Paleta restablecida.';
+    });
+
+    update();
+  </script>
+</Layout>

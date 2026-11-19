@@ -1,0 +1,121 @@
+/*
+ * Pestañas. El comportamiento lo pone <angela-tabs> (src/js/tabs.js); el marcado es nativo:
+ *
+ * <angela-tabs class="tabs">
+ *   <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label="Detalles del producto">
+ *     <button type="button" role="tab" id="t-1" aria-selected="true" focusgroupstart>Resumen</button>
+ *     <button type="button" role="tab" id="t-2" aria-selected="false">Especificaciones</button>
+ *   </div>
+ *   <div role="tabpanel" aria-labelledby="t-1" tabindex="0">…</div>
+ *   <div role="tabpanel" aria-labelledby="t-2" hidden="until-found">…</div>
+ * </angela-tabs>
+ *
+ * role="tablist"/"tab" coinciden con los que infiere focusgroup; se escriben para que los vean
+ * los validadores (axe) y los navegadores sin focusgroup antes de que cargue el JS.
+ */
+@property --fade-start {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --fade-end {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+
+@layer angela.components {
+  .tabs {
+    display: block;
+  }
+
+  .tablist {
+    --fade-size: 2.5rem;
+    --fade-dir: right;
+    --fade-start-pos: 0;
+    --fade-end-pos: 100%;
+
+    display: flex;
+    gap: var(--space-1);
+    margin-block-end: var(--space-4);
+    border-block-end: 1px solid var(--color-border);
+    /* Las pestañas no se parten en varias filas: si no caben, se desplazan. */
+    overflow-x: auto;
+    scrollbar-width: none;
+    scroll-padding-inline: var(--fade-size);
+
+    /* Desvanecido en los bordes que tienen más pestañas ocultas. */
+    mask:
+      linear-gradient(black, black) no-clip subtract,
+      linear-gradient(to var(--fade-dir), black, transparent) var(--fade-start-pos) 0 / var(--fade-start) 100% no-repeat no-clip,
+      linear-gradient(to var(--fade-dir), transparent, black) var(--fade-end-pos) 0 / var(--fade-end) 100% no-repeat no-clip;
+    animation: angela-reveal-fade-start linear both, angela-hide-fade-end linear both;
+    animation-timeline: scroll(self inline);
+    animation-range: 0 var(--fade-size), calc(100% - var(--fade-size)) 100%;
+
+    &:dir(rtl) {
+      --fade-dir: left;
+      --fade-start-pos: 100%;
+      --fade-end-pos: 0;
+    }
+
+    & > button {
+      position: relative;
+      flex: none;
+      min-block-size: var(--control-h-md);
+      padding: var(--space-2) var(--space-3);
+      border: 0;
+      border-radius: var(--radius-md) var(--radius-md) 0 0;
+      background: none;
+      color: var(--color-text-muted);
+      font: inherit;
+      font-size: var(--fs-sm);
+      font-weight: var(--fw-medium);
+      cursor: pointer;
+      white-space: nowrap;
+
+      &:hover {
+        color: var(--color-text);
+        background-color: var(--color-surface-hover);
+      }
+
+      &:focus-visible {
+        outline: var(--focus-width) solid var(--color-focus);
+        outline-offset: -2px;
+      }
+
+      /* Seleccionada: color + subrayado (no solo color, WCAG 1.4.1).
+         Con borde, no con box-shadow ni fondo, para que sobreviva a colores forzados. */
+      &[aria-selected="true"] {
+        color: var(--color-brand-text);
+
+        &::after {
+          content: "";
+          position: absolute;
+          inset: auto 0 -1px;
+          border-block-end: 2px solid currentColor;
+        }
+      }
+    }
+  }
+
+  /* Sin padding/borde/fondo en el panel: hidden="until-found" solo oculta el contenido. */
+  .tabs > [role="tabpanel"]:focus-visible {
+    outline: var(--focus-width) solid var(--color-focus);
+    outline-offset: var(--focus-offset);
+    border-radius: var(--radius-sm);
+  }
+
+  @keyframes angela-reveal-fade-start {
+    to {
+      --fade-start: var(--fade-size);
+    }
+  }
+
+  @keyframes angela-hide-fade-end {
+    from {
+      --fade-end: var(--fade-size);
+    }
+  }
+}

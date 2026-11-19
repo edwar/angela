@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-jsx",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "es2023",
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src", "vitest.config.ts"]
+}

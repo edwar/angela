@@ -1,0 +1,40 @@
+/*
+ * Botón de tema claro/oscuro de dos estados (sistema ↔ el opuesto).
+ * Ambos estados están en el HTML; CSS oculta el inactivo, así funciona aunque cambie el sistema
+ * y no hace falta JS para mostrar el estado correcto.
+ *
+ * <button class="button" data-variant="ghost" data-tone="neutral" data-icon-only type="button" data-theme-toggle>
+ *   <span data-when="light"><svg aria-hidden="true">…luna…</svg><span class="visually-hidden">Cambiar a tema oscuro</span></span>
+ *   <span data-when="dark"><svg aria-hidden="true">…sol…</svg><span class="visually-hidden">Cambiar a tema claro</span></span>
+ * </button>
+ */
+@layer angela.components {
+  [data-theme-toggle] > [data-when] {
+    display: contents;
+  }
+
+  [data-theme-toggle] > [data-when="dark"] {
+    display: none;
+  }
+
+  /* Esquema oscuro efectivo: fijado por el usuario, o del sistema si no fijó claro. */
+  :root:has(> head > meta[name="color-scheme"][content="dark"]) [data-theme-toggle] {
+    & > [data-when="dark"] {
+      display: contents;
+    }
+    & > [data-when="light"] {
+      display: none;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not(:has(> head > meta[name="color-scheme"][content="light"])) [data-theme-toggle] {
+      & > [data-when="dark"] {
+        display: contents;
+      }
+      & > [data-when="light"] {
+        display: none;
+      }
+    }
+  }
+}

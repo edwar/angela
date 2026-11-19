@@ -1,0 +1,152 @@
+/*
+ * Base: estilos de documento sin clases (tipografía, enlaces, foco, esquema de color).
+ * Todo va en :where() para tener especificidad 0 y que cualquier estilo tuyo gane.
+ * Los componentes, en cambio, son opt-in con clase (.button, .input...).
+ */
+@layer angela.base {
+  :root {
+    /* Sigue la preferencia del sistema por defecto. */
+    color-scheme: light dark;
+
+    /* Un selector de tema puede fijar el esquema cambiando <meta name="color-scheme">. */
+    &:has(> head > meta[name="color-scheme"][content="light"]) {
+      color-scheme: light;
+    }
+    &:has(> head > meta[name="color-scheme"][content="dark"]) {
+      color-scheme: dark;
+    }
+
+    accent-color: var(--color-brand-solid);
+    scrollbar-color: var(--color-border-strong) var(--color-canvas);
+    background-color: var(--color-canvas);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    line-height: var(--lh-normal);
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Forzar un esquema en una parte de la página: <section data-scheme="dark">. */
+  :where([data-scheme="light"]) {
+    color-scheme: light;
+  }
+  :where([data-scheme="dark"]) {
+    color-scheme: dark;
+  }
+  :where([data-scheme]) {
+    /* Las propiedades heredadas de color se vuelven a declarar para que resuelvan con el nuevo esquema. */
+    accent-color: var(--color-brand-solid);
+    color: var(--color-text);
+  }
+
+  :where(body) {
+    margin: 0;
+  }
+
+  :where(h1, h2, h3, h4, h5, h6) {
+    line-height: var(--lh-tight);
+    font-weight: var(--fw-bold);
+    text-wrap: balance;
+  }
+  :where(h1) {
+    font-size: var(--fs-4xl);
+  }
+  :where(h2) {
+    font-size: var(--fs-3xl);
+  }
+  :where(h3) {
+    font-size: var(--fs-2xl);
+  }
+  :where(h4) {
+    font-size: var(--fs-xl);
+  }
+  :where(h5, h6) {
+    font-size: var(--fs-lg);
+  }
+
+  :where(p, li, dd, figcaption, blockquote) {
+    text-wrap: pretty;
+  }
+
+  :where(a:any-link) {
+    color: var(--color-brand-text);
+    text-decoration-thickness: from-font;
+    text-underline-offset: 0.2em;
+
+    &:hover {
+      text-decoration-thickness: 2px;
+    }
+  }
+
+  /* Foco visible: anillo de 2px con contraste ≥ 3:1 sobre el fondo (WCAG 2.4.7 y 1.4.11). */
+  :where(:focus-visible) {
+    outline: var(--focus-width) solid var(--color-focus);
+    outline-offset: var(--focus-offset);
+  }
+
+  ::selection {
+    background-color: var(--color-brand-subtle-hover);
+    color: var(--color-text);
+  }
+
+  :where(code, kbd, pre, samp) {
+    font-family: var(--font-code);
+    font-size: 0.9em;
+  }
+
+  :where(:not(pre) > code) {
+    padding: 0.1em 0.3em;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface-sunken);
+  }
+
+  :where(kbd) {
+    padding: 0.05em 0.35em;
+    border: 1px solid var(--color-border-strong);
+    border-block-end-width: 2px;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+  }
+
+  :where(pre) {
+    overflow-x: auto;
+    padding: var(--space-4);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface-sunken);
+    line-height: var(--lh-snug);
+    tab-size: 2;
+  }
+
+  :where(hr) {
+    border: 0;
+    border-block-start: 1px solid var(--color-border);
+    margin-block: var(--space-6);
+  }
+
+  :where(img, svg, video, canvas, picture) {
+    max-inline-size: 100%;
+  }
+  :where(img, video) {
+    block-size: auto;
+  }
+
+  :where(button, input, select, textarea) {
+    font: inherit;
+    color: inherit;
+  }
+
+  :where(mark) {
+    background-color: var(--color-warning-subtle-hover);
+    color: var(--color-text);
+  }
+
+  /* Más contraste cuando la persona lo pide al sistema. */
+  @media (prefers-contrast: more) {
+    :root,
+    [data-angela-theme] {
+      --color-border: var(--color-border-strong);
+      --color-text-muted: var(--color-text);
+    }
+  }
+}

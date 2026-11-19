@@ -1,0 +1,54 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Example from '../../components/Example.astro';
+import { components } from '../../data/components.js';
+
+export function getStaticPaths() {
+  return components.map((component) => ({ params: { slug: component.slug }, props: { component } }));
+}
+
+const { component } = Astro.props;
+---
+
+<Layout title={component.title} description={component.summary}>
+  <section class="doc-section" aria-labelledby="ejemplos">
+    <h2 id="ejemplos">Ejemplos</h2>
+    {component.examples.map((ex) => <Example title={ex.title} note={ex.note} code={ex.code} />)}
+  </section>
+
+  <section class="doc-section" aria-labelledby="api">
+    <h2 id="api">API</h2>
+    <div class="card" data-flush>
+      <div class="table-wrap" role="region" aria-labelledby="api-cap" tabindex="0">
+        <table class="table api-table">
+          <caption id="api-cap" class="visually-hidden">Clases y atributos de {component.title}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Clase o atributo</th>
+              <th scope="col">Uso</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              component.api.map(([name, desc]) => (
+                <tr>
+                  <th scope="row">
+                    <code>{name}</code>
+                  </th>
+                  <td>{desc}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="doc-section" aria-labelledby="accesibilidad">
+    <h2 id="accesibilidad">Accesibilidad</h2>
+    <ul>
+      {component.a11y.map((item) => <li>{item}</li>)}
+    </ul>
+  </section>
+</Layout>

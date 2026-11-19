@@ -1,0 +1,120 @@
+/*
+ * Tarjeta y tabla.
+ */
+@layer angela.components {
+  /*
+   * <article class="card">…</article>
+   * data-flush quita el padding (p. ej. para una tabla dentro: nada de "cajas dentro de cajas").
+   */
+  .card {
+    box-sizing: border-box;
+    padding: var(--space-5);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+
+    & > :first-child {
+      margin-block-start: 0;
+    }
+    & > :last-child {
+      margin-block-end: 0;
+    }
+
+    &[data-flush] {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    &[data-elevated] {
+      box-shadow: var(--elevation-2);
+    }
+  }
+
+  .card-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-block-end: var(--space-4);
+
+    & > :is(h1, h2, h3, h4) {
+      margin: 0;
+      font-size: var(--fs-lg);
+    }
+  }
+
+  .card[data-flush] > .card-header {
+    margin: 0;
+    padding: var(--space-4) var(--space-5);
+    border-block-end: 1px solid var(--color-border);
+  }
+
+  /*
+   * Tabla nativa. En móvil va en un contenedor con scroll horizontal propio
+   * (la página nunca se desplaza en horizontal):
+   *
+   * <div class="table-wrap" role="region" aria-labelledby="cap-1" tabindex="0">
+   *   <table class="table"><caption id="cap-1">Pedidos</caption>…</table>
+   * </div>
+   */
+  .table-wrap {
+    overflow-x: auto;
+    max-inline-size: 100%;
+
+    &:focus-visible {
+      outline: var(--focus-width) solid var(--color-focus);
+      outline-offset: var(--focus-offset);
+    }
+  }
+
+  .table {
+    inline-size: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-sm);
+    font-variant-numeric: tabular-nums;
+
+    & caption {
+      padding: var(--space-3) var(--space-4);
+      text-align: start;
+      font-weight: var(--fw-bold);
+      font-size: var(--fs-md);
+    }
+
+    & :is(th, td) {
+      padding: var(--space-2-5) var(--space-4);
+      text-align: start;
+      vertical-align: middle;
+    }
+
+    & thead th {
+      color: var(--color-text-muted);
+      font-weight: var(--fw-medium);
+      font-size: var(--fs-xs);
+      white-space: nowrap;
+      background-color: var(--color-surface-sunken);
+      border-block-end: 1px solid var(--color-border);
+    }
+
+    & tbody tr:not(:last-child) {
+      border-block-end: 1px solid var(--color-border);
+    }
+
+    & tbody tr:hover {
+      background-color: var(--color-surface-hover);
+    }
+
+    /* Celdas numéricas alineadas al final. */
+    & :is(th, td)[data-numeric] {
+      text-align: end;
+    }
+
+    /* Acciones de fila: siempre visibles, nunca solo al pasar el ratón. */
+    & .table-actions {
+      inline-size: 1%;
+      white-space: nowrap;
+      text-align: end;
+    }
+  }
+}

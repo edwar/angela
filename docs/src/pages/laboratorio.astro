@@ -1,0 +1,267 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { components } from '../data/components.js';
+import { icon } from '../data/icons.js';
+import { MODELS } from '../lib/lab/ai.js';
+
+const quickPrompts = [
+  ['Refactorizar', 'Refactoriza el código para que sea más simple y legible, sin cambiar su comportamiento.'],
+  ['Accesibilidad', 'Revisa y mejora la accesibilidad (WCAG 2.2 AA): nombres accesibles, teclado, foco y estados que no dependan solo del color.'],
+  ['Guía de diseño', 'Ajusta el código a la guía de diseño de angela: capas, :where(), tokens, data-* y propiedades lógicas.'],
+  ['Nueva variante', 'Propón una variante nueva y útil para este componente, documentada con un ejemplo en el HTML.'],
+];
+
+const tabs = [
+  { id: 'html', label: 'HTML' },
+  { id: 'css', label: 'CSS' },
+  { id: 'js', label: 'JavaScript' },
+];
+---
+
+<Layout
+  title="Laboratorio"
+  description="Evoluciona un componente de angela o crea uno nuevo con HTML, CSS y JavaScript, y pide ayuda a la IA cuando quieras."
+  heading={false}
+>
+  <header class="page-header lab-header">
+    <div>
+      <h1 id="contenido" tabindex="-1">Laboratorio</h1>
+      <p class="page-lead">
+        Evoluciona un componente de angela o crea uno nuevo. El código se ejecuta aislado, sin acceso a esta página ni a
+        la red.
+      </p>
+    </div>
+    <button class="button" type="button" data-variant="outline" data-tone="neutral" commandfor="lab-ai-config" command="show-modal">
+      Configurar IA
+    </button>
+  </header>
+
+  <section class="lab-toolbar" aria-label="Punto de partida">
+    <div class="field">
+      <label for="lab-base">Punto de partida</label>
+      <select class="input" id="lab-base">
+        <option value="">Componente nuevo, desde cero</option>
+        {components.map((c) => <option value={c.slug}>{c.title}</option>)}
+      </select>
+    </div>
+    <div class="cluster">
+      <button class="button" type="button" data-variant="outline" data-tone="neutral" id="lab-save">Guardar versión</button>
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-copy">
+        <Fragment set:html={icon('copy')} /> Copiar pestaña
+      </button>
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-download">
+        <Fragment set:html={icon('download')} /> Descargar pestaña
+      </button>
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-confirm-reset" command="show-modal">
+        Restaurar original
+      </button>
+    </div>
+    <p class="muted lab-status" id="lab-status" role="status"></p>
+  </section>
+
+  <div class="lab-workspace">
+    <section class="lab-pane" aria-labelledby="lab-editor-title">
+      <h2 class="visually-hidden" id="lab-editor-title">Editor</h2>
+      <angela-tabs class="tabs lab-tabs" id="lab-tabs">
+        <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label="Archivos">
+          {
+            tabs.map((t, i) => (
+              <button type="button" role="tab" id={`lab-tab-${t.id}`} aria-selected={i === 0 ? 'true' : 'false'} data-file={t.id} focusgroupstart={i === 0 ? '' : undefined}>
+                {t.label}
+              </button>
+            ))
+          }
+        </div>
+        {
+          tabs.map((t, i) => (
+            <div role="tabpanel" aria-labelledby={`lab-tab-${t.id}`} hidden={i === 0 ? undefined : 'until-found'}>
+              <label class="visually-hidden" for={`lab-code-${t.id}`}>
+                Código {t.label}
+              </label>
+              <textarea
+                class="lab-code"
+                id={`lab-code-${t.id}`}
+                data-file={t.id}
+                spellcheck="false"
+                autocapitalize="off"
+                autocomplete="off"
+                wrap="off"
+                aria-describedby="lab-code-hint"
+              />
+            </div>
+          ))
+        }
+      </angela-tabs>
+      <p class="hint" id="lab-code-hint">Tab inserta sangría. Pulsa Esc y luego Tab para salir del editor.</p>
+    </section>
+
+    <section class="lab-pane" aria-labelledby="lab-preview-title">
+      <div class="lab-pane-head">
+        <h2 id="lab-preview-title">Vista previa</h2>
+        <span class="badge" data-tone="info" id="lab-preview-mode" hidden>Propuesta de la IA</span>
+        <div class="cluster">
+          <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" id="lab-scheme" aria-pressed="false">
+            Fondo oscuro
+          </button>
+          <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" id="lab-reload">Recargar</button>
+        </div>
+      </div>
+      <iframe
+        class="lab-frame"
+        id="lab-frame"
+        title="Vista previa del componente"
+        sandbox="allow-scripts allow-forms"
+        referrerpolicy="no-referrer"></iframe>
+      <details class="disclosure lab-console">
+        <summary>Consola <span class="badge" data-tone="neutral" id="lab-console-count">0</span></summary>
+        <div>
+          <ol class="lab-console-list" id="lab-console-list" aria-live="polite"></ol>
+          <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" id="lab-console-clear">Limpiar</button>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <section class="doc-section lab-ai" aria-labelledby="lab-ai-title">
+    <h2 id="lab-ai-title">Asistente de IA</h2>
+    <p class="muted" id="lab-ai-state">Configura tu clave de Anthropic para pedir propuestas.</p>
+    <form class="stack" id="lab-ai-form">
+      <div class="field">
+        <label for="lab-ai-prompt">¿Qué quieres que haga?</label>
+        <p class="hint" id="lab-ai-prompt-hint">
+          La IA recibe el código de las tres pestañas y devuelve una propuesta que puedes probar antes de aplicarla.
+        </p>
+        <textarea class="input" id="lab-ai-prompt" name="instruccion" rows="3" required aria-describedby="lab-ai-prompt-hint"></textarea>
+      </div>
+      <div class="cluster" role="group" aria-label="Ideas rápidas">
+        {
+          quickPrompts.map(([label, text]) => (
+            <button class="button" type="button" data-variant="soft" data-tone="neutral" data-size="sm" data-prompt={text}>
+              {label}
+            </button>
+          ))
+        }
+      </div>
+      <div class="cluster">
+        <button class="button" type="submit" id="lab-ai-submit">Pedir propuesta</button>
+        <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-ai-cancel" hidden>Cancelar</button>
+        <progress class="lab-ai-progress" id="lab-ai-progress" hidden aria-label="Esperando la propuesta"></progress>
+      </div>
+    </form>
+
+    <article class="card stack lab-proposal" id="lab-proposal" hidden aria-labelledby="lab-proposal-title">
+      <h3 id="lab-proposal-title">Propuesta</h3>
+      <p id="lab-proposal-summary"></p>
+      <ul id="lab-proposal-changes"></ul>
+      <div class="callout" data-tone="warning" id="lab-proposal-warnings" hidden>
+        <Fragment set:html={icon('alert')} />
+        <div>
+          <p class="callout-title">Revisa antes de aplicar</p>
+          <ul id="lab-proposal-warning-list"></ul>
+        </div>
+      </div>
+      <details class="disclosure">
+        <summary>Ver el código propuesto</summary>
+        <div class="stack">
+          {
+            tabs.map((t) => (
+              <section>
+                <h4>{t.label}</h4>
+                <pre class="lab-proposal-code" tabindex="0" aria-label={`Código ${t.label} propuesto`}><code id={`lab-proposal-${t.id}`} /></pre>
+              </section>
+            ))
+          }
+        </div>
+      </details>
+      <div class="cluster">
+        <button class="button" type="button" data-variant="outline" data-tone="neutral" id="lab-proposal-try" aria-pressed="false">
+          Probar en la vista previa
+        </button>
+        <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-proposal-discard">Descartar</button>
+        <button class="button" type="button" id="lab-proposal-apply">Aplicar al editor</button>
+      </div>
+    </article>
+  </section>
+
+  <section class="doc-section" aria-labelledby="lab-versions-title">
+    <h2 id="lab-versions-title">Versiones</h2>
+    <p class="muted" id="lab-versions-empty">
+      Aún no hay versiones guardadas. Se guarda una automáticamente antes de aplicar una propuesta de la IA.
+    </p>
+    <ol class="lab-versions" id="lab-versions" role="list"></ol>
+  </section>
+
+  <dialog class="dialog" id="lab-ai-config" aria-labelledby="lab-ai-config-title" closedby="any">
+    <header class="dialog-header">
+      <h2 id="lab-ai-config-title">Configurar IA</h2>
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-icon-only commandfor="lab-ai-config" command="close" aria-label="Cerrar" set:html={icon('x')} />
+    </header>
+    <div class="dialog-body">
+      <form class="stack" id="lab-ai-config-form" method="dialog">
+        <div class="callout" data-tone="info">
+          <Fragment set:html={icon('info')} />
+          <div>
+            <p class="callout-title">Tu clave se queda en tu navegador</p>
+            <p>
+              Solo se envía a api.anthropic.com. El código de la vista previa no puede leerla. Usa una clave con límite de
+              gasto y no la configures en equipos compartidos.
+            </p>
+          </div>
+        </div>
+        <div class="field">
+          <label for="lab-ai-key">Clave de la API de Anthropic</label>
+          <p class="hint" id="lab-ai-key-hint">Empieza por sk-ant-. Déjala vacía para conservar la actual.</p>
+          <input class="input" id="lab-ai-key" name="clave" type="password" autocomplete="off" spellcheck="false" aria-describedby="lab-ai-key-hint" />
+        </div>
+        <div class="field">
+          <label for="lab-ai-model">Modelo</label>
+          <select class="input" id="lab-ai-model" name="modelo">
+            {MODELS.map((m) => <option value={m.id}>{m.label}</option>)}
+          </select>
+        </div>
+        <div class="choice">
+          <input type="checkbox" id="lab-ai-remember" name="recordar" />
+          <label for="lab-ai-remember">Recordar en este navegador (si no, se borra al cerrar la pestaña)</label>
+        </div>
+      </form>
+    </div>
+    <footer class="dialog-footer">
+      <button class="button" type="button" data-variant="ghost" data-tone="danger" id="lab-ai-forget">Olvidar clave</button>
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-ai-config" command="close">Cancelar</button>
+      <button class="button" type="submit" form="lab-ai-config-form" value="guardar">Guardar</button>
+    </footer>
+  </dialog>
+
+  <dialog class="dialog" id="lab-confirm-reset" data-size="sm" aria-labelledby="lab-confirm-reset-title" aria-describedby="lab-confirm-reset-desc">
+    <div class="dialog-body stack" style="--stack-gap: var(--space-2)">
+      <h2 id="lab-confirm-reset-title" class="lab-confirm-title">¿Restaurar el original?</h2>
+      <p id="lab-confirm-reset-desc" class="muted">
+        Se descarta el borrador actual y el editor vuelve al código de angela. Las versiones guardadas se conservan.
+      </p>
+    </div>
+    <form class="dialog-footer" method="dialog">
+      <button class="button" value="cancelar" data-variant="ghost" data-tone="neutral" autofocus>Cancelar</button>
+      <button class="button" value="confirmar" data-tone="danger">Restaurar</button>
+    </form>
+  </dialog>
+
+  <dialog class="dialog" id="lab-confirm-delete" data-size="sm" aria-labelledby="lab-confirm-delete-title" aria-describedby="lab-confirm-delete-desc">
+    <div class="dialog-body stack" style="--stack-gap: var(--space-2)">
+      <h2 id="lab-confirm-delete-title" class="lab-confirm-title">¿Eliminar esta versión?</h2>
+      <p id="lab-confirm-delete-desc" class="muted">
+        Se elimina «<span id="lab-confirm-delete-name"></span>» de este navegador. No se puede deshacer.
+      </p>
+    </div>
+    <form class="dialog-footer" method="dialog">
+      <button class="button" value="cancelar" data-variant="ghost" data-tone="neutral" autofocus>Cancelar</button>
+      <button class="button" value="confirmar" data-tone="danger">Eliminar</button>
+    </form>
+  </dialog>
+</Layout>
+
+<script>
+  import { startLab } from '../lib/lab/app.js';
+  const cleanup = startLab();
+  // En desarrollo, al recargar el módulo en caliente no deben quedar dos instancias escuchando.
+  import.meta.hot?.dispose(cleanup);
+</script>

@@ -1,0 +1,126 @@
+/*
+ * Casillas, radios e interruptores nativos.
+ *
+ * <div class="choice">
+ *   <input type="checkbox" id="terms" name="terms">
+ *   <label for="terms">Acepto los términos</label>
+ * </div>
+ *
+ * Interruptor: <input type="checkbox" role="switch" switch> (el atributo switch es nativo en Safari).
+ */
+@layer angela.components {
+  .choice {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    line-height: var(--lh-snug);
+
+    & > input:is([type="checkbox"], [type="radio"]) {
+      flex: none;
+      inline-size: 1.125rem;
+      block-size: 1.125rem;
+      margin: 0.1em 0 0;
+      accent-color: var(--color-brand-solid);
+      cursor: pointer;
+    }
+
+    & > label {
+      cursor: pointer;
+      /* Área táctil más generosa sin mover el layout. */
+      padding-block: var(--space-1);
+      margin-block: calc(var(--space-1) * -1);
+    }
+
+    & .hint {
+      margin-block-start: var(--space-0-5);
+    }
+
+    &:has(> input:disabled) {
+      color: var(--color-text-muted);
+
+      & > :is(input, label) {
+        cursor: not-allowed;
+      }
+    }
+  }
+
+  input[type="checkbox"]:is([role="switch"], [switch]) {
+    --_track: var(--color-border-strong);
+    --_thumb: var(--color-brand-on-solid);
+
+    appearance: none;
+    position: relative;
+    box-sizing: border-box;
+    flex: none;
+    inline-size: 2.25rem;
+    block-size: 1.25rem;
+    margin: 0.05em 0 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background-color: var(--_track);
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-standard);
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset-block: 2px;
+      inset-inline-start: 2px;
+      aspect-ratio: 1;
+      border-radius: var(--radius-full);
+      background-color: var(--_thumb);
+    }
+
+    &:checked {
+      --_track: var(--color-brand-solid);
+
+      &::before {
+        translate: 1rem 0;
+      }
+
+      &:dir(rtl)::before {
+        translate: -1rem 0;
+      }
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      &::before {
+        transition: translate var(--duration-fast) var(--ease-standard);
+      }
+    }
+  }
+
+  @media (forced-colors: active) {
+    input[type="checkbox"]:is([role="switch"], [switch]) {
+      forced-color-adjust: none;
+      border: 1px solid CanvasText;
+      background-color: Canvas;
+
+      &::before {
+        background-color: CanvasText;
+      }
+
+      &:checked {
+        background-color: Highlight;
+        border-color: Highlight;
+
+        &::before {
+          background-color: HighlightText;
+        }
+      }
+
+      &:disabled {
+        border-color: GrayText;
+
+        &::before {
+          background-color: GrayText;
+        }
+      }
+    }
+  }
+}

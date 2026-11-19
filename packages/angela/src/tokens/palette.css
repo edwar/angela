@@ -1,0 +1,91 @@
+/* ARCHIVO GENERADO por scripts/build-palette.mjs a partir de src/palette.js. No lo edites a mano. */
+
+@layer angela.tokens {
+  /*
+   * Entradas del tema: tono (h, 0–360) y croma (c, 0–0.2) de cada rol.
+   * Sobrescríbelas en :root (o en un elemento con [data-angela-theme]) para cambiar la paleta.
+   */
+  :root {
+    --angela-brand-h: 262;
+    --angela-brand-c: 0.17;
+    --angela-neutral-h: var(--angela-brand-h);
+    --angela-neutral-c: 0.012;
+    --angela-success-h: 150;
+    --angela-success-c: 0.14;
+    --angela-warning-h: 65;
+    --angela-warning-c: 0.14;
+    --angela-danger-h: 25;
+    --angela-danger-c: 0.18;
+    --angela-info-h: 235;
+    --angela-info-c: 0.12;
+  }
+
+  /* Tokens semánticos. Se recalculan en cualquier subárbol con [data-angela-theme]. */
+  :root,
+  [data-angela-theme] {
+    /* Superficies y texto */
+    --color-canvas: light-dark(oklch(0.985 calc(var(--angela-neutral-c) * 0.5) var(--angela-neutral-h)), oklch(0.165 calc(var(--angela-neutral-c) * 0.8) var(--angela-neutral-h)));
+    --color-surface: light-dark(oklch(1 0 var(--angela-neutral-h)), oklch(0.205 var(--angela-neutral-c) var(--angela-neutral-h)));
+    --color-surface-sunken: light-dark(oklch(0.965 var(--angela-neutral-c) var(--angela-neutral-h)), oklch(0.145 var(--angela-neutral-c) var(--angela-neutral-h)));
+    --color-surface-hover: light-dark(oklch(0.94 calc(var(--angela-neutral-c) * 1.2) var(--angela-neutral-h)), oklch(0.27 calc(var(--angela-neutral-c) * 1.2) var(--angela-neutral-h)));
+    --color-text: light-dark(oklch(0.22 calc(var(--angela-neutral-c) * 1.5) var(--angela-neutral-h)), oklch(0.95 calc(var(--angela-neutral-c) * 0.6) var(--angela-neutral-h)));
+    --color-text-muted: light-dark(oklch(0.48 calc(var(--angela-neutral-c) * 1.5) var(--angela-neutral-h)), oklch(0.74 var(--angela-neutral-c) var(--angela-neutral-h)));
+    --color-border: light-dark(oklch(0.905 var(--angela-neutral-c) var(--angela-neutral-h)), oklch(0.3 var(--angela-neutral-c) var(--angela-neutral-h)));
+    --color-border-strong: light-dark(oklch(0.6 calc(var(--angela-neutral-c) * 1.5) var(--angela-neutral-h)), oklch(0.62 var(--angela-neutral-c) var(--angela-neutral-h)));
+    --color-focus: light-dark(oklch(0.5 var(--angela-brand-c) var(--angela-brand-h)), oklch(0.74 calc(var(--angela-brand-c) * 0.9) var(--angela-brand-h)));
+
+    /* Rol: brand */
+    --color-brand-solid: light-dark(oklch(0.5 var(--angela-brand-c) var(--angela-brand-h)), oklch(0.74 calc(var(--angela-brand-c) * 0.9) var(--angela-brand-h)));
+    --color-brand-solid-hover: light-dark(oklch(0.44 var(--angela-brand-c) var(--angela-brand-h)), oklch(0.8 calc(var(--angela-brand-c) * 0.8) var(--angela-brand-h)));
+    --color-brand-on-solid: light-dark(oklch(0.995 0 var(--angela-brand-h)), oklch(0.18 calc(var(--angela-brand-c) * 0.3) var(--angela-brand-h)));
+    --color-brand-subtle: light-dark(oklch(0.955 calc(var(--angela-brand-c) * 0.22) var(--angela-brand-h)), oklch(0.27 calc(var(--angela-brand-c) * 0.35) var(--angela-brand-h)));
+    --color-brand-subtle-hover: light-dark(oklch(0.925 calc(var(--angela-brand-c) * 0.32) var(--angela-brand-h)), oklch(0.31 calc(var(--angela-brand-c) * 0.45) var(--angela-brand-h)));
+    --color-brand-border: light-dark(oklch(0.6 calc(var(--angela-brand-c) * 0.85) var(--angela-brand-h)), oklch(0.62 calc(var(--angela-brand-c) * 0.8) var(--angela-brand-h)));
+    --color-brand-text: light-dark(oklch(0.46 calc(var(--angela-brand-c) * 0.95) var(--angela-brand-h)), oklch(0.84 calc(var(--angela-brand-c) * 0.7) var(--angela-brand-h)));
+
+    /* Rol: neutral */
+    --color-neutral-solid: light-dark(oklch(0.27 calc(var(--angela-neutral-c) * 1.5) var(--angela-neutral-h)), oklch(0.93 var(--angela-neutral-c) var(--angela-neutral-h)));
+    --color-neutral-solid-hover: light-dark(oklch(0.35 calc(var(--angela-neutral-c) * 1.5) var(--angela-neutral-h)), oklch(0.86 var(--angela-neutral-c) var(--angela-neutral-h)));
+    --color-neutral-on-solid: light-dark(oklch(0.99 0 var(--angela-neutral-h)), oklch(0.18 var(--angela-neutral-c) var(--angela-neutral-h)));
+    --color-neutral-subtle: light-dark(oklch(0.955 var(--angela-neutral-c) var(--angela-neutral-h)), oklch(0.27 var(--angela-neutral-c) var(--angela-neutral-h)));
+    --color-neutral-subtle-hover: light-dark(oklch(0.925 calc(var(--angela-neutral-c) * 1.2) var(--angela-neutral-h)), oklch(0.31 calc(var(--angela-neutral-c) * 1.2) var(--angela-neutral-h)));
+    --color-neutral-border: light-dark(oklch(0.6 calc(var(--angela-neutral-c) * 1.5) var(--angela-neutral-h)), oklch(0.62 var(--angela-neutral-c) var(--angela-neutral-h)));
+    --color-neutral-text: light-dark(oklch(0.22 calc(var(--angela-neutral-c) * 1.5) var(--angela-neutral-h)), oklch(0.95 calc(var(--angela-neutral-c) * 0.6) var(--angela-neutral-h)));
+
+    /* Rol: success */
+    --color-success-solid: light-dark(oklch(0.5 var(--angela-success-c) var(--angela-success-h)), oklch(0.74 calc(var(--angela-success-c) * 0.9) var(--angela-success-h)));
+    --color-success-solid-hover: light-dark(oklch(0.44 var(--angela-success-c) var(--angela-success-h)), oklch(0.8 calc(var(--angela-success-c) * 0.8) var(--angela-success-h)));
+    --color-success-on-solid: light-dark(oklch(0.995 0 var(--angela-success-h)), oklch(0.18 calc(var(--angela-success-c) * 0.3) var(--angela-success-h)));
+    --color-success-subtle: light-dark(oklch(0.955 calc(var(--angela-success-c) * 0.22) var(--angela-success-h)), oklch(0.27 calc(var(--angela-success-c) * 0.35) var(--angela-success-h)));
+    --color-success-subtle-hover: light-dark(oklch(0.925 calc(var(--angela-success-c) * 0.32) var(--angela-success-h)), oklch(0.31 calc(var(--angela-success-c) * 0.45) var(--angela-success-h)));
+    --color-success-border: light-dark(oklch(0.6 calc(var(--angela-success-c) * 0.85) var(--angela-success-h)), oklch(0.62 calc(var(--angela-success-c) * 0.8) var(--angela-success-h)));
+    --color-success-text: light-dark(oklch(0.46 calc(var(--angela-success-c) * 0.95) var(--angela-success-h)), oklch(0.84 calc(var(--angela-success-c) * 0.7) var(--angela-success-h)));
+
+    /* Rol: warning */
+    --color-warning-solid: light-dark(oklch(0.5 var(--angela-warning-c) var(--angela-warning-h)), oklch(0.74 calc(var(--angela-warning-c) * 0.9) var(--angela-warning-h)));
+    --color-warning-solid-hover: light-dark(oklch(0.44 var(--angela-warning-c) var(--angela-warning-h)), oklch(0.8 calc(var(--angela-warning-c) * 0.8) var(--angela-warning-h)));
+    --color-warning-on-solid: light-dark(oklch(0.995 0 var(--angela-warning-h)), oklch(0.18 calc(var(--angela-warning-c) * 0.3) var(--angela-warning-h)));
+    --color-warning-subtle: light-dark(oklch(0.955 calc(var(--angela-warning-c) * 0.22) var(--angela-warning-h)), oklch(0.27 calc(var(--angela-warning-c) * 0.35) var(--angela-warning-h)));
+    --color-warning-subtle-hover: light-dark(oklch(0.925 calc(var(--angela-warning-c) * 0.32) var(--angela-warning-h)), oklch(0.31 calc(var(--angela-warning-c) * 0.45) var(--angela-warning-h)));
+    --color-warning-border: light-dark(oklch(0.6 calc(var(--angela-warning-c) * 0.85) var(--angela-warning-h)), oklch(0.62 calc(var(--angela-warning-c) * 0.8) var(--angela-warning-h)));
+    --color-warning-text: light-dark(oklch(0.46 calc(var(--angela-warning-c) * 0.95) var(--angela-warning-h)), oklch(0.84 calc(var(--angela-warning-c) * 0.7) var(--angela-warning-h)));
+
+    /* Rol: danger */
+    --color-danger-solid: light-dark(oklch(0.5 var(--angela-danger-c) var(--angela-danger-h)), oklch(0.74 calc(var(--angela-danger-c) * 0.9) var(--angela-danger-h)));
+    --color-danger-solid-hover: light-dark(oklch(0.44 var(--angela-danger-c) var(--angela-danger-h)), oklch(0.8 calc(var(--angela-danger-c) * 0.8) var(--angela-danger-h)));
+    --color-danger-on-solid: light-dark(oklch(0.995 0 var(--angela-danger-h)), oklch(0.18 calc(var(--angela-danger-c) * 0.3) var(--angela-danger-h)));
+    --color-danger-subtle: light-dark(oklch(0.955 calc(var(--angela-danger-c) * 0.22) var(--angela-danger-h)), oklch(0.27 calc(var(--angela-danger-c) * 0.35) var(--angela-danger-h)));
+    --color-danger-subtle-hover: light-dark(oklch(0.925 calc(var(--angela-danger-c) * 0.32) var(--angela-danger-h)), oklch(0.31 calc(var(--angela-danger-c) * 0.45) var(--angela-danger-h)));
+    --color-danger-border: light-dark(oklch(0.6 calc(var(--angela-danger-c) * 0.85) var(--angela-danger-h)), oklch(0.62 calc(var(--angela-danger-c) * 0.8) var(--angela-danger-h)));
+    --color-danger-text: light-dark(oklch(0.46 calc(var(--angela-danger-c) * 0.95) var(--angela-danger-h)), oklch(0.84 calc(var(--angela-danger-c) * 0.7) var(--angela-danger-h)));
+
+    /* Rol: info */
+    --color-info-solid: light-dark(oklch(0.5 var(--angela-info-c) var(--angela-info-h)), oklch(0.74 calc(var(--angela-info-c) * 0.9) var(--angela-info-h)));
+    --color-info-solid-hover: light-dark(oklch(0.44 var(--angela-info-c) var(--angela-info-h)), oklch(0.8 calc(var(--angela-info-c) * 0.8) var(--angela-info-h)));
+    --color-info-on-solid: light-dark(oklch(0.995 0 var(--angela-info-h)), oklch(0.18 calc(var(--angela-info-c) * 0.3) var(--angela-info-h)));
+    --color-info-subtle: light-dark(oklch(0.955 calc(var(--angela-info-c) * 0.22) var(--angela-info-h)), oklch(0.27 calc(var(--angela-info-c) * 0.35) var(--angela-info-h)));
+    --color-info-subtle-hover: light-dark(oklch(0.925 calc(var(--angela-info-c) * 0.32) var(--angela-info-h)), oklch(0.31 calc(var(--angela-info-c) * 0.45) var(--angela-info-h)));
+    --color-info-border: light-dark(oklch(0.6 calc(var(--angela-info-c) * 0.85) var(--angela-info-h)), oklch(0.62 calc(var(--angela-info-c) * 0.8) var(--angela-info-h)));
+    --color-info-text: light-dark(oklch(0.46 calc(var(--angela-info-c) * 0.95) var(--angela-info-h)), oklch(0.84 calc(var(--angela-info-c) * 0.7) var(--angela-info-h)));
+  }
+}

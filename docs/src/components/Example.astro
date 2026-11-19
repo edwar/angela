@@ -1,0 +1,23 @@
+---
+interface Props {
+  title?: string;
+  note?: string;
+  code: string;
+}
+const { title, note, code } = Astro.props;
+// En el código mostrado, los íconos se abrevian para que se lea el marcado importante.
+const shown = code.replace(/<svg[\s\S]*?<\/svg>/g, '<svg aria-hidden="true">…</svg>');
+---
+
+<section class="example">
+  {
+    (title || note) && (
+      <div class="example-head">
+        {title && <h3>{title}</h3>}
+        {note && <p>{note}</p>}
+      </div>
+    )
+  }
+  <div class="example-preview" set:html={code} />
+  <pre class="example-code" tabindex="0" aria-label={`Código${title ? `: ${title}` : ''}`}><code>{shown}</code></pre>
+</section>

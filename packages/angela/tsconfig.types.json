@@ -1,0 +1,17 @@
+{
+  "include": ["src/js/*.js", "src/palette.js"],
+  "exclude": ["src/**/*.test.js"],
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": false,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "outDir": "dist/types",
+    "rootDir": "src",
+    "module": "nodenext",
+    "target": "es2023",
+    "lib": ["es2023", "dom", "dom.iterable"],
+    "strict": true,
+    "skipLibCheck": true
+  }
+}

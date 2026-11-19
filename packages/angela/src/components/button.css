@@ -1,0 +1,121 @@
+/*
+ * Botón: <button class="button"> o <a class="button" href>.
+ * data-variant="solid|soft|outline|ghost"  data-tone="..."  data-size="sm|md|lg"  data-icon-only
+ */
+@layer angela.components {
+  .button {
+    --_bg: var(--tone-solid);
+    --_bg-hover: var(--tone-solid-hover);
+    --_fg: var(--tone-on-solid);
+    --_border: transparent;
+    --_h: var(--control-h-md);
+    --_px: var(--space-4);
+
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-block-size: var(--_h);
+    padding-block: var(--space-1);
+    padding-inline: var(--_px);
+    /* El borde transparente se vuelve visible en modo de colores forzados. */
+    border: 1px solid var(--_border);
+    border-radius: var(--radius-md);
+    background-color: var(--_bg);
+    color: var(--_fg);
+    font: inherit;
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+    line-height: var(--lh-tight);
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition-property: background-color, border-color, color;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-standard);
+
+    &:hover:not(:disabled, [aria-disabled="true"]) {
+      background-color: var(--_bg-hover);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-width) solid var(--color-focus);
+      outline-offset: var(--focus-offset);
+    }
+
+    &:disabled,
+    &[aria-disabled="true"] {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    /* Íconos: decorativos (aria-hidden) salvo en botones solo-ícono, que llevan aria-label. */
+    & :where(svg) {
+      flex: none;
+      inline-size: 1.15em;
+      block-size: 1.15em;
+    }
+
+    &[data-variant="soft"] {
+      --_bg: var(--tone-subtle);
+      --_bg-hover: var(--tone-subtle-hover);
+      --_fg: var(--tone-text);
+    }
+
+    &[data-variant="outline"] {
+      --_bg: transparent;
+      --_bg-hover: var(--tone-subtle);
+      --_fg: var(--tone-text);
+      --_border: var(--tone-border);
+    }
+
+    &[data-variant="ghost"] {
+      --_bg: transparent;
+      --_bg-hover: var(--tone-subtle);
+      --_fg: var(--tone-text);
+    }
+
+    /* Botón conmutador: <button class="button" aria-pressed="false"> */
+    &[aria-pressed="true"]:not([data-variant="solid"]) {
+      --_bg: var(--tone-subtle-hover);
+      --_border: var(--tone-border);
+    }
+
+    &[data-size="sm"] {
+      --_h: var(--control-h-sm);
+      --_px: var(--space-3);
+      font-size: var(--fs-xs);
+    }
+
+    &[data-size="lg"] {
+      --_h: var(--control-h-lg);
+      --_px: var(--space-6);
+      font-size: var(--fs-md);
+    }
+
+    &[data-icon-only] {
+      --_px: 0;
+      inline-size: var(--_h);
+    }
+
+    &[data-block] {
+      display: flex;
+      inline-size: 100%;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .button {
+      border-color: ButtonText;
+
+      &:disabled,
+      &[aria-disabled="true"] {
+        color: GrayText;
+        border-color: GrayText;
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { components } from '../../data/components.js';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<Layout
+  title="Componentes"
+  description="Cada componente es HTML nativo con una clase. Copia el marcado y funciona en Astro, Next, Vue o HTML plano."
+>
+  <ul class="grid" role="list">
+    {
+      components.map((c) => (
+        <li>
+          <a class="card link-card" href={`${base}/componentes/${c.slug}`}>
+            <h2>{c.title}</h2>
+            <p>{c.summary}</p>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</Layout>
