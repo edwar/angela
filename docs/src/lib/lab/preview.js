@@ -65,6 +65,46 @@ export function angelaVocabulary(sources = angelaCss) {
   return { classes: [...classes].sort(), tokens: [...tokens].sort() };
 }
 
+/**
+ * Un conjunto de componentes que se usan juntos (una rejilla y la tarjeta que va dentro)
+ * se escribe en un mismo CSS, separado por marcadores:
+ *
+ *   @componente cards      → packages/angela/src/components/cards.css
+ *   @componente card-3d    → packages/angela/src/components/card-3d.css
+ *
+ * Así se ven juntos en la vista previa mientras se escriben, y al proponerlos salen como
+ * archivos separados en el mismo pull request, que es como viven en la librería.
+ *
+ * @param {string} css
+ * @param {string} fallbackId  Nombre que se usa si no hay marcadores (un solo componente).
+ * @returns {{ id: string, css: string, declared: boolean }[]}
+ */
+export function splitComponents(css, fallbackId = 'componente') {
+  // El comentario puede seguir tras el nombre: así cada pieza se lleva su cabecera documentada.
+  const marker = /\/\*\s*@componente\s+([a-z][\w-]*)[\s\S]*?\*\//gi;
+  const marks = [...css.matchAll(marker)];
+  if (marks.length === 0) return [{ id: fallbackId, css: css.trim(), declared: false }];
+
+  const parts = marks.map((mark, i) => ({
+    id: mark[1].toLowerCase(),
+    css: css.slice(mark.index, i + 1 < marks.length ? marks[i + 1].index : css.length).trim(),
+    declared: true,
+  }));
+
+  // Lo que haya antes del primer marcador (tokens compartidos, comentarios) va con la primera pieza.
+  const preludio = css.slice(0, marks[0].index).trim();
+  if (preludio) parts[0].css = `${preludio}\n\n${parts[0].css}`;
+
+  // Si alguien repite un nombre, las piezas se unen en un solo archivo.
+  const porId = new Map();
+  for (const part of parts) {
+    const previa = porId.get(part.id);
+    if (previa) previa.css = `${previa.css}\n\n${part.css}`;
+    else porId.set(part.id, part);
+  }
+  return [...porId.values()];
+}
+
 const IMPORT_LINE =/^@import\s+["']\.\/([^"']+)["'];\s*$/gm;
 
 /**
@@ -150,8 +190,9 @@ const consoleBridge = `
  * Carga los módulos de angela desde blobs (dentro del iframe, sin red) y luego el JS del editor.
  * Si el editor tiene el código de un módulo de angela (p. ej. tabs.js), lo sustituye.
  */
-function moduleLoader({ modules, userJs, userModule, dependencyJs = [] }) {
+function moduleLoader({ modules, userJs, userModule, dependencyJs = [], ignoreReducedMotion = false }) {
   return `
+${ignoreReducedMotion ? IGNORE_REDUCED_MOTION : ''}
 const files = ${scriptJson(modules)};
 const dependencyJs = ${scriptJson(dependencyJs)};
 const userJs = ${scriptJson(userJs)};
@@ -191,6 +232,34 @@ if (!userModule && userJs.trim()) {
 }
 
 /**
+ * Quien tiene activado «reducir movimiento» en su sistema no vería la animación que acaba
+ * de escribir. Esto reescribe las condiciones de las @media en la hoja ya cargada, y solo
+ * dentro de la vista previa: el CSS del componente no se toca.
+ */
+const IGNORE_REDUCED_MOTION = String.raw`
+const ajustarMedia = (rules) => {
+  for (const rule of rules) {
+    if (rule.media) {
+      const texto = rule.media.mediaText;
+      if (/prefers-reduced-motion\s*:\s*no-preference/.test(texto)) {
+        const limpio = texto
+          .replace(/\s*and\s*\(\s*prefers-reduced-motion\s*:\s*no-preference\s*\)/g, '')
+          .replace(/\(\s*prefers-reduced-motion\s*:\s*no-preference\s*\)/g, 'all')
+          .trim();
+        rule.media.mediaText = limpio || 'all';
+      } else if (/prefers-reduced-motion\s*:\s*reduce/.test(texto)) {
+        rule.media.mediaText = 'not all';
+      }
+    }
+    if (rule.cssRules) ajustarMedia(rule.cssRules);
+  }
+};
+for (const sheet of document.styleSheets) {
+  try { ajustarMedia(sheet.cssRules); } catch {}
+}
+`;
+
+/**
  * Construye el documento completo de la vista previa.
  * @param {{
  *   html: string, css: string, js: string,
@@ -199,6 +268,7 @@ if (!userModule && userJs.trim()) {
  *   jsModule?: string | null,
  *   modules?: Record<string, string>,
  *   dependencies?: { name: string, css: string, js: string }[],
+ *   ignoreReducedMotion?: boolean,
  * }} input
  */
 export function buildPreviewDocument({
@@ -210,6 +280,7 @@ export function buildPreviewDocument({
   jsModule = null,
   modules = angelaJs,
   dependencies = [],
+  ignoreReducedMotion = false,
 }) {
   const dependencyCss = dependencies.map((d) => `/* Componente: ${d.name.replace(/\*\//g, '')} */\n${d.css}`).join('\n\n');
   const dependencyJs = dependencies.filter((d) => d.js.trim()).map(({ name, js: code }) => ({ name, js: code }));
@@ -231,7 +302,7 @@ export function buildPreviewDocument({
 <style>${escapeClosingTag(css, 'style')}</style>
 <!-- En el <head> y no tras el HTML del editor: un atributo o comentario sin cerrar no puede
      tragárselo. Los módulos se ejecutan al terminar de analizar el documento. -->
-<script type="module">${escapeClosingTag(moduleLoader({ modules, userJs: js, userModule: jsModule, dependencyJs }), 'script')}</script>
+<script type="module">${escapeClosingTag(moduleLoader({ modules, userJs: js, userModule: jsModule, dependencyJs, ignoreReducedMotion }), 'script')}</script>
 </head>
 <body>
 ${html}

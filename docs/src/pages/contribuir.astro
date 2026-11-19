@@ -199,8 +199,27 @@ const pasos = [
   transform: var(--_fuga);
 }`}</code></pre>
     <p>
-      La tarjeta nunca nombra a <code>.cards</code>, así que puedes usarla suelta. Y el contenedor acepta cualquier hijo. En
-      el laboratorio, al insertar uno dentro de otro, los dos quedan registrados en «Usa:» y su CSS se carga junto.
+      La tarjeta nunca nombra a <code>.cards</code>, así que puedes usarla suelta. Y el contenedor acepta cualquier hijo.
+    </p>
+    <h3>Escribir los dos a la vez</h3>
+    <p>
+      En la librería cada componente es su propio archivo, pero para escribirlos necesitas verlos juntos. En el laboratorio
+      van en el mismo CSS, separados por un marcador:
+    </p>
+    <pre tabindex="0"><code>{`/* @componente cards */
+@layer angela.components {
+  .cards { … }
+}
+
+/* @componente card-3d */
+@layer angela.components {
+  .card-3d { … }
+}`}</code></pre>
+    <p>
+      Los pruebas juntos en la vista previa y, al proponerlos, el pull request crea
+      <code>cards.css</code> y <code>card-3d.css</code> por separado, con sus dos <code>@import</code>. El marcado de
+      ejemplo viaja en la descripción del pull request, de modo que quien revisa ve cómo se usan juntos. Lo que escribas
+      antes del primer marcador (tokens compartidos, un comentario de cabecera) va con la primera pieza.
     </p>
   </section>
 
