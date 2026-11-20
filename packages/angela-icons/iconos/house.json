@@ -1,0 +1,81 @@
+{
+  "version": 1,
+  "categoria": "lugares",
+  "etiquetas": [
+    "casa",
+    "inicio",
+    "hogar",
+    "house",
+    "home"
+  ],
+  "autor": "angela",
+  "licencia": "MIT",
+  "formas": [
+    {
+      "tipo": "linea",
+      "puntos": [
+        [
+          3,
+          11
+        ],
+        [
+          12,
+          3.5
+        ],
+        [
+          21,
+          11
+        ]
+      ]
+    },
+    {
+      "tipo": "linea",
+      "puntos": [
+        [
+          5.5,
+          9.5
+        ],
+        [
+          5.5,
+          20.5
+        ],
+        [
+          18.5,
+          20.5
+        ],
+        [
+          18.5,
+          9.5
+        ]
+      ]
+    },
+    {
+      "tipo": "rect",
+      "x": 10,
+      "y": 14.5,
+      "ancho": 4,
+      "alto": 6
+    },
+    {
+      "tipo": "linea",
+      "puntos": [
+        [
+          15.5,
+          6.5
+        ],
+        [
+          15.5,
+          4
+        ],
+        [
+          17.5,
+          4
+        ],
+        [
+          17.5,
+          8.2
+        ]
+      ]
+    }
+  ]
+}

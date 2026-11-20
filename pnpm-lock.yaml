@@ -13,6 +13,9 @@ importers:
       '@angela-ui/angela':
         specifier: workspace:*
         version: link:../packages/angela
+      '@angela-ui/icons':
+        specifier: workspace:*
+        version: link:../packages/angela-icons
       '@anthropic-ai/sdk':
         specifier: ^1.10.0
         version: 1.10.0(zod@4.6.7)
@@ -81,6 +84,12 @@ importers:
       typescript:
         specifier: ^7.0.2
         version: 7.0.2
+      vitest:
+        specifier: ~5.0.5
+        version: 5.0.5(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(happy-dom@21.0.4)(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))
+
+  packages/angela-icons:
+    devDependencies:
       vitest:
         specifier: ~5.0.5
         version: 5.0.5(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(happy-dom@21.0.4)(vite@8.3.8(@types/node@26.6.6)(yaml@2.9.1))

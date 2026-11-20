@@ -1,0 +1,269 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { icon } from '../../data/icons.js';
+import { catalogo } from '../../data/iconos.js';
+import { CATEGORIAS, GUIA, ZONA } from '@angela-ui/icons/reglas';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const href = (p: string) => `${base}${p}`;
+const lineas = Array.from({ length: 25 }, (_, i) => i);
+
+const herramientas = [
+  { id: 'seleccionar', nombre: 'Seleccionar', tecla: 'V', ayuda: 'Pulsa una forma para elegirla; arrástrala o arrastra sus tiradores.' },
+  { id: 'linea', nombre: 'Línea', tecla: 'L', ayuda: 'Pulsa punto a punto. Doble clic o Intro para terminar; pulsa el primer punto para cerrarla.' },
+  { id: 'rect', nombre: 'Rectángulo', tecla: 'R', ayuda: 'Arrastra de una esquina a la opuesta.' },
+  { id: 'circulo', nombre: 'Círculo', tecla: 'C', ayuda: 'Arrastra desde el centro hasta el borde.' },
+  { id: 'elipse', nombre: 'Elipse', tecla: 'E', ayuda: 'Arrastra de una esquina a la opuesta de su caja.' },
+];
+
+// El editor abre iconos del repositorio: solo sus datos, no el SVG.
+const repositorio = catalogo.map(({ nombre, categoria, etiquetas, autor, licencia, formas }) => ({ nombre, categoria, etiquetas, autor, licencia, formas }));
+---
+
+<Layout
+  title="Editor de iconos"
+  description="Dibuja formas limpias sobre la cuadrícula de 24 y míralas convertidas en un icono a mano alzada. Cuando esté listo, propónlo al proyecto en su propio pull request."
+  heading={false}
+>
+  <header class="page-header lab-header">
+    <div>
+      <p class="eyebrow">Dibuja · Revisa · Propón</p>
+      <h1 id="contenido" tabindex="-1">Editor de iconos</h1>
+      <span class="cota" aria-hidden="true"></span>
+      <p class="page-lead">
+        Dibuja con formas limpias; el estilo a mano alzada se aplica solo, igual para todos los iconos. Cuando esté listo,
+        propónlo al proyecto: cada icono va en su propio pull request.
+      </p>
+    </div>
+    <a class="button" data-variant="ghost" data-tone="neutral" href={href('/iconos')}>Ver el catálogo</a>
+  </header>
+
+  <section class="lab-step" aria-labelledby="ed-paso-dibujo">
+    <h2 class="lab-step-title" id="ed-paso-dibujo">
+      <span class="lab-step-num" aria-hidden="true">01</span><span class="visually-hidden">Paso 1: </span>Dibuja
+    </h2>
+
+    <div class="ed-trabajo">
+      <div class="ed-lienzo-zona">
+        <div class="cluster ed-barra">
+          <div class="cluster ed-herramientas" role="radiogroup" aria-label="Herramienta">
+            {
+              herramientas.map((h, i) => (
+                <button class="button" type="button" role="radio" aria-checked={i === 0 ? 'true' : 'false'} data-variant={i === 0 ? 'soft' : 'ghost'} data-tone="neutral" data-size="sm" data-herramienta={h.id} data-ayuda={h.ayuda} aria-keyshortcuts={h.tecla} tabindex={i === 0 ? '0' : '-1'}>
+                  {h.nombre} <kbd>{h.tecla}</kbd>
+                </button>
+              ))
+            }
+          </div>
+          <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" id="ed-detalle" aria-pressed="false" aria-keyshortcuts="D">
+            Trazo de detalle <kbd>D</kbd>
+          </button>
+        </div>
+
+        <svg class="ed-lienzo" id="ed-lienzo" viewBox="-1 -1 26 26" tabindex="0" role="application" aria-roledescription="lienzo de dibujo" aria-label="Lienzo de 24 por 24" aria-describedby="ed-ayuda">
+          <g class="plano-cuadricula" aria-hidden="true">
+            {lineas.map((i) => <line x1={i} y1="0" x2={i} y2="24" />)}
+            {lineas.map((i) => <line x1="0" y1={i} x2="24" y2={i} />)}
+          </g>
+          <rect class="plano-zona" x={ZONA.min} y={ZONA.min} width={ZONA.max - ZONA.min} height={ZONA.max - ZONA.min} aria-hidden="true" />
+          <g class="ed-referencias" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" />
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+          </g>
+          <g class="ed-resultado" id="ed-resultado" aria-hidden="true"></g>
+          <g class="ed-formas" id="ed-formas"></g>
+          <g class="ed-borrador" id="ed-borrador" aria-hidden="true"></g>
+          <g class="ed-tiradores" id="ed-tiradores"></g>
+        </svg>
+
+        <div class="cluster ed-pie">
+          <p class="muted ed-ayuda" id="ed-ayuda">{herramientas[0].ayuda}</p>
+          <p class="ed-coordenadas" id="ed-coordenadas" aria-hidden="true">x — · y —</p>
+        </div>
+        <div class="cluster ed-opciones">
+          <div class="field">
+            <label for="ed-iman">Imán</label>
+            <select class="input" id="ed-iman">
+              <option value="0.5">Medio píxel</option>
+              <option value="1">Un píxel</option>
+            </select>
+          </div>
+          <label class="ed-casilla"><input type="checkbox" id="ed-ver-formas" checked /> Ver las formas</label>
+          <label class="ed-casilla"><input type="checkbox" id="ed-ver-referencias" checked /> Ver las referencias</label>
+          <div class="cluster">
+            <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" id="ed-deshacer" aria-keyshortcuts="Control+Z Meta+Z">Deshacer</button>
+            <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" id="ed-rehacer" aria-keyshortcuts="Control+Shift+Z Meta+Shift+Z">Rehacer</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="ed-vista" aria-labelledby="ed-vista-titulo">
+        <h3 id="ed-vista-titulo">Así se ve</h3>
+        <div class="ed-muestras" data-scheme="light">
+          {[16, 24, 32, 48].map((t) => <span class="ed-muestra" data-tamano={t} style={`--t:${t}px`} />)}
+        </div>
+        <div class="ed-muestras" data-scheme="dark">
+          {[16, 24, 32, 48].map((t) => <span class="ed-muestra" data-tamano={t} style={`--t:${t}px`} />)}
+        </div>
+        <div class="cluster ed-contexto">
+          <button class="button" type="button" tabindex="-1" aria-hidden="true"><span class="ed-muestra" data-tamano="1em"></span> Botón</button>
+          <button class="button" type="button" data-variant="outline" data-tone="neutral" tabindex="-1" aria-hidden="true"><span class="ed-muestra" data-tamano="1em"></span> Secundario</button>
+        </div>
+        <p class="muted ed-vista-nota">Así lo recibe quien lo use: en currentColor y escalado a cada tamaño.</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="lab-step" aria-labelledby="ed-paso-formas">
+    <h2 class="lab-step-title" id="ed-paso-formas">
+      <span class="lab-step-num" aria-hidden="true">02</span><span class="visually-hidden">Paso 2: </span>Ajusta las formas
+    </h2>
+    <p class="muted lab-step-lead">Todo lo que haces en el lienzo se puede hacer aquí con el teclado. Las medidas van en la cuadrícula de 24.</p>
+    <div class="ed-formas-panel">
+      <div class="stack">
+        <div class="cluster" role="group" aria-label="Añadir una forma">
+          <button class="button" type="button" data-variant="outline" data-tone="neutral" data-size="sm" data-anadir="linea"><Fragment set:html={icon('plus')} /> Línea</button>
+          <button class="button" type="button" data-variant="outline" data-tone="neutral" data-size="sm" data-anadir="rect"><Fragment set:html={icon('plus')} /> Rectángulo</button>
+          <button class="button" type="button" data-variant="outline" data-tone="neutral" data-size="sm" data-anadir="circulo"><Fragment set:html={icon('plus')} /> Círculo</button>
+          <button class="button" type="button" data-variant="outline" data-tone="neutral" data-size="sm" data-anadir="elipse"><Fragment set:html={icon('plus')} /> Elipse</button>
+        </div>
+        <ol class="ed-lista" id="ed-lista" aria-label="Formas del icono"></ol>
+        <p class="muted" id="ed-lista-vacia">Aún no hay formas: dibuja en el lienzo o añade una.</p>
+      </div>
+      <div class="ed-propiedades plano-marco lab-panel" id="ed-propiedades" aria-labelledby="ed-propiedades-titulo">
+        <h3 id="ed-propiedades-titulo">Forma seleccionada</h3>
+        <p class="muted" id="ed-sin-seleccion">Elige una forma en el lienzo o en la lista.</p>
+        <div class="stack" id="ed-campos" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="lab-step" aria-labelledby="ed-paso-guia">
+    <h2 class="lab-step-title" id="ed-paso-guia">
+      <span class="lab-step-num" aria-hidden="true">03</span><span class="visually-hidden">Paso 3: </span>Revisa
+    </h2>
+    <div class="ed-revision">
+      <div class="stack">
+        <div class="lab-pane-head">
+          <h3>La guía, en vivo</h3>
+          <span class="badge" id="ed-guia-cuenta" data-tone="neutral">—</span>
+        </div>
+        <ul class="lab-review" id="ed-guia-lista" role="list" aria-live="polite"></ul>
+      </div>
+      <details class="disclosure">
+        <summary>Qué pide la guía</summary>
+        <ol class="iconos-reglas">
+          {GUIA.map((r) => <li><strong>{r.titulo}.</strong> {r.texto}</li>)}
+        </ol>
+      </details>
+    </div>
+  </section>
+
+  <section class="lab-step" aria-labelledby="ed-paso-datos">
+    <h2 class="lab-step-title" id="ed-paso-datos">
+      <span class="lab-step-num" aria-hidden="true">04</span><span class="visually-hidden">Paso 4: </span>Nómbralo y propónlo
+    </h2>
+    <div class="ed-datos">
+      <div class="stack">
+        <div class="field">
+          <label for="ed-nombre">Nombre</label>
+          <p class="hint" id="ed-nombre-ayuda">En inglés, minúsculas y guiones (shopping-cart). También es la semilla del trazo: cambiarlo cambia el dibujo.</p>
+          <input class="input" id="ed-nombre" autocomplete="off" spellcheck="false" aria-describedby="ed-nombre-ayuda" />
+        </div>
+        <div class="field">
+          <label for="ed-categoria">Categoría</label>
+          <select class="input" id="ed-categoria">
+            <option value="">Elige una</option>
+            {CATEGORIAS.map((c) => <option value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div class="field">
+          <label for="ed-etiquetas">Etiquetas</label>
+          <p class="hint" id="ed-etiquetas-ayuda">Separadas por comas, en español e inglés: casa, inicio, home.</p>
+          <input class="input" id="ed-etiquetas" autocomplete="off" aria-describedby="ed-etiquetas-ayuda" />
+        </div>
+        <div class="field">
+          <label for="ed-autor">Autor</label>
+          <input class="input" id="ed-autor" autocomplete="name" />
+        </div>
+      </div>
+      <div class="stack">
+        <div class="field">
+          <label for="ed-abrir">Abrir un icono del repositorio</label>
+          <select class="input" id="ed-abrir">
+            <option value="">Elige uno para editarlo</option>
+            {repositorio.map((i) => <option value={i.nombre}>{i.nombre}</option>)}
+          </select>
+        </div>
+        <div class="cluster">
+          <button class="button" type="button" data-variant="outline" data-tone="neutral" id="ed-copiar"><Fragment set:html={icon('copy')} /> Copiar el SVG</button>
+          <button class="button" type="button" data-variant="outline" data-tone="neutral" id="ed-descargar"><Fragment set:html={icon('download')} /> Descargar el JSON</button>
+          <button class="button" type="button" data-variant="ghost" data-tone="danger" id="ed-nuevo"><Fragment set:html={icon('trash')} /> Empezar de cero</button>
+        </div>
+        <button class="button" type="button" id="ed-proponer-abrir"><Fragment set:html={icon('upload')} /> Proponer al proyecto</button>
+        <p class="muted lab-status" id="ed-estado" role="status"></p>
+      </div>
+    </div>
+  </section>
+
+  <dialog class="dialog" id="ed-nuevo-dialogo" data-size="sm" aria-labelledby="ed-nuevo-titulo" aria-describedby="ed-nuevo-desc" closedby="any">
+    <div class="dialog-body stack" style="--stack-gap: var(--space-3)">
+      <h2 id="ed-nuevo-titulo" style="font-size: var(--fs-lg); margin: 0">¿Empezar de cero?</h2>
+      <p id="ed-nuevo-desc"></p>
+      <div class="callout" data-tone="warning">
+        <Fragment set:html={icon('alert')} />
+        <div><p class="callout-title">No se puede deshacer</p><p>Si quieres conservarlo, descarga antes el JSON.</p></div>
+      </div>
+    </div>
+    <form class="dialog-footer" method="dialog">
+      <button class="button" value="cancelar" data-variant="ghost" data-tone="neutral" autofocus>Cancelar</button>
+      <button class="button" value="borrar" data-tone="danger">Borrar el dibujo</button>
+    </form>
+  </dialog>
+
+  <dialog class="dialog" id="ed-proponer" data-size="lg" aria-labelledby="ed-proponer-titulo" closedby="any">
+    <form class="dialog-form" method="dialog" id="ed-proponer-form">
+      <header class="dialog-header">
+        <h2 id="ed-proponer-titulo">Proponer el icono</h2>
+        <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-icon-only commandfor="ed-proponer" command="close" aria-label="Cerrar" set:html={icon('x')} />
+      </header>
+      <div class="dialog-body stack">
+        <div class="callout" data-tone="danger" id="ed-proponer-error" role="alert" tabindex="-1" hidden>
+          <Fragment set:html={icon('error')} />
+          <div>
+            <p class="callout-title">No se pudo abrir el pull request</p>
+            <p id="ed-proponer-error-texto"></p>
+            <p id="ed-proponer-error-enlace-p" hidden><a id="ed-proponer-error-enlace" href="#" target="_blank" rel="noopener">Abrir el pull request en GitHub</a></p>
+          </div>
+        </div>
+        <p id="ed-proponer-resumen"></p>
+        <div class="field">
+          <label for="ed-proponer-descripcion">Qué representa y para qué sirve</label>
+          <p class="hint" id="ed-proponer-descripcion-ayuda">Una o dos frases. Es lo primero que lee quien revisa.</p>
+          <textarea class="input" id="ed-proponer-descripcion" rows="3" required aria-describedby="ed-proponer-descripcion-ayuda"></textarea>
+        </div>
+        <p class="muted" id="ed-proponer-token"></p>
+      </div>
+      <footer class="dialog-footer">
+        <p class="muted lab-propose-step" id="ed-proponer-paso" role="status"></p>
+        <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="ed-proponer" command="close">Cancelar</button>
+        <button class="button" type="submit" id="ed-proponer-enviar">Abrir pull request</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <div class="callout lab-done" data-tone="success" id="ed-hecho" tabindex="-1" hidden>
+    <Fragment set:html={icon('check')} />
+    <div>
+      <p class="callout-title">Pull request abierto</p>
+      <p>Tu icono ya está en GitHub. <a id="ed-hecho-enlace" href="#" target="_blank" rel="noopener">Ver el pull request</a></p>
+    </div>
+  </div>
+
+  <script is:inline type="application/json" id="ed-repositorio" set:html={JSON.stringify(repositorio)} />
+
+  <script>
+    import { iniciarEditor } from '../../lib/iconos/editor.js';
+    iniciarEditor();
+  </script>
+</Layout>

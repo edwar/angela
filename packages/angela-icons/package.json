@@ -1,0 +1,50 @@
+{
+  "name": "@angela-ui/icons",
+  "version": "0.1.0",
+  "description": "Iconos de angela a mano alzada: formas limpias sobre 24×24 con trazo de presión variable, en currentColor. SVG, sprite y exportaciones en JS.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edwar/angela.git",
+    "directory": "packages/angela-icons"
+  },
+  "homepage": "https://angela.cognilab.dev/iconos",
+  "bugs": {
+    "url": "https://github.com/edwar/angela/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./todos": {
+      "types": "./dist/todos.d.ts",
+      "default": "./dist/todos.js"
+    },
+    "./reglas": "./src/reglas.js",
+    "./mano-alzada": "./src/mano-alzada.js",
+    "./sprite.svg": "./dist/sprite.svg",
+    "./iconos.json": "./dist/iconos.json",
+    "./svg/*": "./dist/svg/*",
+    "./fuente/*": "./iconos/*"
+  },
+  "files": [
+    "dist",
+    "iconos/*.json",
+    "src/reglas.js",
+    "src/mano-alzada.js",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "~5.0.5"
+  }
+}

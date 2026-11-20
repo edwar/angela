@@ -863,6 +863,380 @@ body {
   }
 }
 
+/* Iconos */
+.iconos-proceso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-6);
+  margin-block: var(--space-4);
+}
+
+.iconos-tamanos {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-5);
+
+  & svg {
+    display: block;
+  }
+}
+
+.iconos-plano {
+  flex: 0 1 20rem;
+  margin: 0;
+  padding: var(--space-4);
+
+  & svg {
+    display: block;
+    inline-size: 100%;
+    max-inline-size: 18rem;
+    margin-inline: auto;
+  }
+
+  & figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2) var(--space-4);
+    margin-block-start: var(--space-3);
+    color: var(--color-text-muted);
+    font-size: var(--fs-xs);
+  }
+}
+
+.plano-cuadricula line {
+  stroke: var(--color-border);
+  stroke-width: 0.04;
+}
+
+.plano-zona {
+  fill: color-mix(in oklab, var(--color-brand-subtle) 60%, transparent);
+  stroke: var(--color-brand-border);
+  stroke-width: 0.08;
+  stroke-dasharray: 0.4 0.3;
+}
+
+.plano-guia,
+.plano-formas {
+  fill: none;
+  stroke: var(--color-border-strong);
+  stroke-width: 0.08;
+  stroke-dasharray: 0.3 0.25;
+}
+
+/* El icono a mano alzada: siluetas rellenas. */
+.plano-icono {
+  fill: var(--color-text);
+}
+
+/* Muestras de la leyenda: el texto dice qué es cada una; el color solo la acompaña. */
+.leyenda {
+  display: inline-block;
+  inline-size: 0.9em;
+  block-size: 0.9em;
+  margin-inline-end: var(--space-1);
+  vertical-align: -0.1em;
+  border-radius: var(--radius-sm);
+}
+
+.leyenda-zona {
+  border: 1px dashed var(--color-brand-border);
+  background-color: var(--color-brand-subtle);
+}
+
+.leyenda-guia {
+  border: 1px dashed var(--color-border-strong);
+}
+
+.iconos-reglas {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-inline-start: var(--space-5);
+}
+
+.iconos-buscar {
+  max-inline-size: 24rem;
+}
+
+.iconos-estado {
+  margin: var(--space-3) 0;
+  min-block-size: 1lh;
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.iconos-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.icono-ficha {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--plano-panel);
+  text-align: center;
+
+  &[hidden] {
+    display: none;
+  }
+
+  & .cluster {
+    justify-content: center;
+  }
+}
+
+.icono-muestra svg {
+  display: block;
+  inline-size: 2rem;
+  block-size: 2rem;
+}
+
+.icono-nombre {
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+}
+
+.icono-etiquetas,
+.icono-credito {
+  color: var(--color-text-muted);
+  font-size: var(--fs-xs);
+}
+
+/* Editor de iconos */
+.ed-trabajo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.ed-lienzo-zona {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.ed-barra {
+  justify-content: space-between;
+}
+
+.ed-herramientas kbd,
+.ed-barra kbd {
+  font-family: var(--font-code);
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+
+.ed-lienzo {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 34rem;
+  aspect-ratio: 1;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  touch-action: none;
+  cursor: crosshair;
+
+  &[data-herramienta="seleccionar"] {
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: var(--focus-width) solid var(--color-focus);
+    outline-offset: var(--focus-offset);
+  }
+}
+
+/* Solo las formas y sus tiradores reciben el puntero: si una capa que se redibuja al pulsar
+   estuviera bajo el cursor, el navegador no daría por hecho el clic. */
+.ed-lienzo :is(.plano-cuadricula, .plano-zona, .ed-referencias, .ed-resultado, .ed-borrador) {
+  pointer-events: none;
+}
+
+.ed-referencias {
+  fill: none;
+  stroke: var(--color-border-strong);
+  stroke-width: 0.05;
+  stroke-dasharray: 0.3 0.25;
+}
+
+.ed-resultado {
+  fill: var(--color-text);
+  opacity: 0.9;
+}
+
+/* Las formas limpias: guías finas sobre el resultado. */
+.ed-forma {
+  fill: none;
+  stroke: var(--color-brand-text);
+  stroke-width: 0.12;
+  stroke-dasharray: 0.35 0.2;
+  pointer-events: none;
+
+  &.es-detalle {
+    stroke-dasharray: 0.12 0.18;
+  }
+
+  &.esta-seleccionada {
+    stroke: var(--color-focus);
+    stroke-width: 0.2;
+    stroke-dasharray: none;
+  }
+}
+
+/* Zona de toque: más ancha que el trazo, invisible. */
+.ed-toque {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 1.2;
+  pointer-events: stroke;
+  cursor: move;
+}
+
+.ed-borrador {
+  fill: none;
+  stroke: var(--color-focus);
+  stroke-width: 0.15;
+
+  & circle {
+    fill: var(--color-focus);
+    stroke: none;
+  }
+
+  & .ed-primer-punto {
+    fill: none;
+    stroke: var(--color-focus);
+    stroke-width: 0.12;
+  }
+}
+
+.ed-tirador {
+  fill: var(--color-surface);
+  stroke: var(--color-focus);
+  stroke-width: 0.15;
+  cursor: grab;
+}
+
+.ed-pie {
+  justify-content: space-between;
+
+  & p {
+    margin: 0;
+  }
+}
+
+.ed-ayuda {
+  font-size: var(--fs-sm);
+}
+
+.ed-coordenadas {
+  font-family: var(--font-code);
+  font-size: var(--fs-xs);
+  color: var(--color-text-muted);
+}
+
+.ed-opciones {
+  align-items: end;
+}
+
+.ed-casilla {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--control-h-sm);
+  font-size: var(--fs-sm);
+}
+
+.ed-vista {
+  display: grid;
+  gap: var(--space-3);
+
+  & h3 {
+    margin: 0;
+    font-size: var(--fs-lg);
+  }
+}
+
+.ed-muestras {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-canvas);
+  color: var(--color-text);
+
+  & svg {
+    display: block;
+  }
+}
+
+.ed-contexto .ed-muestra svg {
+  display: inline-block;
+  vertical-align: -0.125em;
+}
+
+.ed-vista-nota {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.ed-formas-panel,
+.ed-datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.ed-lista {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ed-lista-item {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+
+  & > .button:first-child {
+    flex: 1;
+    justify-content: flex-start;
+  }
+}
+
+.ed-campos-titulo {
+  margin: 0;
+  font-weight: var(--fw-bold);
+}
+
+.ed-campos-fila {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: var(--space-3);
+}
+
+.ed-revision {
+  display: grid;
+  gap: var(--space-4);
+  max-inline-size: 60rem;
+}
+
 /* Imágenes de ejemplo */
 .imagenes-indice {
   margin-block-start: var(--space-4);
@@ -972,7 +1346,7 @@ body {
 /* Laboratorio */
 
 /* Los componentes fijan su display; el atributo hidden debe ganar igualmente. */
-:is(.lab-step, #lab-settings, #lab-propose, #lab-reset, #lab-imagenes) [hidden]:not([hidden="until-found"]) {
+:is(.lab-step, #lab-settings, #lab-propose, #lab-reset, #lab-imagenes, #ed-proponer, .ed-propiedades) [hidden]:not([hidden="until-found"]) {
   display: none;
 }
 

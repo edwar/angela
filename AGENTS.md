@@ -19,6 +19,11 @@ packages/angela/          La librería (paquete npm "@angela-ui/angela")
   src/css.d.ts            Tipos de los imports de CSS (import '@angela-ui/angela/css')
   scripts/                build, build-palette, check-contrast
 packages/angela-react/    Componentes de React 19 sobre angela (paquete npm "@angela-ui/react")
+packages/angela-icons/    Iconos (paquete npm "@angela-ui/icons")
+  iconos/<nombre>.json    La fuente de cada icono: formas limpias sobre 24×24 + categoría, etiquetas, autor, licencia
+  src/reglas.js           La guía de los iconos en código: la usan el build, el editor y la revisión
+  src/mano-alzada.js      El estilo: convierte las formas en trazos a mano alzada (silueta rellena)
+  scripts/build.mjs       Genera dist/: un módulo por icono, «todos», sprite, metadatos y tipos
   src/*.tsx               Un archivo por grupo; 'use client' solo donde hay hooks o refs
 docs/                     Sitio de documentación (Astro)
   src/data/components.js  Ejemplos, API y notas de accesibilidad de cada componente
@@ -51,6 +56,8 @@ docs/                     Sitio de documentación (Astro)
   - `autoFocus` necesita el atributo real (`autofocusRef`): React lo omite en el cliente.
 - El sitio de documentación tiene su propio tema, «plano» (`data-angela-theme="plano"` en `<html>`, definido en `docs/src/styles/docs.css`). La librería sigue con sus valores por defecto: los ejemplos de componentes y el playground de la guía llevan `data-angela-theme="angela"` para mostrarla tal como la recibe quien la instala. Si cambias las entradas del tema, verifica: `pnpm --filter @angela-ui/angela check:contrast --brand 78 0.11 --neutral 262 0.06 --info 215 0.12 --warning 50 0.14 --danger 18 0.18`.
 - Imágenes en ejemplos y pruebas: las de `/img/…` (página «Imágenes»), no servicios externos como placehold.co. Solo se añaden fotos CC0 o equivalente, con su entrada en `docs/src/data/imagenes.js` (autor, origen, licencia y texto alternativo que describa lo que se ve): se redistribuyen desde la web.
+- Iconos de `@angela-ui/icons`: se diseñan en el editor (`/iconos/editor`) como formas limpias (línea, rectángulo, círculo, elipse) dentro de la zona segura 2–22 de 24×24; la fuente es el JSON y el SVG lo genera `mano-alzada.js` (trazo de presión variable 0.75→1.25, semilla = nombre). El estilo es global: no se retoca a mano un SVG generado. El build no publica un icono que incumpla `reglas.js`. Nombre en inglés y kebab-case; etiquetas en español e inglés. Cada icono, su propio PR. Sin iconos copiados de otras librerías.
+- Los iconos de la interfaz del sitio (`icon()` de `docs/src/data/icons.js`) son de Lucide, con su licencia en `docs/src/data/LICENSE-LUCIDE`; no forman parte de `@angela-ui/icons`.
 - Cada componente nuevo se documenta en `docs/src/data/components.js` (ejemplos + API + accesibilidad) y, si encaja, tiene su envoltorio en `@angela-ui/react`.
 - Antes de terminar: `pnpm test`, `pnpm check:contrast` y revisión con teclado y lector de pantalla.
 
