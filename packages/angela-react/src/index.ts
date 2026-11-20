@@ -1,4 +1,4 @@
-/// <reference types="angela/jsx" preserve="true" />
+/// <reference types="@angela-ui/angela/jsx" preserve="true" />
 
 export * from './runtime.js';
 export * from './button-props.js';

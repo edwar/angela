@@ -1,7 +1,7 @@
 /**
  * Punto de entrada de la capa JS de angela. Todo es opcional: el CSS funciona sin JS.
  *
- *   import { angela } from 'angela/js';
+ *   import { angela } from '@angela-ui/angela/js';
  *   angela();            // activa todo en el documento
  */
 import { loadPolyfills } from './polyfills.js';

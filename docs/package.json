@@ -21,7 +21,7 @@
     "@emmetio/codemirror6-plugin": "^0.4.2",
     "@fontsource/barlow-condensed": "5.3.0",
     "@lezer/highlight": "^1.2.5",
-    "angela": "workspace:*",
+    "@angela-ui/angela": "workspace:*",
     "astro": "7.4.12",
     "codemirror": "^6.0.2"
   },

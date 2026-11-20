@@ -4,8 +4,8 @@
  * Activa los atributos HTML nuevos que angela usa y que @types/react aún no declara,
  * y el elemento <angela-tabs>. Añádelo una vez en tu proyecto:
  *
- *   // tsconfig.json → "compilerOptions": { "types": ["angela/jsx"] }
- *   // o en cualquier .d.ts:  /// <reference types="angela/jsx" />
+ *   // tsconfig.json → "compilerOptions": { "types": ["@angela-ui/angela/jsx"] }
+ *   // o en cualquier .d.ts:  /// <reference types="@angela-ui/angela/jsx" />
  *
  * Escribe siempre los atributos en minúsculas (`commandfor`, no `commandFor`): React 19
  * pasa tal cual los atributos que no conoce, pero avisa y descarta el camelCase.

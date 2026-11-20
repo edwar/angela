@@ -164,7 +164,7 @@ function withImport(entryCss, id) {
   return entryCss.replace(marca, `${linea}\n${marca}`);
 }
 
-/** Cómo quedó el JS en angela/js, para contarlo en el pull request. */
+/** Cómo quedó el JS en @angela-ui/angela/js, para contarlo en el pull request. */
 function jsLines(js) {
   if (!js) return { intro: '', todo: '' };
   const ruta = `\`${jsPath(js.file)}\``;
@@ -360,7 +360,7 @@ export async function proposeComponent({
     await put(docsPath(id), docsEntry, `docs(${id}): página del componente`);
   }
 
-  // El JS se sube y se registra en angela/js: si no, angela() no lo ejecuta nunca.
+  // El JS se sube y se registra en @angela-ui/angela/js: si no, angela() no lo ejecuta nunca.
   let js = null;
   if (hasCode(files.js)) {
     const file = jsFile || `${id}.js`;
@@ -369,7 +369,7 @@ export async function proposeComponent({
     const fn = findEntryFunction(files.js);
     js = { file, fn, registro: fn ? null : 'sin-funcion' };
     if (fn) {
-      paso('Registrando el JavaScript en angela/js…');
+      paso('Registrando el JavaScript en @angela-ui/angela/js…');
       const entrada = await call(`/repos/${head.owner}/${head.name}/contents/${JS_ENTRY}?ref=${branch}`, opts);
       const registro = registerJsModule(fromBase64(entrada.content.replace(/\n/g, '')), file, fn);
       js.registro = registro.status;

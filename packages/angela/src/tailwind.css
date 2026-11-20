@@ -2,8 +2,8 @@
  * Puente opcional con Tailwind CSS v4: expone los tokens de angela como utilidades.
  *
  *   @import "tailwindcss";
- *   @import "angela/css";
- *   @import "angela/tailwind.css";
+ *   @import "@angela-ui/angela/css";
+ *   @import "@angela-ui/angela/tailwind.css";
  *
  * Ejemplos: bg-canvas, bg-surface, text-muted, border-strong, bg-brand-solid,
  * text-danger-text, shadow-elevation-2, font-body, rounded-lg.

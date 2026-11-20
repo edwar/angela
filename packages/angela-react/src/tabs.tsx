@@ -1,6 +1,6 @@
 'use client';
 
-import { defineTabs } from 'angela/js/tabs';
+import { defineTabs } from '@angela-ui/angela/js/tabs';
 import { useEffect, useId, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { cx } from './utils.js';
 

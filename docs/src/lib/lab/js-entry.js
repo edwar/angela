@@ -1,5 +1,5 @@
 /**
- * Registro del JS de un componente en angela/js.
+ * Registro del JS de un componente en @angela-ui/angela/js.
  *
  * angela() solo ejecuta los módulos que src/js/index.js importa y llama. Un módulo que
  * se sube sin registrarse no corre nunca en la web, así que el pull request del

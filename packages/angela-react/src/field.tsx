@@ -78,7 +78,7 @@ function useFieldControl<P extends ControlProps>(props: P) {
   const field = useContext(FieldContext);
   if (field && props.id && props.id !== field.id && isDev()) {
     console.warn(
-      `[angela-react] <Field> ya da id al control: pon id="${props.id}" en el <Field>, no en el control (la etiqueta no lo encontraría).`,
+      `[@angela-ui/react] <Field> ya da id al control: pon id="${props.id}" en el <Field>, no en el control (la etiqueta no lo encontraría).`,
     );
   }
   const describedBy = [field?.hintId, props['aria-describedby'], field?.invalid ? field.errorId : undefined]
@@ -92,7 +92,7 @@ function useFieldControl<P extends ControlProps>(props: P) {
     'aria-describedby': describedBy || undefined,
     // Empieza en "false": Firefox y Safari anuncian como inválido un campo requerido vacío sin él.
     'aria-invalid': props['aria-invalid'] ?? (field?.invalid ? true : false),
-    // angela/js usa data-error para enlazar y anunciar el mensaje cuando aparece.
+    // @angela-ui/angela/js usa data-error para enlazar y anunciar el mensaje cuando aparece.
     'data-error': field?.errorId,
   };
 }

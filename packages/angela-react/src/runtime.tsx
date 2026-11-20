@@ -1,6 +1,6 @@
 'use client';
 
-import { angela } from 'angela/js';
+import { angela } from '@angela-ui/angela/js';
 import { useEffect } from 'react';
 
 export interface AngelaOptions {

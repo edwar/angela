@@ -17,7 +17,7 @@ import {
   splitComponents,
 } from './preview.js';
 import { aiKey, drafts, githubToken, settings, toComponentId } from './storage.js';
-import { getRenderedScheme } from 'angela/js/theme';
+import { getRenderedScheme } from '@angela-ui/angela/js/theme';
 import { createCodeEditor } from './editor.js';
 import { reviewComponent } from './review.js';
 import { buildDocsEntry } from './docs-entry.js';

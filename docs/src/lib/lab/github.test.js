@@ -47,7 +47,7 @@ const prBody = (calls) => calls.find((c) => c.path.endsWith('/pulls')).body;
 afterEach(() => vi.restoreAllMocks());
 
 describe('proposeComponent', () => {
-  it('sube el JS y lo registra en angela/js', async () => {
+  it('sube el JS y lo registra en @angela-ui/angela/js', async () => {
     const calls = fakeGitHub();
     await proposeComponent(input(`export function enhanceGaleria(root = document) { return () => {}; }`));
 
@@ -79,7 +79,7 @@ describe('proposeComponent', () => {
     expect(written(calls, '/js/index.js')).toBeUndefined();
   });
 
-  it('sin JS, no toca angela/js', async () => {
+  it('sin JS, no toca @angela-ui/angela/js', async () => {
     const calls = fakeGitHub();
     await proposeComponent(input('// nada\n'));
     expect(writes(calls).some((c) => c.path.includes('/src/js/'))).toBe(false);

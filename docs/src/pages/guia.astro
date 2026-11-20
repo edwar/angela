@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { icon } from '../data/icons.js';
-import { roles } from 'angela/palette';
+import { roles } from '@angela-ui/angela/palette';
 
 const surfaceTokens = ['canvas', 'surface', 'surface-sunken', 'surface-hover', 'text', 'text-muted', 'border', 'border-strong', 'focus'];
 const toneTokens = ['solid', 'solid-hover', 'on-solid', 'subtle', 'subtle-hover', 'border', 'text'];
@@ -272,10 +272,10 @@ const previewHtml = `
       con una alternativa que mantiene el componente usable:
     </p>
     <ul>
-      <li><strong>Invoker Commands y Popover:</strong> <code>angela/js</code> carga polyfills solo si el navegador no los tiene.</li>
+      <li><strong>Invoker Commands y Popover:</strong> <code>@angela-ui/angela/js</code> carga polyfills solo si el navegador no los tiene.</li>
       <li><strong>Anchor Positioning:</strong> sin soporte, el popover se muestra como hoja inferior.</li>
       <li><strong>focusgroup:</strong> sin soporte, <code>&lt;angela-tabs&gt;</code> implementa las flechas y el tabindex itinerante.</li>
-      <li><strong>closedby="any":</strong> sin soporte, <code>angela/js</code> añade el cierre al hacer clic fuera.</li>
+      <li><strong>closedby="any":</strong> sin soporte, <code>@angela-ui/angela/js</code> añade el cierre al hacer clic fuera.</li>
       <li><strong>accent-color, field-sizing, interpolate-size, animaciones de salida:</strong> sin soporte se ve el control nativo, el textarea no crece solo o la transición es instantánea. Nada se rompe.</li>
     </ul>
   </section>
@@ -294,7 +294,7 @@ const previewHtml = `
   </section>
 
   <script>
-    import { auditPalette, contrastRatio, resolvePalette, roles } from 'angela/palette';
+    import { auditPalette, contrastRatio, resolvePalette, roles } from '@angela-ui/angela/palette';
 
     // La paleta de prueba vive en el recuadro del playground, no en toda la página.
     const root = document.querySelector<HTMLElement>('.playground')!;
