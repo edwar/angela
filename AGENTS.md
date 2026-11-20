@@ -27,7 +27,7 @@ docs/                     Sitio de documentación (Astro)
 ## Comandos
 
 - `pnpm dev` — documentación en local.
-- `pnpm test` — Vitest de `angela` (paleta, tema, pestañas, formularios) y de `angela-react`.
+- `pnpm test` — Vitest de `angela` (paleta, tema, pestañas, formularios), de `angela-react` y del laboratorio (`docs/src/lib/lab`).
 - `pnpm typecheck` — genera los tipos de `angela/js` (desde el JSDoc) y comprueba `angela-react`.
 - `pnpm check:contrast` — verifica WCAG AA en todos los tonos. Con valores: `pnpm --filter angela check:contrast --brand 20 0.19`.
 - `pnpm build` — genera paleta, `dist/angela.css`, tipos, `angela-react` y el sitio. Solo antes de push.
@@ -40,7 +40,7 @@ docs/                     Sitio de documentación (Astro)
 - Solo tokens; nada de valores de color sueltos. Nombres de tokens que no choquen con Tailwind (`--fs-*`, `--lh-*`, `--fw-*`, `--elevation-*`, `--font-body`).
 - Para cambiar colores, edita `src/palette.js`, ejecuta `build:palette` y `check:contrast`.
 - Propiedades lógicas, `:focus-visible`, `forced-colors`, `prefers-reduced-motion`.
-- JS: un módulo por función en `src/js/`, exporta funciones que devuelven un `cleanup`, guarda `typeof window` y lleva test. Los tipos se generan del JSDoc: documenta parámetros y retornos.
+- JS: un módulo por función en `src/js/`, exporta funciones que devuelven un `cleanup`, guarda `typeof window` y lleva test. Se registra en `src/js/index.js` (import, reexport y llamada en `angela()`): si no, no se ejecuta en ninguna web. El PR del laboratorio lo hace solo. Los tipos se generan del JSDoc: documenta parámetros y retornos.
 - JS para frameworks: escucha en el documento (delegación) o con `MutationObserver`, nunca solo sobre lo que existe al llamar. Los frameworks montan nodos después.
 - `angela-react`: envoltorios finos que generan el mismo marcado que la documentación, sin estado propio salvo el imprescindible.
   - Un módulo sin `'use client'` no importa uno con `'use client'` (lo comprueba `boundaries.test.ts`).

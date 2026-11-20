@@ -17,7 +17,10 @@ const API = 'https://api.github.com';
 const COMPONENTS_DIR = 'packages/angela/src/components';
 const JS_DIR = 'packages/angela/src/js';
 const ENTRY = 'packages/angela/src/angela.css';
+const JS_ENTRY = 'packages/angela/src/js/index.js';
 const DOCS_DIR = 'docs/src/data/componentes';
+
+import { findEntryFunction, registerJsModule } from './js-entry.js';
 
 export class GitHubError extends Error {}
 
@@ -125,7 +128,7 @@ export async function verifyToken(token, { signal } = {}) {
 }
 
 const cssPath = (id) => `${COMPONENTS_DIR}/${id}.css`;
-const jsPath = (id) => `${JS_DIR}/${id}.js`;
+const jsPath = (file) => `${JS_DIR}/${file}`;
 const docsPath = (id) => `${DOCS_DIR}/${id}.js`;
 
 /**
@@ -161,7 +164,34 @@ function withImport(entryCss, id) {
   return entryCss.replace(marca, `${linea}\n${marca}`);
 }
 
-function prBody({ partes, id, nuevo, resumen, html, js, hallazgos, documentado }) {
+/** Cómo quedó el JS en angela/js, para contarlo en el pull request. */
+function jsLines(js) {
+  if (!js) return { intro: '', todo: '' };
+  const ruta = `\`${jsPath(js.file)}\``;
+  const llamada = `\`${js.fn}(root)\` en \`angela()\``;
+  switch (js.registro) {
+    case 'added':
+      return {
+        intro: `Incluye el módulo ${ruta}, registrado en \`${JS_ENTRY}\`: ${llamada}.`,
+        todo: `- [ ] Test del módulo JS.`,
+      };
+    case 'present':
+      return { intro: `Modifica el módulo ${ruta} (ya estaba registrado en \`${JS_ENTRY}\`).`, todo: `- [ ] Test del módulo JS.` };
+    case 'unknown':
+      return {
+        intro: `Incluye el módulo ${ruta}.`,
+        todo: `- [ ] Registrar ${llamada} en \`${JS_ENTRY}\` (el laboratorio no reconoció su forma) y test del módulo.`,
+      };
+    default:
+      return {
+        intro: `Incluye el módulo ${ruta}, **sin registrar**: no exporta una función de activación, así que \`angela()\` no lo ejecuta.`,
+        todo: `- [ ] Convertirlo en \`export function enhance…(root = document)\` que devuelva su limpieza, registrarlo en \`${JS_ENTRY}\` y añadir su test.`,
+      };
+  }
+}
+
+function prBody({ partes, id, nuevo, resumen, html, hallazgos, documentado, js }) {
+  const modulo = jsLines(js);
   const avisos = hallazgos.filter((h) => h.level === 'warn');
   const conjunto = partes.length > 1;
   return [
@@ -177,7 +207,7 @@ function prBody({ partes, id, nuevo, resumen, html, js, hallazgos, documentado }
         ? `Añade \`${cssPath(id)}\` y su \`@import\` en \`${ENTRY}\`.`
         : `Modifica \`${cssPath(id)}\`.`,
     conjunto ? `\nEl marcado de ejemplo de abajo los usa juntos: así se espera que se usen.` : '',
-    hasCode(js) ? `Incluye el módulo \`${jsPath(id)}\`.` : '',
+    modulo.intro,
     '',
     '## Marcado de ejemplo',
     '',
@@ -196,7 +226,7 @@ function prBody({ partes, id, nuevo, resumen, html, js, hallazgos, documentado }
     documentado
       ? `- [x] Página de documentación en \`${docsPath(id)}\`: repásala y añade los ejemplos que falten.`
       : `- [ ] Entrada en \`docs/src/data/components.js\` (ejemplos, API y accesibilidad).`,
-    hasCode(js) ? `- [ ] Test del módulo JS y llamada desde \`src/js/index.js\`.` : '',
+    modulo.todo,
     `- [ ] Si encaja, envoltorio en \`packages/angela-react\`.`,
     `- [ ] Repaso con teclado y lector de pantalla.`,
     '',
@@ -215,6 +245,7 @@ function prBody({ partes, id, nuevo, resumen, html, js, hallazgos, documentado }
  *   token: string, id: string, name: string, summary: string,
  *   parts: { id: string, css: string }[],
  *   docsEntry?: string | null,
+ *   jsFile?: string | null,
  *   files: { html: string, css: string, js: string },
  *   findings?: { level: string, text: string }[],
  *   onStep?: (text: string) => void, signal?: AbortSignal,
@@ -229,6 +260,7 @@ export async function proposeComponent({
   parts,
   files,
   docsEntry = null,
+  jsFile = null,
   findings = [],
   onStep = () => {},
   signal,
@@ -328,9 +360,21 @@ export async function proposeComponent({
     await put(docsPath(id), docsEntry, `docs(${id}): página del componente`);
   }
 
+  // El JS se sube y se registra en angela/js: si no, angela() no lo ejecuta nunca.
+  let js = null;
   if (hasCode(files.js)) {
+    const file = jsFile || `${id}.js`;
     paso('Subiendo el JavaScript…');
-    await put(jsPath(id), `${files.js.trimEnd()}\n`, `feat(${id}): módulo JavaScript del componente`);
+    await put(jsPath(file), `${files.js.trimEnd()}\n`, `feat(${id}): módulo JavaScript del componente`);
+    const fn = findEntryFunction(files.js);
+    js = { file, fn, registro: fn ? null : 'sin-funcion' };
+    if (fn) {
+      paso('Registrando el JavaScript en angela/js…');
+      const entrada = await call(`/repos/${head.owner}/${head.name}/contents/${JS_ENTRY}?ref=${branch}`, opts);
+      const registro = registerJsModule(fromBase64(entrada.content.replace(/\n/g, '')), file, fn);
+      js.registro = registro.status;
+      if (registro.status === 'added') await put(JS_ENTRY, registro.code, `chore(${id}): activa el módulo en angela()`);
+    }
   }
 
   paso('Abriendo el pull request…');
@@ -350,7 +394,7 @@ export async function proposeComponent({
           nuevo,
           resumen: summary,
           html: files.html,
-          js: files.js,
+          js,
           hallazgos: findings,
           documentado: Boolean(docsEntry),
         }),

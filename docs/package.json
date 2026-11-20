@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.10.0",
@@ -22,5 +23,8 @@
     "angela": "workspace:*",
     "astro": "7.4.12",
     "codemirror": "^6.0.2"
+  },
+  "devDependencies": {
+    "vitest": "~5.0.5"
   }
 }
