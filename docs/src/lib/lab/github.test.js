@@ -63,6 +63,43 @@ describe('proposeComponent', () => {
     expect(prBody(calls).body).toContain('- [ ] Pon al día la página que ya existe');
   });
 
+  it('con el CSS igual pero otra documentación, abre un PR solo de documentación', async () => {
+    const calls = fakeGitHub({
+      existing: {
+        'packages/angela/src/components/galeria.css': '.galeria{}\n',
+        'docs/src/data/componentes/galerias.js': 'export default { viejo: true }',
+      },
+    });
+    await proposeComponent(input('', { docs: { slug: 'galerias', content: 'export default {}', actualiza: true } }));
+    expect(writes(calls).map((c) => c.path.split('/contents/')[1])).toEqual(['docs/src/data/componentes/galerias.js']);
+    const pr = prBody(calls);
+    expect(pr.title).toBe('docs(galeria): pone al día la documentación de «Galería»');
+    expect(pr.body).toContain('cambia solo la documentación');
+  });
+
+  it('con el CSS y la documentación iguales, no hay nada que proponer', async () => {
+    fakeGitHub({
+      existing: {
+        'packages/angela/src/components/galeria.css': '.galeria{}\n',
+        'docs/src/data/componentes/galerias.js': 'export default {}',
+      },
+    });
+    await expect(proposeComponent(input('', { docs: { slug: 'galerias', content: 'export default {}', actualiza: true } }))).rejects.toThrow(
+      'no hay nada que proponer',
+    );
+  });
+
+  it('la misma página con otro formato no cuenta como cambio', async () => {
+    fakeGitHub({
+      existing: {
+        'packages/angela/src/components/galeria.css': '.galeria{}\n',
+        'docs/src/data/componentes/galerias.js': '/** viejo */\nexport default { "title": "Galería", slug: "galerias" };\n',
+      },
+    });
+    const docs = { slug: 'galerias', content: 'export default {}', actualiza: true, entry: { slug: 'galerias', title: 'Galería' } };
+    await expect(proposeComponent(input('', { docs }))).rejects.toThrow('no hay nada que proponer');
+  });
+
   it('cambio con la página fusionada: la pone al día y cuenta qué cambió', async () => {
     const calls = fakeGitHub({ existing: { 'packages/angela/src/components/galeria.css': '.galeria{color:red}\n' } });
     const resumen = { ejemplos: { nuevos: ['Con pie'], cambiados: [], quitados: ['Viejo'] }, api: { nuevos: ['--galeria-gap'], quitados: [] } };

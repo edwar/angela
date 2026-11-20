@@ -46,6 +46,12 @@ describe('splitExamples', () => {
     ]);
   });
 
+  it('la nota no se pone en mayúscula si empieza por código', () => {
+    expect(splitExamples('<!-- Tema: data-angela-theme en el contenedor -->\n<p>a</p>')[0].note).toBe('data-angela-theme en el contenedor.');
+    expect(splitExamples('<!-- Tema: --angela-brand-h cambia la marca -->\n<p>a</p>')[0].note).toBe('--angela-brand-h cambia la marca.');
+    expect(splitExamples('<!-- Tema: con otra marca -->\n<p>a</p>')[0].note).toBe('Con otra marca.');
+  });
+
   it('sin comentarios, todo es un ejemplo', () => {
     expect(splitExamples('<p>hola</p>')).toEqual([{ title: 'Ejemplo', comment: '', code: '<p>hola</p>' }]);
   });

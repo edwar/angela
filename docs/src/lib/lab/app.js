@@ -1122,7 +1122,7 @@ export function startLab() {
         oldCss: original(info.slug).css,
         a11y,
       });
-      return { slug: info.slug, content: serializeDocsEntry(entry), actualiza: true, resumen };
+      return { slug: info.slug, content: serializeDocsEntry(entry), actualiza: true, resumen, entry };
     }
     return {
       slug: id,

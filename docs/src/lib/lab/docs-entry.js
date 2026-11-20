@@ -177,7 +177,10 @@ export function splitExamples(html) {
     cerrar();
     const [title, ...resto] = m[1].split(/:\s+/);
     const note = resto.join(': ').trim();
-    actual = { title: title.trim(), ...(note && { note: note[0].toUpperCase() + note.slice(1) + (/[.!?]$/.test(note) ? '' : '.') }), comment: m[1], lines: [] };
+    // La nota empieza en mayúscula, salvo que empiece por código (data-*, --var, <etiqueta>, .clase).
+    const codigo = /^[^\s]*[-.<=`:]/.test(note) || /^[.<-]/.test(note);
+    const frase = note && (codigo ? note : note[0].toUpperCase() + note.slice(1)) + (/[.!?]$/.test(note) ? '' : '.');
+    actual = { title: title.trim(), ...(frase && { note: frase }), comment: m[1], lines: [] };
   }
   cerrar();
   return bloques;
