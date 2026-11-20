@@ -4,6 +4,18 @@
   "description": "Componentes de React 19 sobre angela: envoltorios finos de HTML nativo, compatibles con Server Components.",
   "type": "module",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/edwar/angela.git",
+    "directory": "packages/angela-react"
+  },
+  "homepage": "https://docs-one-ecru-29.vercel.app",
+  "bugs": {
+    "url": "https://github.com/edwar/angela/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "sideEffects": false,
   "files": [
     "dist"
