@@ -22,6 +22,7 @@ packages/angela-react/    Componentes de React 19 sobre angela (paquete npm "ang
   src/*.tsx               Un archivo por grupo; 'use client' solo donde hay hooks o refs
 docs/                     Sitio de documentación (Astro)
   src/data/components.js  Ejemplos, API y notas de accesibilidad de cada componente
+  src/styles/docs.css     Estilo «plano» del sitio (tema data-angela-theme="plano")
 ```
 
 ## Comandos
@@ -47,6 +48,7 @@ docs/                     Sitio de documentación (Astro)
   - Nada de `cloneElement`: un elemento que llega desde un Server Component puede ser una referencia diferida. Los disparadores son objetos de props.
   - El estado que gestiona el DOM nativo (`<angela-tabs>`, `<dialog>`) se pinta solo al principio; los cambios van por la API del elemento.
   - `autoFocus` necesita el atributo real (`autofocusRef`): React lo omite en el cliente.
+- El sitio de documentación tiene su propio tema, «plano» (`data-angela-theme="plano"` en `<html>`, definido en `docs/src/styles/docs.css`). La librería sigue con sus valores por defecto: los ejemplos de componentes y el playground de la guía llevan `data-angela-theme="angela"` para mostrarla tal como la recibe quien la instala. Si cambias las entradas del tema, verifica: `pnpm --filter angela check:contrast --brand 78 0.11 --neutral 262 0.06 --info 215 0.12 --warning 50 0.14 --danger 18 0.18`.
 - Cada componente nuevo se documenta en `docs/src/data/components.js` (ejemplos + API + accesibilidad) y, si encaja, tiene su envoltorio en `angela-react`.
 - Antes de terminar: `pnpm test`, `pnpm check:contrast` y revisión con teclado y lector de pantalla.
 

@@ -32,43 +32,88 @@ const usageTheme = `:root {
 
 <Layout title="angela" description="Componentes accesibles sobre HTML nativo." heading={false}>
   <section class="hero" aria-labelledby="contenido">
-    <span class="badge" data-tone="brand">Accesible · Nativo · Adaptable</span>
-    <h1 id="contenido" tabindex="-1">Componentes que son HTML.</h1>
-    <p>
-      angela da estilo y comportamiento a los elementos nativos de la web —<code>&lt;button&gt;</code>,
-      <code>&lt;dialog&gt;</code>, <code>popover</code>, <code>&lt;details&gt;</code>, formularios— con modo claro y oscuro
-      automático, contraste AA garantizado y una paleta que cambias con dos números.
-    </p>
-    <div class="cluster">
-      <a class="button" data-size="lg" href={`${base}/componentes`}>Ver componentes</a>
-      <a class="button" data-size="lg" data-variant="outline" data-tone="neutral" href={`${base}/guia`}>Guía de diseño</a>
+    <div class="hero-text">
+      <p class="eyebrow">Accesible · Nativo · Adaptable</p>
+      <h1 id="contenido" tabindex="-1">Componentes <span class="hero-title-line">que son HTML.</span></h1>
+      <span class="cota" aria-hidden="true"></span>
+      <p>
+        angela da estilo y comportamiento a los elementos nativos de la web —<code>&lt;button&gt;</code>,
+        <code>&lt;dialog&gt;</code>, <code>popover</code>, <code>&lt;details&gt;</code>, formularios— con modo claro y oscuro
+        automático, contraste AA garantizado y una paleta que cambias con dos números.
+      </p>
+      <div class="cluster">
+        <a class="button" data-size="lg" href={`${base}/componentes`}>Ver componentes</a>
+        <a class="button" data-size="lg" data-variant="outline" data-tone="neutral" href={`${base}/guia`}>Guía de diseño</a>
+      </div>
     </div>
+
+    <!-- El plano de un diálogo de angela: decorativo, lo importante ya lo dice el texto. -->
+    <svg class="plano-dibujo" viewBox="-72 0 594 345" aria-hidden="true">
+      <g class="trazo-fino">
+        <path d="M60 26h360M60 20v12M420 20v12" />
+        <path d="M444 242v26M438 242h12M438 268h12" />
+        <path d="M398 80l34-38h24" />
+        <path d="M356 270v34h-40" />
+        <path d="M66 274l-26 30h-22" />
+        <path d="M80 200H34v-48h-16" />
+      </g>
+      <g class="trazo">
+        <rect x="60" y="48" width="360" height="232" rx="8" />
+        <path d="M60 106h360M60 230h360" />
+        <path d="M388 70l12 12M400 70l-12 12" />
+        <rect x="84" y="186" width="312" height="28" rx="6" />
+        <rect x="232" y="242" width="76" height="26" rx="6" stroke-dasharray="3 3" />
+      </g>
+      <g class="relleno">
+        <rect x="84" y="72" width="150" height="14" rx="2" />
+        <rect x="84" y="124" width="300" height="8" rx="2" />
+        <rect x="84" y="142" width="270" height="8" rx="2" />
+        <rect x="84" y="160" width="190" height="8" rx="2" />
+      </g>
+      <rect class="foco" x="80.5" y="182.5" width="319" height="35" rx="8" />
+      <rect class="primario" x="316" y="242" width="80" height="26" rx="6" />
+      <g class="rotulo">
+        <text x="240" y="16" text-anchor="middle">32 rem</text>
+        <text x="454" y="259">40 px</text>
+        <text x="458" y="46">aria-label</text>
+        <text x="312" y="308" text-anchor="end">una acción primaria</text>
+        <text x="16" y="308" text-anchor="end">radio 8</text>
+        <text x="14" y="156" text-anchor="end">foco 2 px</text>
+        <text x="240" y="332" text-anchor="middle">&lt;dialog class="dialog"&gt;</text>
+      </g>
+    </svg>
   </section>
 
   <section class="doc-section" aria-labelledby="principios">
     <h2 id="principios">Principios</h2>
     <ul class="grid" role="list">
-      <li class="card feature">
+      <li class="card feature plano-marco">
+        <p class="eyebrow">01</p>
         <h3>La plataforma primero</h3>
         <p>Si existe un elemento nativo, se usa. Sin wrappers ni Shadow DOM: el marcado que escribes es el que llega al navegador.</p>
       </li>
-      <li class="card feature">
+      <li class="card feature plano-marco">
+        <p class="eyebrow">02</p>
         <h3>Accesible por defecto</h3>
         <p>Contraste WCAG AA verificado para cualquier tono, foco visible, objetivos táctiles grandes, alto contraste y movimiento reducido.</p>
       </li>
-      <li class="card feature">
+      <li class="card feature plano-marco">
+        <p class="eyebrow">03</p>
         <h3>Claro y oscuro</h3>
         <p>Sigue al sistema con <code>light-dark()</code> y <code>color-scheme</code>. Un selector opcional permite fijarlo.</p>
       </li>
-      <li class="card feature">
+      <li class="card feature plano-marco">
+        <p class="eyebrow">04</p>
         <h3>Paleta adaptable</h3>
         <p>Toda la paleta se deriva en OKLCH de un tono y un croma por rol. Cambia dos variables y todo se recalcula.</p>
       </li>
-      <li class="card feature">
+      <li class="card feature plano-marco">
+        <p class="eyebrow">05</p>
         <h3>Funciona en cualquier proyecto</h3>
         <p>Astro, Next, Vue o HTML plano. Todo vive en capas de cascada: tu CSS siempre gana.</p>
       </li>
-      <li class="card feature">
+      <li class="card feature plano-marco">
+        <p class="eyebrow">06</p>
         <h3>JS opcional</h3>
         <p>El CSS funciona solo. <code>angela/js</code> añade validación accesible, pestañas y tema, y carga polyfills solo si faltan.</p>
       </li>
