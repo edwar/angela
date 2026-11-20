@@ -1048,6 +1048,8 @@ export function startLab() {
   function validateProposeName() {
     const id = componentFileId();
     el.proposeName.setCustomValidity(id ? '' : 'Escribe un nombre con al menos una letra o número.');
+    // El nombre decide el archivo de un componente nuevo: la lista se pone al día al escribir.
+    renderProposeParts();
     return id;
   }
   on(el.proposeName, 'input', validateProposeName);
