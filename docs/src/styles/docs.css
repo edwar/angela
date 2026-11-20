@@ -493,6 +493,18 @@
   font-size: var(--fs-sm);
 }
 
+.lab-done {
+  flex-basis: 100%;
+}
+
+/* El avance va en el pie: así se ve siempre, aunque el cuerpo del modal tenga scroll. */
+.lab-propose-step {
+  flex: 1 1 12rem;
+  align-self: center;
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
 .lab-workspace {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
