@@ -63,3 +63,45 @@ describe('dibujar a mano alzada', () => {
     expect(grosorEn(12)).toBeLessThanOrEqual(1.3);
   });
 });
+
+describe('trazo libre con presión', () => {
+  // Un trazo horizontal: presión baja a la izquierda, alta a la derecha.
+  const conPresion = (f) => ({ tipo: 'trazo', puntos: Array.from({ length: 37 }, (_, k) => [3 + k * 0.5, 12, f(k / 36)]) });
+  const grosores = (forma) => {
+    const [sil] = siluetas(dibujar([forma], { semilla: 't' }).contorno[0]);
+    return (x) => {
+      const cortes = [];
+      sil.forEach((p, i) => {
+        const q = sil[(i + 1) % sil.length];
+        if ((p[0] - x) * (q[0] - x) <= 0 && p[0] !== q[0]) cortes.push(p[1] + ((x - p[0]) / (q[0] - p[0])) * (q[1] - p[1]));
+      });
+      return Math.max(...cortes) - Math.min(...cortes);
+    };
+  };
+
+  it('la presión real decide el grosor: apretar más engorda el trazo', () => {
+    const g = grosores(conPresion((t) => 0.2 + 0.6 * t));
+    expect(g(16)).toBeGreaterThan(g(8) + 0.2);
+  });
+
+  it('sigue dentro del rango de la guía y con las puntas finas, apriete lo que apriete', () => {
+    const g = grosores(conPresion(() => 1));
+    // Toda la presión al máximo: el normalizado no tiene rango y se usa la curva.
+    expect(g(12)).toBeLessThanOrEqual(1.3);
+    const fuerte = grosores(conPresion((t) => (t < 0.5 ? 0.3 : 0.95)));
+    expect(fuerte(20.8)).toBeLessThan(fuerte(16));
+    expect(fuerte(16)).toBeLessThanOrEqual(1.3);
+  });
+
+  it('se normaliza por icono: apretar poco o mucho da el mismo dibujo', () => {
+    const suave = piezasSvg(dibujar([conPresion((t) => 0.1 + 0.2 * t)], { semilla: 't' }));
+    const fuerte = piezasSvg(dibujar([conPresion((t) => 0.5 + 0.4 * t)], { semilla: 't' }));
+    expect(suave).toBe(fuerte);
+  });
+
+  it('sin presión (ratón) sigue la curva de la guía, igual que sin el dato', () => {
+    const raton = { tipo: 'trazo', puntos: conPresion(() => 0.5).puntos };
+    const sinDato = { tipo: 'trazo', puntos: raton.puntos.map(([x, y]) => [x, y]) };
+    expect(piezasSvg(dibujar([raton], { semilla: 't' }))).toBe(piezasSvg(dibujar([sinDato], { semilla: 't' })));
+  });
+});

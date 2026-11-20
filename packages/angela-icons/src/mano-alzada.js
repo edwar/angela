@@ -10,6 +10,10 @@
  * como un lápiz al apoyarlo y levantarlo. Un trazo SVG no puede variar de grosor, así que
  * cada trazo se dibuja como su silueta rellena (fill="currentColor").
  *
+ * Los trazos libres (tipo «trazo», dibujados con el lápiz de una tableta) traen su propia
+ * presión: aquí se normaliza por icono (así da igual si quien dibuja aprieta mucho o poco) y
+ * se lleva al mismo rango de grosor que el resto. Sin presión, siguen la curva de la guía.
+ *
  * Es determinista: la misma forma con la misma semilla da siempre el mismo trazo.
  * Sin dependencias y sin DOM.
  */
@@ -33,6 +37,10 @@ export const ESTILO = {
   grosor: { contorno: [0.75, 1.25], detalle: [0.5, 0.85], repaso: [0.4, 0.7] },
   /** Cuánto varía la presión a lo largo del trazo (además de afinarse en los extremos). */
   pulso: 0.08,
+  /** Presión real (trazo libre): por debajo de esta variación en el icono no hay presión que leer (ratón). */
+  presionMinima: 0.08,
+  /** Las puntas del trazo libre siempre se afinan, apriete lo que apriete el lápiz. */
+  puntas: 1.6,
 };
 
 /* ---------- Azar con semilla ---------- */
@@ -92,13 +100,17 @@ function trazoTembloroso(puntos, r, amplitud = ESTILO.temblor) {
   return salida;
 }
 
-/** Un paso de suavizado de Chaikin: redondea los quiebros que deja el muestreo. */
+/**
+ * Un paso de suavizado de Chaikin: redondea los quiebros que deja el muestreo. Interpola
+ * todas las componentes del punto, también la presión si la trae.
+ */
 function suavizar(puntos) {
   if (puntos.length < 3) return puntos;
   const out = [puntos[0]];
+  const mezcla = (a, b, t) => a.map((v, k) => v * (1 - t) + b[k] * t);
   for (let i = 0; i < puntos.length - 1; i++) {
     const [a, b] = [puntos[i], puntos[i + 1]];
-    out.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    out.push(mezcla(a, b, 0.25), mezcla(a, b, 0.75));
   }
   out.push(puntos.at(-1));
   return out;
@@ -143,7 +155,7 @@ function rutaCerrada(pts) {
  * La silueta de un trazo con presión: fino en los extremos, más grueso en medio y con un
  * pulso suave. Todas las siluetas giran en el mismo sentido: donde dos trazos se cruzan,
  * el relleno se suma en lugar de dejar un hueco.
- * @param {[number, number][]} linea  Centro del trazo.
+ * @param {number[][]} linea  Centro del trazo: [x, y] o, con presión real, [x, y, presión 0–1].
  * @param {[number, number]} rango  Grosor [fino, grueso].
  */
 function silueta(linea, rango, r) {
@@ -157,8 +169,10 @@ function silueta(linea, rango, r) {
   const derecha = [];
   pts.forEach((p, i) => {
     const s = largos[i] / total;
-    // Presión: el lápiz se apoya, empuja y se levanta.
-    const presion = Math.min(1, Math.max(0, Math.sin(Math.PI * s) ** 0.6 + ESTILO.pulso * Math.sin(s * 7 + fase)));
+    // Presión: el lápiz se apoya, empuja y se levanta. Con presión real manda la mano, pero
+    // las puntas siempre se afinan.
+    const curva = Math.sin(Math.PI * s) ** 0.6;
+    const presion = Math.min(1, Math.max(0, p.length > 2 ? Math.min(p[2], curva * ESTILO.puntas) : curva + ESTILO.pulso * Math.sin(s * 7 + fase)));
     const medio = (rango[0] + (rango[1] - rango[0]) * presion) / 2;
     const a = pts[Math.max(0, i - 1)];
     const b = pts[Math.min(pts.length - 1, i + 1)];
@@ -219,10 +233,30 @@ function repaso(puntos, r) {
 /* ---------- Formas ---------- */
 
 /**
+ * Presión de los trazos libres de un icono, normalizada entre todos: el más suave del icono
+ * va a 0 y el más fuerte a 1. Si apenas varía (ratón, dedo), no hay presión: null.
+ * @param {Forma[]} formas
+ * @returns {((p: number) => number) | null}
+ */
+function normalizarPresion(formas) {
+  const valores = formas
+    .filter((f) => f.tipo === 'trazo')
+    .flatMap((f) => f.puntos.filter((p) => p.length > 2).map((p) => p[2]))
+    .sort((a, b) => a - b);
+  if (valores.length < 2) return null;
+  // Percentiles 5 y 95: un pico suelto del lápiz no decide la escala.
+  const lo = valores[Math.floor(valores.length * 0.05)];
+  const hi = valores[Math.ceil(valores.length * 0.95) - 1];
+  if (hi - lo < ESTILO.presionMinima) return null;
+  return (p) => Math.min(1, Math.max(0, (p - lo) / (hi - lo)));
+}
+
+/**
  * @typedef {{ tipo: 'linea', puntos: [number, number][], cerrada?: boolean, detalle?: boolean }
  *   | { tipo: 'rect', x: number, y: number, ancho: number, alto: number, radio?: number, detalle?: boolean }
  *   | { tipo: 'circulo', cx: number, cy: number, r: number, detalle?: boolean }
- *   | { tipo: 'elipse', cx: number, cy: number, rx: number, ry: number, detalle?: boolean }} Forma
+ *   | { tipo: 'elipse', cx: number, cy: number, rx: number, ry: number, detalle?: boolean }
+ *   | { tipo: 'trazo', puntos: number[][], detalle?: boolean }} Forma
  */
 
 /** Puntos de un contorno redondo (círculo o elipse) con su cierre imperfecto. */
@@ -262,11 +296,18 @@ export function dibujar(formas, { semilla = 'angela' } = {}) {
   const contorno = [];
   const detalle = [];
   const repasos = [];
+  const presion = normalizarPresion(formas);
   formas.forEach((forma, i) => {
     const r = azar(`${semilla}:${i}:${forma.tipo}`);
     const destino = forma.detalle ? detalle : contorno;
     const trazar = (puntos) => destino.push(silueta(puntos, forma.detalle ? ESTILO.grosor.detalle : ESTILO.grosor.contorno, r));
     let principal = null;
+
+    if (forma.tipo === 'trazo') {
+      // El trazo libre ya es de la mano: ni temblor ni sobrepaso ni repaso. Solo la presión.
+      trazar(forma.puntos.map(([x, y, p]) => (presion && p !== undefined ? [limitar(x), limitar(y), presion(p)] : [limitar(x), limitar(y)])));
+      return;
+    }
 
     if (forma.tipo === 'linea' || (forma.tipo === 'rect' && !forma.radio)) {
       // Líneas y rectángulos de esquina viva: cada lado es un trazo que se pasa de la esquina.
@@ -325,6 +366,7 @@ export function svgDeDibujo(dibujo) {
  */
 export function formaLimpia(f, extra = '') {
   const a = extra ? ` ${extra}` : '';
+  if (f.tipo === 'trazo') return `<polyline points="${f.puntos.map((p) => `${p[0]},${p[1]}`).join(' ')}"${a}/>`;
   if (f.tipo === 'linea') return `<${f.cerrada ? 'polygon' : 'polyline'} points="${f.puntos.map((p) => p.join(',')).join(' ')}"${a}/>`;
   if (f.tipo === 'rect') return `<rect x="${f.x}" y="${f.y}" width="${f.ancho}" height="${f.alto}" rx="${f.radio ?? 0}"${a}/>`;
   if (f.tipo === 'circulo') return `<circle cx="${f.cx}" cy="${f.cy}" r="${f.r}"${a}/>`;
