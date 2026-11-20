@@ -262,12 +262,27 @@ const pasos = [
         al proponer el componente, con el ejemplo y la tabla de API sacada del propio CSS; tú repasas el texto y añades
         los ejemplos que falten. El catálogo la carga sola, así que al mezclar el pull request ya está en la web.
       </li>
-      <li>Si lleva JavaScript: un módulo en <code>packages/angela/src/js/</code> con su test.</li>
+      <li>
+        Si lleva JavaScript: un módulo en <code>packages/angela/src/js/</code> que exporte su función de activación
+        (<code>enhance…(root)</code>), registrado en <code>src/js/index.js</code> y con su test. El laboratorio lo
+        registra solo; el test lo añades tú.
+      </li>
       <li>Si encaja, su envoltorio en <code>packages/angela-react</code>.</li>
     </ul>
     <p>
       Rama <code>feat/…</code>, commits en español siguiendo Conventional Commits, y antes de subir:
       <code>pnpm test</code> y <code>pnpm check:contrast</code>.
+    </p>
+    <h3>La revisión automática</h3>
+    <p>
+      Cada pull request pasa tests, tipos, contraste y build, y se revisa cada componente que crea o edita con las mismas
+      reglas del laboratorio y las de esta página. En una edición solo cuenta lo que cambia: lo que ya estaba no te
+      bloquea. El resultado llega como un comentario en el pull request.
+    </p>
+    <p>
+      Si algo incumple las reglas, el check falla y el comentario dice qué corregir. Si todo cumple, queda la revisión
+      visual: quien mantiene el proyecto abre la preview, la compara con producción y mezcla. La revisión automática no
+      aprueba ni despliega nada.
     </p>
     <p>
       <a class="button" data-variant="outline" data-tone="neutral" href={`${REPO}/compare`}>Abrir un pull request</a>

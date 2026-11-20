@@ -1,0 +1,82 @@
+# Revisión automática de los PR contra las reglas de angela.
+#
+# Pasa tests, tipos, contraste y build, y revisa cada componente que el PR crea o edita
+# (docs/scripts/revision). Si algo incumple las reglas, el check falla. No aprueba, no
+# mezcla y no despliega: la preview la publica Vercel y producción solo cambia al mezclar.
+#
+# Se ejecuta sin permisos de escritura y sin secretos, porque corre el código del PR
+# (también el de bifurcaciones). El comentario lo publica revision-comentario.yml.
+name: Revisión de componentes
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: revision-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  reglas:
+    name: Reglas de angela
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Cada paso sigue aunque falle el anterior: el comentario los cuenta todos.
+      - id: test
+        continue-on-error: true
+        run: pnpm test
+
+      - id: typecheck
+        continue-on-error: true
+        run: pnpm typecheck
+
+      - id: contrast
+        continue-on-error: true
+        run: pnpm check:contrast
+
+      - id: build
+        continue-on-error: true
+        run: pnpm build
+
+      - name: Revisión de reglas
+        id: revision
+        env:
+          BASE_REF: origin/${{ github.base_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          CHECK_TEST: ${{ steps.test.outcome }}
+          CHECK_TYPECHECK: ${{ steps.typecheck.outcome }}
+          CHECK_CONTRAST: ${{ steps.contrast.outcome }}
+          CHECK_BUILD: ${{ steps.build.outcome }}
+        run: node docs/scripts/revision/cli.mjs --base "$BASE_REF" --out revision
+
+      - name: Resumen
+        if: always()
+        run: |
+          if [ -f revision/comentario.md ]; then
+            sed 's/{{preview}}/(preview de Vercel)/g' revision/comentario.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: revision
+          path: revision/
+          retention-days: 7

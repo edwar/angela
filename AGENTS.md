@@ -55,6 +55,12 @@ docs/                     Sitio de documentación (Astro)
 **Baseline “ampliamente disponible”.** Lo más nuevo se usa como mejora progresiva cuyo fallback es el control o comportamiento nativo (sin polyfills pesados):
 invokers y popover → polyfill condicional (`loadPolyfills`); anchor positioning → hoja inferior (`@supports`); focusgroup → teclado en `<angela-tabs>`; `closedby` → `enhanceDialogs`; `accent-color`, `field-sizing`, `interpolate-size`, animaciones de salida → sin fallback (se ve el nativo / transición instantánea).
 
+## Revisión de PR
+
+`.github/workflows/revision.yml` revisa cada PR a `main`: tests, tipos, contraste, build y, por cada componente que crea o edita, las reglas del laboratorio (`docs/src/lib/lab/review.js`) más las de este archivo que se comprueban con código (`@import` en `angela.css`, documentación con ejemplos/API/accesibilidad, JS registrado en `index.js` y con test). Solo cuenta lo que introduce el PR. Errores → el check falla; si no, queda la revisión visual en la preview. `revision-comentario.yml` publica el resultado en un comentario. Ninguno aprueba, mezcla ni despliega. La lógica está en `docs/scripts/revision/` (con tests); para probarla en local: `node docs/scripts/revision/cli.mjs --base main`.
+
+Una regla nueva que se pueda comprobar con código va en `review.js` (la ven el laboratorio y el CI) o, si es del PR en conjunto, en `docs/scripts/revision/revision.js`.
+
 ## Git
 
 Ramas `feat/…`, `fix/…`, `chore/…` → PR. Commits en español con Conventional Commits. No commitear ni hacer push sin permiso.
