@@ -128,6 +128,91 @@ body {
   letter-spacing: 0.12em;
 }
 
+/* «Empezar» por framework: pestañas y pasos con el archivo donde va cada código. */
+.empezar-tabs {
+  margin-block: var(--space-5) var(--space-6);
+}
+
+.empezar-resumen {
+  margin: var(--space-4) 0 0;
+  max-inline-size: var(--measure);
+  color: var(--color-text-muted);
+}
+
+.empezar-pasos {
+  display: grid;
+  /* minmax(0, …): el código largo se desplaza dentro de su bloque, no ensancha la página. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  list-style: none;
+
+  & h3 {
+    margin: 0 0 var(--space-2);
+    font-size: var(--fs-lg);
+  }
+
+  & > li > p {
+    margin: 0 0 var(--space-3);
+    max-inline-size: var(--measure);
+    color: var(--color-text-muted);
+    font-size: var(--fs-sm);
+  }
+}
+
+/* Un archivo: su ruta encima del código, como la pestaña de un editor. */
+.archivo {
+  margin: 0;
+  min-inline-size: 0;
+
+  & figcaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--color-border);
+    border-block-end: 0;
+    border-start-start-radius: var(--radius-lg);
+    border-start-end-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+  }
+
+  & pre {
+    margin: 0;
+    border-start-start-radius: 0;
+    border-start-end-radius: 0;
+  }
+}
+
+.archivo-ruta {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-text);
+  font-family: var(--font-code);
+  font-size: var(--fs-sm);
+}
+
+.archivo-lenguaje {
+  flex: none;
+  color: var(--color-brand-text);
+  font-family: var(--font-code);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.empezar-tailwind {
+  margin-block-start: var(--space-3);
+
+  & > p {
+    margin: var(--space-2) 0 var(--space-3);
+    color: var(--color-text-muted);
+    font-size: var(--fs-sm);
+  }
+}
+
 /* Número de un paso dentro de un título («1. Instala»). */
 .paso {
   color: var(--color-brand-text);
