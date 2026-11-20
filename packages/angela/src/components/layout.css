@@ -60,6 +60,12 @@
    * </div>
    */
   .table-wrap {
+    /*
+     * position: relative hace que el scroll recorte también lo que va posicionado dentro,
+     * como el .visually-hidden de un encabezado «Acciones». Sin esto, ese texto se coloca
+     * respecto a la página, fuera del scroll, y la ensancha en móvil.
+     */
+    position: relative;
     overflow-x: auto;
     max-inline-size: 100%;
 
