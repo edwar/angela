@@ -22,8 +22,10 @@ import { createCodeEditor } from './editor.js';
 import { reviewComponent } from './review.js';
 import { buildDocsEntry } from './docs-entry.js';
 import { guessFormat } from './ai.js';
+import { diffStats, lineDiff, withContext } from './diff.js';
 
 const FILES = ['html', 'css', 'js'];
+const TAB_FILES = { html: 'HTML', css: 'CSS', js: 'JavaScript' };
 const LANGUAGE_NAMES = { html: 'HTML', css: 'CSS', js: 'JavaScript' };
 
 const STARTER = {
@@ -141,6 +143,34 @@ export function startLab() {
     done: $('lab-done'),
     doneTitle: $('lab-done-title'),
     doneLink: $('lab-done-link'),
+    aiReviewRun: $('lab-ai-review-run'),
+    aiReviewCancel: $('lab-ai-review-cancel'),
+    aiReviewProgress: $('lab-ai-review-progress'),
+    aiReviewStatus: $('lab-ai-review-status'),
+    aiReviewSetup: $('lab-ai-review-setup'),
+    aiReviewOk: $('lab-ai-review-ok'),
+    aiReviewOkTitle: $('lab-ai-review-ok-title'),
+    aiReviewOkSummary: $('lab-ai-review-ok-summary'),
+    aiReviewCheckedBox: $('lab-ai-review-checked-box'),
+    aiReviewChecked: $('lab-ai-review-checked'),
+    aiReviewChanges: $('lab-ai-review-changes'),
+    aiReviewChangesTitle: $('lab-ai-review-changes-title'),
+    aiReviewSummary: $('lab-ai-review-summary'),
+    aiReviewIssues: $('lab-ai-review-issues'),
+    aiReviewApi: $('lab-ai-review-api'),
+    aiReviewApiList: $('lab-ai-review-api-list'),
+    aiReviewAfter: $('lab-ai-review-after'),
+    aiReviewWarnings: $('lab-ai-review-warnings'),
+    aiReviewWarningList: $('lab-ai-review-warning-list'),
+    aiReviewDiff: $('lab-ai-review-diff'),
+    aiReviewReject: $('lab-ai-review-reject'),
+    aiReviewTry: $('lab-ai-review-try'),
+    aiReviewAccept: $('lab-ai-review-accept'),
+    resetOpen: $('lab-reset-open'),
+    reset: $('lab-reset'),
+    resetDesc: $('lab-reset-desc'),
+    resetLoss: $('lab-reset-loss'),
+    resetList: $('lab-reset-list'),
   };
 
   const state = {
@@ -257,6 +287,8 @@ export function startLab() {
         onChange(value) {
           state.files[f] = value;
           if (state.trying) setTrying(false);
+          // El «todo cumple» era de otro código: deja de valer en cuanto cambia.
+          el.aiReviewOk.hidden = true;
           el.ideSaved.textContent = 'Guardando…';
           saveDraft();
           renderSoon();
@@ -315,6 +347,8 @@ export function startLab() {
     const draft = drafts.get(state.slug);
     state.files = { ...original(state.slug), ...pickFiles(draft) };
     discardProposal({ silent: true });
+    el.aiReviewOk.hidden = true;
+    el.aiReviewStatus.textContent = '';
     fillEditor();
     showFileStatus();
     el.ideSaved.textContent = '';
@@ -492,6 +526,8 @@ export function startLab() {
     el.aiState.textContent = aiKey.get()
       ? `Usando ${aiModel} en ${new URL(aiUrl).host}. La clave se queda en tu navegador.`
       : 'Configura en Ajustes la URL de tu API y su clave para pedir código a la IA.';
+    // La revisión con IA avisa desde el principio de que necesita el agente configurado.
+    el.aiReviewSetup.hidden = aiConfigured();
   }
 
   // Al cambiar la URL, adivinamos el formato para no obligar a elegirlo.
@@ -552,6 +588,7 @@ export function startLab() {
 
   function setBusy(busy) {
     el.aiSubmit.disabled = busy;
+    el.aiReviewRun.disabled = busy;
     el.aiSubmit.textContent = busy ? 'Pensando…' : 'Generar código';
     el.aiCancel.hidden = !busy;
     el.aiProgress.hidden = !busy;
@@ -598,6 +635,7 @@ export function startLab() {
   });
 
   function showProposal(proposal) {
+    el.aiReviewOk.hidden = true;
     state.proposal = { html: proposal.html, css: proposal.css, js: proposal.js };
     el.proposalSummary.textContent = proposal.resumen;
     el.proposalChanges.replaceChildren(
@@ -610,9 +648,6 @@ export function startLab() {
     );
     for (const f of FILES) el.proposalCode[f].textContent = proposal[f];
     el.proposal.hidden = false;
-    // Una sola acción primaria a la vista: mientras hay propuesta, lo es "Aplicar".
-    el.aiSubmit.dataset.variant = 'outline';
-    el.aiSubmit.dataset.tone = 'neutral';
     setTrying(true);
     el.proposal.scrollIntoView({ block: 'nearest' });
   }
@@ -620,6 +655,7 @@ export function startLab() {
   function setTrying(trying) {
     state.trying = trying && Boolean(state.proposal);
     el.proposalTry.setAttribute('aria-pressed', String(state.trying));
+    el.aiReviewTry.setAttribute('aria-pressed', String(state.trying));
     render();
   }
 
@@ -627,9 +663,9 @@ export function startLab() {
     state.proposal = null;
     state.trying = false;
     el.proposal.hidden = true;
+    el.aiReviewChanges.hidden = true;
     el.proposalTry.setAttribute('aria-pressed', 'false');
-    delete el.aiSubmit.dataset.variant;
-    delete el.aiSubmit.dataset.tone;
+    el.aiReviewTry.setAttribute('aria-pressed', 'false');
     if (!silent) render();
   }
 
@@ -646,6 +682,253 @@ export function startLab() {
     discardProposal();
     renderReview();
     setStatus('Propuesta aplicada al editor.');
+  });
+
+  /* ---------- Revisión con IA ---------- */
+
+  const aiConfigured = () => Boolean(aiKey.get() && settings.get().aiUrl && settings.get().aiModel);
+
+  function setReviewing(busy) {
+    el.aiReviewRun.disabled = busy;
+    el.aiSubmit.disabled = busy;
+    el.aiReviewRun.lastChild.textContent = busy ? ' Revisando…' : ' Revisar con IA';
+    el.aiReviewCancel.hidden = !busy;
+    el.aiReviewProgress.hidden = !busy;
+  }
+
+  const li = (text) => Object.assign(document.createElement('li'), { textContent: text });
+
+  /** Un bloque de código como texto: lo que propone la IA nunca se interpreta como HTML. */
+  function codeBlock(text, label) {
+    const pre = document.createElement('pre');
+    pre.className = 'lab-code';
+    pre.tabIndex = 0;
+    pre.setAttribute('aria-label', label);
+    pre.append(Object.assign(document.createElement('code'), { textContent: text || '(vacío)' }));
+    return pre;
+  }
+
+  /** Diff de un archivo: cada línea lleva su signo, así no depende del color. */
+  function diffBlock(file, before, after) {
+    const diff = lineDiff(before, after);
+    const { added, removed } = diffStats(diff);
+    const section = document.createElement('section');
+    const title = document.createElement('h5');
+    title.className = 'heading';
+    title.dataset.size = 'sm';
+    title.textContent = `${TAB_FILES[file]} · ${added} ${added === 1 ? 'línea añadida' : 'líneas añadidas'}, ${removed} ${removed === 1 ? 'quitada' : 'quitadas'}`;
+    const pre = document.createElement('pre');
+    pre.className = 'lab-diff';
+    pre.tabIndex = 0;
+    pre.setAttribute('aria-label', `Cambios en ${TAB_FILES[file]}`);
+    for (const line of withContext(diff)) {
+      const row = document.createElement('span');
+      row.dataset.kind = line.kind;
+      row.textContent =
+        line.kind === 'skip'
+          ? `   … ${line.count} ${line.count === 1 ? 'línea sin cambios' : 'líneas sin cambios'}`
+          : `${{ add: '+', del: '−', same: ' ' }[line.kind]}  ${line.text}`;
+      pre.append(row);
+    }
+    section.append(title, pre);
+    return section;
+  }
+
+  function showReviewOk(result) {
+    discardProposal({ silent: true });
+    // Solo hay tranquilidad completa si la revisión automática tampoco marca errores.
+    const errores = state.findings.filter((h) => h.level === 'error').length;
+    const pendiente = errores > 0;
+    el.aiReviewOk.dataset.tone = pendiente ? 'warning' : 'success';
+    el.aiReviewOk.querySelector('[data-when="cumple"]').toggleAttribute('hidden', pendiente);
+    el.aiReviewOk.querySelector('[data-when="pendiente"]').toggleAttribute('hidden', !pendiente);
+    el.aiReviewOkTitle.textContent = pendiente
+      ? `La IA no propone cambios, pero la revisión automática aún marca ${errores} ${errores === 1 ? 'error' : 'errores'}`
+      : 'Todo sigue las normas de angela';
+    el.aiReviewOkSummary.textContent = pendiente
+      ? `${result.resumen} Revisa los errores de arriba antes de proponerlo.`
+      : result.resumen;
+    el.aiReviewChecked.replaceChildren(...result.revisado.map(li));
+    el.aiReviewCheckedBox.hidden = result.revisado.length === 0;
+    el.aiReviewOk.hidden = false;
+    el.aiReviewOk.focus();
+  }
+
+  function showReviewChanges(result) {
+    discardProposal({ silent: true });
+    el.aiReviewOk.hidden = true;
+    state.proposal = { ...result.archivos };
+
+    const n = result.problemas.length;
+    el.aiReviewChangesTitle.textContent = n
+      ? `La IA propone ${n} ${n === 1 ? 'cambio' : 'cambios'} para cumplir las normas`
+      : 'La IA propone cambios para cumplir las normas';
+    el.aiReviewSummary.textContent = result.resumen;
+
+    el.aiReviewIssues.replaceChildren(
+      ...result.problemas.map((p, index) => {
+        const item = document.createElement('li');
+        const regla = document.createElement('p');
+        const id = p.reglaId && p.reglaId !== 'DESIGN' ? `${p.reglaId} · ` : '';
+        regla.append(Object.assign(document.createElement('strong'), { textContent: `${index + 1}. ${id}${p.regla}` }));
+        regla.append(` · ${TAB_FILES[p.archivo]} `);
+        if (p.inventada) {
+          // Lo dice el texto de la etiqueta, no solo su color.
+          const badge = Object.assign(document.createElement('span'), { className: 'badge', textContent: 'Regla que no existe en angela' });
+          badge.dataset.tone = 'danger';
+          regla.append(badge);
+        }
+        const motivo = document.createElement('p');
+        motivo.textContent = p.motivo;
+        const pair = document.createElement('div');
+        pair.className = 'lab-ai-review-pair';
+        for (const [caption, code] of [
+          ['Lo que había', p.antes],
+          ['Lo que propone', p.despues],
+        ]) {
+          const figure = document.createElement('figure');
+          figure.append(Object.assign(document.createElement('figcaption'), { textContent: caption }), codeBlock(code, `${caption}: ${p.regla}`));
+          pair.append(figure);
+        }
+        item.append(regla, motivo, pair);
+        return item;
+      }),
+    );
+
+    const { clases, propiedades, funciones } = result.apiQuitada;
+    const rotos = [
+      ...clases.map((c) => `Clase .${c}`),
+      ...propiedades.map((v) => `Propiedad ${v}`),
+      ...funciones.map((f) => `Función ${f}()`),
+    ];
+    el.aiReviewApi.hidden = rotos.length === 0;
+    el.aiReviewApiList.replaceChildren(...rotos.map(li));
+    if (rotos.length) el.aiReviewChangesTitle.textContent = 'La IA propone cambios que rompen el componente: revísalos con cuidado';
+
+    // La propuesta pasa también por la revisión automática: así se ve si de verdad mejora.
+    const antes = state.findings.length;
+    const despues = reviewComponent(result.archivos).length;
+    el.aiReviewAfter.textContent =
+      despues === 0
+        ? 'Con estos cambios, la revisión automática no encuentra nada.'
+        : `Con estos cambios, la revisión automática encuentra ${despues} ${despues === 1 ? 'aviso' : 'avisos'} (ahora ${antes}).`;
+
+    const warnings = [...new Set([...result.advertencias, ...riskyPatterns(`${result.archivos.html}\n${result.archivos.js}`)])];
+    el.aiReviewWarnings.hidden = warnings.length === 0;
+    el.aiReviewWarningList.replaceChildren(...warnings.map(li));
+
+    el.aiReviewDiff.replaceChildren(
+      ...FILES.filter((f) => result.archivos[f] !== state.files[f]).map((f) => diffBlock(f, state.files[f], result.archivos[f])),
+    );
+
+    el.aiReviewChanges.hidden = false;
+    el.aiReviewChanges.focus();
+  }
+
+  on(el.aiReviewRun, 'click', async () => {
+    el.aiReviewSetup.hidden = true;
+    if (!aiConfigured()) {
+      el.aiReviewSetup.hidden = false;
+      el.aiReviewSetup.focus();
+      return;
+    }
+
+    el.aiReviewOk.hidden = true;
+    discardProposal({ silent: true });
+    state.request = new AbortController();
+    setReviewing(true);
+    el.aiReviewStatus.textContent = 'Revisando el componente contra las reglas de angela. Puede tardar un poco.';
+    try {
+      const { reviewWithAi } = await import('./ai.js');
+      const { aiUrl, aiModel, aiFormat } = settings.get();
+      const info = componentInfo();
+      const result = await reviewWithAi({
+        url: aiUrl,
+        apiKey: aiKey.get(),
+        model: aiModel,
+        format: aiFormat,
+        component: info ? { title: info.title } : null,
+        files: { ...state.files },
+        findings: state.findings,
+        signal: state.request.signal,
+      });
+      el.aiReviewStatus.textContent = '';
+      if (result.cambia) showReviewChanges(result);
+      else showReviewOk(result);
+      render();
+    } catch (error) {
+      el.aiReviewStatus.textContent = error?.message || 'Algo salió mal al revisar.';
+    } finally {
+      state.request = null;
+      setReviewing(false);
+    }
+  });
+
+  on(el.aiReviewCancel, 'click', () => state.request?.abort());
+  on(el.aiReviewTry, 'click', () => setTrying(!state.trying));
+
+  on(el.aiReviewReject, 'click', () => {
+    discardProposal();
+    el.aiReviewStatus.textContent = 'Cambios rechazados: tu código sigue como estaba.';
+    el.aiReviewRun.focus();
+  });
+
+  on(el.aiReviewAccept, 'click', () => {
+    if (!state.proposal) return;
+    state.files = { ...state.proposal };
+    fillEditor();
+    drafts.set(state.slug, state.files);
+    discardProposal();
+    renderReview();
+    renderParts();
+    renderMotionNotice();
+    el.aiReviewStatus.textContent = 'Cambios aceptados y aplicados al editor. Vuelve a revisar si quieres confirmarlo.';
+    el.aiReviewRun.focus();
+  });
+
+  /* ---------- Restablecer el código ---------- */
+
+  const lineas = (n) => `${n} ${n === 1 ? 'línea' : 'líneas'}`;
+
+  /**
+   * Cuenta, antes de confirmar, qué se va a perder exactamente: es una acción definitiva,
+   * así que el diálogo describe el estado real, no un aviso genérico.
+   */
+  function describeReset() {
+    const info = componentInfo();
+    const destino = info ? `al código original de «${info.title}»` : 'a la plantilla de componente nuevo';
+    const base = original(state.slug);
+    const perdidas = FILES.filter((f) => state.files[f] !== base[f]).map((f) => {
+      const { added, removed } = diffStats(lineDiff(base[f], state.files[f]));
+      const partes = [added && `${lineas(added)} ${added === 1 ? 'añadida' : 'añadidas'}`, removed && `${lineas(removed)} ${removed === 1 ? 'quitada' : 'quitadas'}`]
+        .filter(Boolean)
+        .join(' y ');
+      return `Tus cambios en ${TAB_FILES[f]}${partes ? `: ${partes}` : ''}.`;
+    });
+    if (drafts.get(state.slug)) perdidas.push('El borrador que se guarda en este navegador.');
+    if (state.proposal) perdidas.push('La propuesta de la IA que aún no has aplicado.');
+
+    el.resetDesc.textContent = perdidas.length
+      ? `El editor vuelve ${destino} y se descarta todo lo que hayas cambiado.`
+      : `El editor ya está ${destino.replace(/^al /, 'en el ').replace(/^a la /, 'en la ')}: no hay nada que perder.`;
+    el.resetLoss.hidden = perdidas.length === 0;
+    el.resetList.replaceChildren(...perdidas.map(li));
+  }
+
+  on(el.resetOpen, 'click', () => {
+    describeReset();
+    // Si se cierra con Esc o fuera, no debe quedar el valor de una confirmación anterior.
+    el.reset.returnValue = '';
+    el.reset.showModal();
+  });
+
+  on(el.reset, 'close', () => {
+    if (el.reset.returnValue !== 'restablecer') return;
+    const info = componentInfo();
+    drafts.clear(state.slug);
+    load(state.slug);
+    setStatus(info ? `Código restablecido: vuelves al original de «${info.title}».` : 'Código restablecido: vuelves a la plantilla de componente nuevo.');
+    el.ideSaved.textContent = 'Restablecido';
   });
 
   /* ---------- Proponer al proyecto ---------- */
