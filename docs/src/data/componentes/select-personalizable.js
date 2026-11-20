@@ -1,7 +1,7 @@
 /**
  * Select personalizable
- * Generado desde el laboratorio al proponer el componente. Edítalo con libertad:
- * añade ejemplos, afina la tabla de API y completa las notas de accesibilidad.
+ * Página de documentación del componente. La genera y la actualiza el laboratorio al
+ * proponer cambios; también se puede editar a mano.
  */
 export default {
   slug: "select-personalizable",
@@ -9,8 +9,30 @@ export default {
   summary: "La lista del select nativo toma el estilo de angela con appearance: base-select, sin JS. Se añade la variante de opciones con descripción. Donde no hay soporte, en táctil o en alto contraste se queda el select nativo.",
   examples: [
     {
-      title: 'Ejemplo',
-      code: "<div class=\"stack\">\n  <div class=\"field\">\n    <label for=\"s-pais\">País</label>\n    <select class=\"input\" id=\"s-pais\" name=\"pais\" autocomplete=\"country\">\n      <option value=\"\">Elige un país</option>\n      <option>Argentina</option>\n      <option>Colombia</option>\n      <option>España</option>\n      <option>México</option>\n    </select>\n  </div>\n\n  <!-- Variante: opciones con descripción. El botón hace que, cerrado, se vea solo el nombre. -->\n  <div class=\"field\">\n    <label for=\"s-plan\">Plan</label>\n    <select class=\"input\" id=\"s-plan\" name=\"plan\">\n      <button type=\"button\"><selectedcontent></selectedcontent></button>\n      <option value=\"basico\">Básico<span class=\"option-sep\"> — </span><span class=\"option-hint\">Gratis, 1 persona</span></option>\n      <option value=\"pro\" selected>Pro<span class=\"option-sep\"> — </span><span class=\"option-hint\">12 €/mes, hasta 5 personas</span></option>\n      <option value=\"equipo\">Equipo<span class=\"option-sep\"> — </span><span class=\"option-hint\">40 €/mes, personas ilimitadas</span></option>\n    </select>\n  </div>\n</div>",
+      title: "Ejemplo",
+      code: `<div class="stack" data-angela-theme style="--angela-brand-h: 78; --angela-brand-c: 0.11; --angela-neutral-h: 262; --angela-neutral-c: 0.06; --angela-info-h: 215; --angela-warning-h: 50; --angela-danger-h: 18">
+  <div class="field">
+    <label for="s-pais">País</label>
+    <select class="input" id="s-pais" name="pais" autocomplete="country">
+      <option value="">Elige un país</option>
+      <option>Argentina</option>
+      <option>Colombia</option>
+      <option>España</option>
+      <option>México</option>
+    </select>
+  </div>
+
+  <!-- Variante: opciones con descripción. El botón hace que, cerrado, se vea solo el nombre. -->
+  <div class="field">
+    <label for="s-plan">Plan</label>
+    <select class="input" id="s-plan" name="plan">
+      <button type="button"><selectedcontent></selectedcontent></button>
+      <option value="basico">Básico<span class="option-sep"> — </span><span class="option-hint">Gratis, 1 persona</span></option>
+      <option value="pro" selected>Pro<span class="option-sep"> — </span><span class="option-hint">12 €/mes, hasta 5 personas</span></option>
+      <option value="equipo">Equipo<span class="option-sep"> — </span><span class="option-hint">40 €/mes, personas ilimitadas</span></option>
+    </select>
+  </div>
+</div>`,
     },
   ],
   api: [
