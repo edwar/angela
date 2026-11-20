@@ -1,0 +1,101 @@
+# Publica @angela-ui/angela y @angela-ui/react en npm al publicar un release en GitHub.
+#
+# Trusted Publishing: npm confía en este workflow por OIDC, sin tokens guardados, y genera
+# la atestación de procedencia sola (repositorio y paquetes públicos). Requiere configurar
+# el publicador de confianza en cada paquete (ver AGENTS.md → Publicar en npm).
+#
+# El nombre de este archivo y el entorno «npm» deben coincidir con esa configuración.
+name: Publicar en npm
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write # OIDC: así npm sabe que publica este workflow y no otro.
+
+concurrency:
+  group: publicar-npm
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    name: Publicar paquetes
+    runs-on: ubuntu-latest
+    # El entorno solo admite etiquetas v*: ninguna rama puede publicar.
+    environment: npm
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+
+      # Trusted Publishing necesita npm 11.5.1 o posterior.
+      - name: Comprobar npm
+        run: |
+          node -e '
+            const [a, b, c] = process.argv[1].split(".").map(Number);
+            const ok = a > 11 || (a === 11 && (b > 5 || (b === 5 && c >= 1)));
+            if (!ok) { console.error(`npm ${process.argv[1]} es anterior a 11.5.1`); process.exit(1); }
+          ' "$(npm --version)"
+
+      - run: pnpm install --frozen-lockfile
+
+      # La etiqueta del release (v0.1.2) debe coincidir con la versión de los dos paquetes.
+      - name: Comprobar la versión
+        id: version
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          node -e '
+            const tag = process.env.TAG.replace(/^v/, "");
+            const pkgs = ["packages/angela", "packages/angela-react"].map((d) => require(`./${d}/package.json`));
+            const malas = pkgs.filter((p) => p.version !== tag);
+            if (malas.length) {
+              for (const p of malas) console.error(`${p.name} está en ${p.version}, pero la etiqueta es ${process.env.TAG}`);
+              process.exit(1);
+            }
+            console.log(`Versión ${tag} en los dos paquetes.`);
+          '
+          version="${TAG#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # Una versión con guion (0.2.0-beta.1) se publica como «next», no como «latest».
+          if [[ "$version" == *-* ]]; then echo "dist_tag=next" >> "$GITHUB_OUTPUT"; else echo "dist_tag=latest" >> "$GITHUB_OUTPUT"; fi
+
+      - run: pnpm test
+      - run: pnpm check:contrast
+      - run: pnpm build
+
+      # pnpm empaqueta (convierte workspace:^ en la versión real) y npm publica (OIDC).
+      - name: Empaquetar
+        run: |
+          mkdir -p paquetes
+          (cd packages/angela && pnpm pack --pack-destination ../../paquetes)
+          (cd packages/angela-react && pnpm pack --pack-destination ../../paquetes)
+          ls -la paquetes
+
+      # Primero angela: react depende de ella. Si una versión ya existe, se salta: relanzar es seguro.
+      - name: Publicar
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          DIST_TAG: ${{ steps.version.outputs.dist_tag }}
+        run: |
+          for pkg in angela react; do
+            name="@angela-ui/$pkg"
+            # Se compara la salida, no el código: según la versión de npm, «no existe» sale con 0 y vacío.
+            if [ "$(npm view "$name@$VERSION" version 2>/dev/null)" = "$VERSION" ]; then
+              echo "::notice::$name@$VERSION ya está en npm: se salta."
+              continue
+            fi
+            npm publish "paquetes/angela-ui-$pkg-$VERSION.tgz" --tag "$DIST_TAG"
+            echo "::notice::Publicado $name@$VERSION ($DIST_TAG)."
+          done
