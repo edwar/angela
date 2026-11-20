@@ -139,6 +139,7 @@ export function enhanceForms(root = globalThis.document) {
 
   return () => {
     observer.disconnect();
+    clearTimeout(announceTimer);
     root.removeEventListener('blur', onBlur, true);
     root.removeEventListener('input', onInput);
     root.removeEventListener('change', onChange, true);
