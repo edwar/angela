@@ -161,7 +161,7 @@ function withImport(entryCss, id) {
   return entryCss.replace(marca, `${linea}\n${marca}`);
 }
 
-function prBody({ partes, id, nuevo, resumen, html, js, hallazgos }) {
+function prBody({ partes, id, nuevo, resumen, html, js, hallazgos, documentado }) {
   const avisos = hallazgos.filter((h) => h.level === 'warn');
   const conjunto = partes.length > 1;
   return [
@@ -193,7 +193,7 @@ function prBody({ partes, id, nuevo, resumen, html, js, hallazgos }) {
     '',
     '## Falta por hacer al integrarlo',
     '',
-    docsEntry
+    documentado
       ? `- [x] Página de documentación en \`${docsPath(id)}\`: repásala y añade los ejemplos que falten.`
       : `- [ ] Entrada en \`docs/src/data/components.js\` (ejemplos, API y accesibilidad).`,
     hasCode(js) ? `- [ ] Test del módulo JS y llamada desde \`src/js/index.js\`.` : '',
@@ -219,7 +219,7 @@ function prBody({ partes, id, nuevo, resumen, html, js, hallazgos }) {
  *   findings?: { level: string, text: string }[],
  *   onStep?: (text: string) => void, signal?: AbortSignal,
  * }} input
- * @returns {Promise<{ url: string, nuevo: boolean }>}
+ * @returns {Promise<{ url: string, nuevo: boolean, partes: number }>}
  */
 export async function proposeComponent({
   token,
@@ -334,17 +334,41 @@ export async function proposeComponent({
   }
 
   paso('Abriendo el pull request…');
-  const pr = await call(`/repos/${REPO.owner}/${REPO.name}/pulls`, {
-    ...opts,
-    method: 'POST',
-    body: {
-      title: titulo,
-      head: propio ? branch : `${head.owner}:${branch}`,
-      base: REPO.branch,
-      body: prBody({ partes: parts, id, nuevo, resumen: summary, html: files.html, js: files.js, hallazgos: findings }),
-      maintainer_can_modify: true,
-    },
-  });
+  const headRef = propio ? branch : `${head.owner}:${branch}`;
+  let pr;
+  try {
+    pr = await call(`/repos/${REPO.owner}/${REPO.name}/pulls`, {
+      ...opts,
+      method: 'POST',
+      body: {
+        title: titulo,
+        head: headRef,
+        base: REPO.branch,
+        body: prBody({
+          partes: parts,
+          id,
+          nuevo,
+          resumen: summary,
+          html: files.html,
+          js: files.js,
+          hallazgos: findings,
+          documentado: Boolean(docsEntry),
+        }),
+        maintainer_can_modify: true,
+      },
+    });
+  } catch (error) {
+    // Los archivos ya están en la rama: repetir crearía otra igual. Mejor dar el enlace para abrirlo a mano.
+    if (error?.name === 'AbortError') throw error;
+    const compare = new URL(`https://github.com/${REPO.owner}/${REPO.name}/compare/${REPO.branch}...${headRef}`);
+    compare.searchParams.set('quick_pull', '1');
+    compare.searchParams.set('title', titulo);
+    compare.searchParams.set('body', summary);
+    throw new GitHubError(
+      `Los archivos ya están en la rama ${branch}, pero no se pudo abrir el pull request: ${error?.message ?? 'error desconocido'}`,
+      { cause: { compareUrl: compare.href } },
+    );
+  }
 
   return { url: pr.html_url, nuevo, partes: parts.length };
 }

@@ -12,7 +12,7 @@ import {
   angelaVocabulary,
   bundleAngelaCss,
   buildPreviewDocument,
-  componentSources,
+  sourcesFor,
   riskyPatterns,
   splitComponents,
 } from './preview.js';
@@ -126,6 +126,13 @@ export function startLab() {
     motionNotice: $('lab-motion-notice'),
     motionToggle: $('lab-motion-toggle'),
     proposeSend: $('lab-propose-send'),
+    proposeError: $('lab-propose-error'),
+    proposeErrorText: $('lab-propose-error-text'),
+    proposeErrorRecover: $('lab-propose-error-recover'),
+    proposeErrorLink: $('lab-propose-error-link'),
+    done: $('lab-done'),
+    doneTitle: $('lab-done-title'),
+    doneLink: $('lab-done-link'),
   };
 
   const state = {
@@ -148,13 +155,13 @@ export function startLab() {
   const on = (target, type, fn) => target.addEventListener(type, fn, { signal: abort.signal });
   const setStatus = (text) => (el.status.textContent = text);
 
-  const sources = () => componentSources[state.slug] ?? {};
+  const sources = () => sourcesFor(state.slug);
   const componentInfo = () => components.find((c) => c.slug === state.slug) ?? null;
 
   function original(slug) {
     const component = components.find((c) => c.slug === slug);
-    const src = componentSources[slug];
-    if (!component || !src) return { ...STARTER };
+    const src = sourcesFor(slug);
+    if (!component || !src.css) return { ...STARTER };
     return {
       html: component.examples.map((ex) => `<!-- ${ex.title} -->\n${ex.code}`).join('\n\n'),
       css: angelaCss[src.css] ?? '',
@@ -314,7 +321,10 @@ export function startLab() {
     setStatus(draft ? 'Recuperado lo que tenías escrito en este navegador.' : '');
   }
 
-  on(el.base, 'change', () => load(el.base.value));
+  on(el.base, 'change', () => {
+    el.done.hidden = true;
+    load(el.base.value);
+  });
 
   /* ---------- Revisión ---------- */
 
@@ -707,6 +717,8 @@ export function startLab() {
     el.proposeSummary.value = '';
     el.proposeA11y.value = '';
     el.proposeStep.textContent = '';
+    showProposeError(null);
+    el.done.hidden = true;
     el.proposeKind.textContent = info
       ? `Partes de «${info.title}», así que se propondrá como un cambio sobre ese componente.`
       : 'Se comprobará en el repositorio si el componente ya existe, para proponerlo como nuevo o como un cambio.';
@@ -719,6 +731,34 @@ export function startLab() {
     validateProposeName();
     el.propose.showModal();
   });
+
+  /**
+   * Muestra (o quita) el error arriba del modal, donde se ve aunque el cuerpo tenga scroll.
+   * Si los archivos ya se subieron, da el enlace para abrir el pull request a mano.
+   */
+  function showProposeError(error) {
+    el.proposeError.hidden = !error;
+    if (!error) return;
+    el.proposeErrorText.textContent = error.message || 'Algo falló por el camino.';
+    const compareUrl = error.cause?.compareUrl;
+    el.proposeErrorRecover.hidden = !compareUrl;
+    if (compareUrl) el.proposeErrorLink.href = compareUrl;
+    el.proposeError.scrollIntoView({ block: 'nearest' });
+    el.proposeError.focus();
+  }
+
+  /** Tras abrir el pull request: se cierra el modal, se avisa con el enlace y el laboratorio empieza de cero. */
+  function proposalSent({ url, nuevo, partes }) {
+    el.propose.close();
+    drafts.clear(state.slug);
+    load('');
+    const que = partes > 1 ? `${partes} componentes` : nuevo ? 'componente nuevo' : 'cambio';
+    el.doneTitle.textContent = `Pull request abierto (${que})`;
+    el.doneLink.href = url;
+    el.done.hidden = false;
+    el.done.scrollIntoView({ block: 'nearest' });
+    el.done.focus();
+  }
 
   on(el.proposeForm, 'submit', async (event) => {
     event.preventDefault();
@@ -736,10 +776,11 @@ export function startLab() {
     }
 
     el.proposeSend.disabled = true;
+    showProposeError(null);
     state.request = new AbortController();
     try {
       const { proposeComponent } = await import('./github.js');
-      const { url, nuevo, partes } = await proposeComponent({
+      const result = await proposeComponent({
         token,
         id,
         name: el.proposeName.value.trim(),
@@ -764,12 +805,11 @@ export function startLab() {
         onStep: (text) => (el.proposeStep.textContent = text),
         signal: state.request.signal,
       });
-      el.propose.close();
-      const que = partes > 1 ? `${partes} componentes` : nuevo ? 'componente nuevo' : 'cambio';
-      setStatus(`Pull request abierto (${que}): ${url}`);
-      window.open(url, '_blank', 'noopener');
+      proposalSent(result);
     } catch (error) {
-      el.proposeStep.textContent = error?.message || 'No se pudo abrir el pull request.';
+      if (error?.name === 'AbortError') return;
+      el.proposeStep.textContent = '';
+      showProposeError(error);
     } finally {
       state.request = null;
       el.proposeSend.disabled = false;

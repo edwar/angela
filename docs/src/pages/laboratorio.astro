@@ -131,6 +131,16 @@ const tabs = [
       <a class="button" data-variant="ghost" data-tone="neutral" href={href('/contribuir')}>Cómo aportar</a>
     </div>
     <p class="muted lab-status" id="lab-status" role="status"></p>
+    <div class="callout lab-done" data-tone="success" id="lab-done" tabindex="-1" hidden>
+      <Fragment set:html={icon('check')} />
+      <div>
+        <p class="callout-title" id="lab-done-title">Pull request abierto</p>
+        <p>
+          Lo que escribiste ya está en GitHub y el laboratorio empieza de cero.
+          <a id="lab-done-link" href="#" target="_blank" rel="noopener">Ver el pull request</a>
+        </p>
+      </div>
+    </div>
   </section>
 
   <div class="lab-workspace">
@@ -321,6 +331,16 @@ const tabs = [
         <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-icon-only commandfor="lab-propose" command="close" aria-label="Cerrar" set:html={icon('x')} />
       </header>
       <div class="dialog-body stack">
+        <div class="callout" data-tone="danger" id="lab-propose-error" role="alert" tabindex="-1" hidden>
+          <Fragment set:html={icon('error')} />
+          <div>
+            <p class="callout-title">No se pudo abrir el pull request</p>
+            <p id="lab-propose-error-text"></p>
+            <p id="lab-propose-error-recover" hidden>
+              <a id="lab-propose-error-link" href="#" target="_blank" rel="noopener">Abrir el pull request en GitHub</a>
+            </p>
+          </div>
+        </div>
         <p class="muted" id="lab-propose-kind"></p>
         <div class="field" id="lab-propose-parts-field">
           <p class="heading" data-size="md" id="lab-propose-parts-title">Archivos que se van a crear</p>
@@ -352,9 +372,9 @@ const tabs = [
             <p id="lab-propose-warnings-text"></p>
           </div>
         </div>
-        <p class="muted" id="lab-propose-step" role="status"></p>
       </div>
       <footer class="dialog-footer">
+        <p class="muted lab-propose-step" id="lab-propose-step" role="status"></p>
         <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-propose" command="close">Cancelar</button>
         <button class="button" type="submit" value="proponer" id="lab-propose-send">Abrir pull request</button>
       </footer>
