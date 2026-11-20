@@ -8,7 +8,7 @@ const modulo = (name) => readFileSync(new URL(`../../../../packages/angela/src/j
 describe('regla de delegación', () => {
   it('marca como error escuchar sobre elementos buscados al arrancar, aunque se guarden en una variable', () => {
     // La propuesta que hizo la IA para el spotlight.
-    const js = `export function enhanceSpotlight(root = document) {
+    const js = `export function enhanceSpotlight(root = globalThis.document) {
   if (typeof window === "undefined") return () => {};
   const spotlights = root.querySelectorAll('.spotlight');
   const listeners = [];
@@ -29,7 +29,7 @@ describe('regla de delegación', () => {
   });
 
   it('no marca la delegación en root, document o window', () => {
-    const js = `export function enhanceX(root = document) {
+    const js = `export function enhanceX(root = globalThis.document) {
   const meta = document.querySelector('meta');
   const on = (event) => event.target.closest('.x');
   root.addEventListener('click', on);
@@ -47,6 +47,31 @@ describe('regla de delegación', () => {
   it('ningún módulo de angela incumple la regla', () => {
     for (const name of ['forms.js', 'overlays.js', 'tabs.js', 'theme.js', 'spotlight.js']) {
       expect(delegacion(modulo(name)), name).toBeUndefined();
+    }
+  });
+});
+
+describe('regla ssr: valor por defecto evaluado antes de la guarda', () => {
+  const ssr = (js) => reviewComponent({ html: '', css: '', js }).find((h) => h.id === 'ssr');
+
+  it('avisa de root = document aunque haya guarda (la guarda llega tarde)', () => {
+    const js = `export function enhanceX(root = document) {\n  if (typeof window === 'undefined') return () => {};\n  return () => {};\n}`;
+    expect(ssr(js)?.text).toContain('root = globalThis.document');
+  });
+
+  it('también dentro de un objeto de opciones', () => {
+    expect(ssr(`export function angela({ root = document, polyfills = true } = {}) { if (typeof window === 'undefined') return; }`)).toBeTruthy();
+  });
+
+  it('no avisa con root = globalThis.document y guarda', () => {
+    const js = `export function enhanceX(root = globalThis.document) {\n  if (typeof window === 'undefined' || !root) return () => {};\n  return () => {};\n}`;
+    expect(ssr(js)).toBeUndefined();
+  });
+
+  it('ningún módulo de angela usa el patrón', () => {
+    // Solo este aviso: tabs.js se protege con typeof customElements, que la otra comprobación no reconoce.
+    for (const name of ['index.js', 'forms.js', 'overlays.js', 'tabs.js', 'theme.js', 'spotlight.js']) {
+      expect(ssr(modulo(name))?.text ?? '', name).not.toContain('valor por defecto');
     }
   });
 });

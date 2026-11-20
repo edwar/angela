@@ -219,7 +219,7 @@ describe('reglas inventadas y API pública', () => {
   .spotlight { position: relative; }
   .spotlight-overlay { position: absolute; inset: 0; }
 }`,
-    js: `export function enhanceSpotlight(root = document) {\n  const on = (e) => e.target.closest?.('.spotlight');\n  root.addEventListener('pointermove', on);\n  return () => root.removeEventListener('pointermove', on);\n}`,
+    js: `export function enhanceSpotlight(root = globalThis.document) {\n  const on = (e) => e.target.closest?.('.spotlight');\n  root.addEventListener('pointermove', on);\n  return () => root.removeEventListener('pointermove', on);\n}`,
   };
   const propuesta = {
     html: spotlight.html.replace('class="spotlight"', 'data-spotlight').replace('class="spotlight-overlay"', 'data-slot="overlay"'),

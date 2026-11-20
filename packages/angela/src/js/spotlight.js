@@ -13,8 +13,9 @@
  * @param {Document|HTMLElement} [root=document]
  * @returns {() => void} función para desconectar el listener
  */
-export function enhanceSpotlight(root = document) {
-  if (typeof window === 'undefined') return () => {};
+export function enhanceSpotlight(root = globalThis.document) {
+  // Seguro en el servidor: sin DOM no hay nada que mejorar.
+  if (typeof window === 'undefined' || !root) return () => {};
 
   /** @param {PointerEvent} event */
   const onMove = (event) => {

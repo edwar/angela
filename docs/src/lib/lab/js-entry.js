@@ -8,7 +8,7 @@
  * Para eso el módulo tiene que exportar una función de activación que reciba la raíz y
  * devuelva su limpieza, como el resto de angela:
  *
- *   export function enhanceSpotlight(root = document) { …; return () => {…}; }
+ *   export function enhanceSpotlight(root = globalThis.document) { …; return () => {…}; }
  */
 
 const stripComments = (js) => js.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');

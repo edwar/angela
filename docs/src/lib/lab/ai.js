@@ -86,8 +86,8 @@ export const RULES_LIST = [
     titulo: 'JavaScript con delegación',
     texto: `Módulos ES sin dependencias. Exporta una función de activación que angela() llama en la web, con este patrón:
 
-  export function enhanceNombre(root = document) {
-    if (typeof window === 'undefined') return () => {};
+  export function enhanceNombre(root = globalThis.document) {
+    if (typeof window === 'undefined' || !root) return () => {};
     const onEvento = (event) => {
       const el = event.target.closest?.('.nombre');
       if (!el || !root.contains(el)) return;
@@ -96,6 +96,8 @@ export const RULES_LIST = [
     root.addEventListener('evento', onEvento);
     return () => root.removeEventListener('evento', onEvento);
   }
+
+  root = globalThis.document, no root = document: el valor por defecto se evalúa antes que la guarda, y en el servidor document no existe.
 
   Delegación siempre: un solo listener en root y el elemento se encuentra con event.target.closest(). NUNCA busques los elementos al arrancar (querySelector, querySelectorAll, getElementById…) para ponerles un listener a cada uno, ni siquiera dentro de la función de activación: solo alcanza a los que ya existen, y los frameworks montan nodos después. Si el evento no burbujea, usa su versión que sí lo hace (pointerover en vez de mouseenter, focusin en vez de focus) o un MutationObserver.`,
   },

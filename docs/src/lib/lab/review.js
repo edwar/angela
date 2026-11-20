@@ -197,7 +197,7 @@ const JS_RULES = [
       if (!stripJs(js).trim()) return null;
       return findEntryFunction(js)
         ? null
-        : 'Exporta una función de activación (export function enhanceNombre(root = document) { …; return limpieza; }): es la que angela() llama en la web. Sin ella, el módulo se sube pero no se ejecuta nunca.';
+        : 'Exporta una función de activación (export function enhanceNombre(root = globalThis.document) { …; return limpieza; }): es la que angela() llama en la web. Sin ella, el módulo se sube pero no se ejecuta nunca.';
     },
   },
   {
@@ -206,6 +206,10 @@ const JS_RULES = [
     check(js) {
       const limpio = stripJs(js);
       if (!limpio.trim()) return null;
+      // root = document como valor por defecto se evalúa antes que cualquier guarda: en el servidor lanza.
+      if (/[({,]\s*[\w$]+\s*=\s*document\s*[,)}]/.test(limpio)) {
+        return 'No uses document como valor por defecto (root = document): se evalúa antes que la guarda y en el servidor lanza ReferenceError. Usa root = globalThis.document y comprueba !root en la guarda.';
+      }
       const usaDom = /\b(document|window|navigator)\b/.test(limpio);
       if (!usaDom) return null;
       return /typeof window|typeof document/.test(limpio)

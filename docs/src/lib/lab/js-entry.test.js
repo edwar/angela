@@ -7,12 +7,12 @@ const indexJs = readFileSync(new URL('../../../../packages/angela/src/js/index.j
 
 describe('findEntryFunction', () => {
   it('prefiere la exportada que empieza por enhance, init o define', () => {
-    const js = `export function ayuda() {}\nexport function enhanceGaleria(root = document) { return () => {}; }`;
+    const js = `export function ayuda() {}\nexport function enhanceGaleria(root = globalThis.document) { return () => {}; }`;
     expect(findEntryFunction(js)).toBe('enhanceGaleria');
   });
 
   it('acepta funciones flecha exportadas', () => {
-    expect(findEntryFunction(`export const initMenu = (root = document) => () => {};`)).toBe('initMenu');
+    expect(findEntryFunction(`export const initMenu = (root = globalThis.document) => () => {};`)).toBe('initMenu');
   });
 
   it('si ninguna sigue la convención, usa la primera exportada', () => {
@@ -55,7 +55,7 @@ describe('revisión: regla de activación', () => {
   });
 
   it('no avisa con una función exportada ni con el JS vacío o solo comentarios', () => {
-    expect(activacion(`export function enhanceX(root = document) { return () => {}; }`)).toBeUndefined();
+    expect(activacion(`export function enhanceX(root = globalThis.document) { return () => {}; }`)).toBeUndefined();
     expect(activacion('')).toBeUndefined();
     expect(activacion('// nada todavía\n')).toBeUndefined();
   });
