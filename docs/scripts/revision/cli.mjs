@@ -61,26 +61,26 @@ const { components } = await load('src/data/components.js');
 const { componentSources } = await load('src/lib/lab/preview.js');
 const { reviewComponent, MANUAL_CHECKS } = await load('src/lib/lab/review.js');
 const { findEntryFunction } = await load('src/lib/lab/js-entry.js');
+const { apiTokens, rowToken } = await load('src/lib/lab/docs-entry.js');
 
 const units = touchedComponents(changed, componentSources);
 
-// Documentación de cada lado. La de main se lee del propio archivo del componente aportado;
-// la de los del núcleo vive en components.js y se toma la actual.
+// Documentación de cada lado: cada página es su archivo en docs/src/data/componentes/. Si en
+// main aún no existe (un componente nuevo, o el PR que pasó el núcleo a un archivo por
+// componente), los del núcleo toman la actual.
 const docsHead = Object.fromEntries(components.map((c) => [c.slug, c]));
 const docsBase = {};
 for (const slug of units.flatMap((u) => u.slugs)) {
-  if (componentSources[slug]) {
-    docsBase[slug] = docsHead[slug];
-    continue;
-  }
   const source = read('base', `docs/src/data/componentes/${slug}.js`);
   if (source) {
     docsBase[slug] = (await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`)).default;
+  } else if (componentSources[slug]) {
+    docsBase[slug] = docsHead[slug];
   }
 }
 
 const reviewed = units.map((unit) =>
-  reviewUnit(unit, { read, docs: { base: docsBase, head: docsHead }, reviewComponent, findEntryFunction }),
+  reviewUnit(unit, { read, docs: { base: docsBase, head: docsHead }, reviewComponent, findEntryFunction, apiTokens, rowToken }),
 );
 
 const outcome = (name) => process.env[name] ?? 'success';

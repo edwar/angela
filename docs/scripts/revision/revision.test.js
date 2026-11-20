@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { findEntryFunction } from '../../src/lib/lab/js-entry.js';
 import { MANUAL_CHECKS, reviewComponent } from '../../src/lib/lab/review.js';
+import { apiTokens, rowToken } from '../../src/lib/lab/docs-entry.js';
 import { CSS_ENTRY, JS_ENTRY, renderComment, reviewUnit, touchedComponents, verdict } from './revision.js';
 
 const SOURCES = {
@@ -187,5 +188,27 @@ describe('página duplicada', () => {
     const files = { base: { [CSS_D]: CSS_OK, 'docs/src/data/componentes/disclosure.js': 'export default {}' }, head: { [CSS_D]: CSS_OK } };
     const r = reviewUnit(unit, ctx(files, docs));
     expect(r.findings.some((h) => h.id === 'pagina-duplicada')).toBe(false);
+  });
+});
+
+describe('api-sin-documentar', () => {
+  const unit = { slugs: ['galeria'], css: 'galeria', js: null };
+  const CSS_NUEVO = CSS_OK.replace('.galeria { gap', '.galeria[data-pie] { --galeria-pie: 1; }\n  .galeria { gap');
+  const files = { base: { [CSS]: CSS_OK, 'packages/angela/src/angela.css': ENTRY_OK }, head: { [CSS]: CSS_NUEVO, 'packages/angela/src/angela.css': ENTRY_OK } };
+  const conDeps = (docs) => ({ ...ctx(files, docs), apiTokens, rowToken });
+
+  it('avisa de lo que el CSS añade y la API no explica', () => {
+    const docs = { base: { galeria: DOC() }, head: { galeria: DOC() } };
+    const aviso = reviewUnit(unit, conDeps(docs)).findings.find((h) => h.id === 'api-sin-documentar');
+    expect(aviso?.level).toBe('warn');
+    expect(aviso.text).toContain('`data-pie`');
+    expect(aviso.text).toContain('`--galeria-pie`');
+    expect(aviso.text).not.toContain('--galeria-gap');
+  });
+
+  it('no dice nada si la API ya lo explica', () => {
+    const doc = DOC({ api: [['.galeria', 'x'], ['data-pie', 'y'], ['--galeria-pie', 'z']] });
+    const r = reviewUnit(unit, conDeps({ base: { galeria: DOC() }, head: { galeria: doc } }));
+    expect(r.findings.some((h) => h.id === 'api-sin-documentar')).toBe(false);
   });
 });

@@ -37,7 +37,7 @@ const input = (js, extra = {}) => ({
   name: 'Galería',
   summary: 'Una galería.',
   parts: [{ id: 'galeria', css: '.galeria{}' }],
-  docsEntry: 'export default {}',
+  docs: { slug: 'galeria', content: 'export default {}' },
   files: { html: '<div class="galeria"></div>', css: '.galeria{}', js },
   ...extra,
 });
@@ -56,11 +56,25 @@ describe('proposeComponent', () => {
     expect(prBody(calls).body).toContain('- [x] Página de documentación');
   });
 
-  it('cambio sobre un componente que ya existe: no genera otra página (duplicaría la que hay) y lo deja como tarea', async () => {
+  it('cambio sin página fusionada: no genera otra (duplicaría la que hay) y lo deja como tarea', async () => {
     const calls = fakeGitHub({ existing: { 'packages/angela/src/components/galeria.css': '.galeria{color:red}\n' } });
     await proposeComponent(input(''));
     expect(writes(calls).some((c) => c.path.includes('docs/src/data/'))).toBe(false);
-    expect(prBody(calls).body).toContain('- [ ] Actualiza la página que ya existe');
+    expect(prBody(calls).body).toContain('- [ ] Pon al día la página que ya existe');
+  });
+
+  it('cambio con la página fusionada: la pone al día y cuenta qué cambió', async () => {
+    const calls = fakeGitHub({ existing: { 'packages/angela/src/components/galeria.css': '.galeria{color:red}\n' } });
+    const resumen = { ejemplos: { nuevos: ['Con pie'], cambiados: [], quitados: ['Viejo'] }, api: { nuevos: ['--galeria-gap'], quitados: [] } };
+    await proposeComponent(input('', { docs: { slug: 'galerias', content: 'export default {}', actualiza: true, resumen } }));
+    const pagina = written(calls, 'docs/src/data/componentes/galerias.js');
+    expect(pagina.body.message).toBe('docs(galeria): pone al día su página');
+    const body = prBody(calls).body;
+    expect(body).toContain('## Documentación');
+    expect(body).toContain('Ejemplos nuevos: «Con pie»');
+    expect(body).toContain('Ejemplos quitados (comprueba que sobran): «Viejo»');
+    expect(body).toContain('API: filas nuevas: «--galeria-gap»');
+    expect(body).toContain('- [x] Página de documentación puesta al día');
   });
 
   it('no sube un JS sin efecto (una plantilla que quedó en la pestaña)', async () => {
