@@ -1,0 +1,60 @@
+@layer angela.components {
+  :where(.flip-card) {
+    --flip-perspective: 1000px;
+    --flip-duration: 600ms;
+    --flip-giro: rotateY(180deg); /* horizontal por defecto */
+  }
+
+  .flip-container {
+    inline-size: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-6);
+  }
+
+  .flip-card[data-flip="vertical"] {
+    --flip-giro: rotateX(180deg);
+  }
+
+  .flip-card {
+    inline-size: min(100%, 200px);
+    aspect-ratio: 3 / 4;
+    perspective: var(--flip-perspective);
+  }
+
+  .flip-card-inner {
+    position: relative;
+    block-size: 100%;
+    transform-style: preserve-3d;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .flip-card-inner {
+      transition: transform var(--flip-duration) var(--ease-standard);
+    }
+  }
+
+  .flip-card:hover .flip-card-inner,
+  .flip-card:focus-within .flip-card-inner {
+    transform: var(--flip-giro);
+  }
+
+  .flip-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+  }
+
+  .flip-card-front {
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .flip-card-back {
+    background: var(--color-neutral-solid);
+    color: var(--color-neutral-on-solid);
+    transform: var(--flip-giro); /* empieza girada con el mismo eje */
+  }
+}
