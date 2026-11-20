@@ -53,6 +53,17 @@ export function touchedComponents(paths, componentSources) {
   }));
 
   const add = ({ css = null, js = null, slug = null }) => {
+    // Una página aportada con el nombre del CSS de uno del núcleo (componentes/disclosure.js para
+    // «desplegable») es una segunda página del mismo componente: se revisa con él y se marca.
+    const duplicada = slug && !core.some((c) => c.slug === slug) ? core.filter((c) => c.css === slug) : [];
+    if (duplicada.length) {
+      for (const match of duplicada) {
+        const unit = unitFor(match.css, match.js);
+        unit.slugs.add(match.slug);
+        unit.duplica = [...new Set([...(unit.duplica ?? []), slug])];
+      }
+      return;
+    }
     const matches = core.filter((c) => (css && c.css === css) || (js && c.js === js) || (slug && c.slug === slug));
     if (matches.length) {
       for (const match of matches) unitFor(match.css, match.js).slugs.add(match.slug);
@@ -71,7 +82,7 @@ export function touchedComponents(paths, componentSources) {
     const slug = fileName(path, DOCS_DIR, '.js');
     if (slug) add({ slug });
   }
-  return [...units.values()].map((u) => ({ slugs: [...u.slugs], css: u.css, js: u.js }));
+  return [...units.values()].map((u) => ({ slugs: [...u.slugs], css: u.css, js: u.js, ...(u.duplica && { duplica: u.duplica }) }));
 }
 
 const hasCode = (js) =>
@@ -133,6 +144,11 @@ export function reviewUnit(unit, { read, docs, reviewComponent, findEntryFunctio
     if (!entry.includes(`@import "./components/${unit.css}.css";`)) {
       add('error', 'import', `El CSS nuevo no se importa en \`${CSS_ENTRY}\`: añade \`@import "./components/${unit.css}.css";\`.`);
     }
+  }
+
+  for (const slug of unit.duplica ?? []) {
+    if (read('head', `${DOCS_DIR}${slug}.js`) == null) continue; // el PR la borra: bien
+    add('error', 'pagina-duplicada', `\`${DOCS_DIR}${slug}.js\` crea una segunda página de «${title}»: actualiza la que ya existe (\`/componentes/${unit.slugs[0]}\`, en \`docs/src/data/components.js\`) y borra este archivo.`);
   }
 
   if (head.docs.length === 0) {

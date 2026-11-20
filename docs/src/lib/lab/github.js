@@ -225,7 +225,9 @@ function prBody({ partes, id, nuevo, resumen, html, hallazgos, documentado, js }
     '',
     documentado
       ? `- [x] Página de documentación en \`${docsPath(id)}\`: repásala y añade los ejemplos que falten.`
-      : `- [ ] Entrada en \`docs/src/data/components.js\` (ejemplos, API y accesibilidad).`,
+      : nuevo
+        ? `- [ ] Entrada en \`docs/src/data/components.js\` (ejemplos, API y accesibilidad).`
+        : `- [ ] Actualiza la página que ya existe (en \`docs/src/data/components.js\` o \`docs/src/data/componentes/\`) con lo que cambia: ejemplos, API y accesibilidad. El laboratorio no la reescribe para no perder lo escrito a mano.`,
     modulo.todo,
     `- [ ] Si encaja, envoltorio en \`packages/angela-react\`.`,
     `- [ ] Repaso con teclado y lector de pantalla.`,
@@ -355,7 +357,11 @@ export async function proposeComponent({
     if (cambiado) await put(ENTRY, css, `chore(${id}): importa ${conjunto ? 'los componentes' : 'el componente'} en angela.css`);
   }
 
-  if (docsEntry) {
+  // Solo para componentes nuevos. Si ya existe, su página tiene ejemplos y notas escritos a
+  // mano (y la del núcleo vive en components.js con otro slug): generarla la duplicaría o la
+  // empobrecería. Queda como tarea en el PR.
+  const documentado = Boolean(docsEntry) && nuevo;
+  if (documentado) {
     paso('Escribiendo la página de documentación…');
     await put(docsPath(id), docsEntry, `docs(${id}): página del componente`);
   }
@@ -397,7 +403,7 @@ export async function proposeComponent({
           html: files.html,
           js,
           hallazgos: findings,
-          documentado: Boolean(docsEntry),
+          documentado,
         }),
         maintainer_can_modify: true,
       },
