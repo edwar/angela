@@ -1121,6 +1121,11 @@ body {
   }
 }
 
+.ed-borrador .ed-tinta {
+  fill: var(--color-text);
+  stroke: none;
+}
+
 .ed-tirador {
   fill: var(--color-surface);
   stroke: var(--color-focus);

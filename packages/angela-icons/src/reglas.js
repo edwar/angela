@@ -13,7 +13,9 @@ export const ZONA = { min: 2, max: 22 };
 /** Por debajo de esto, a 16 px la forma se queda en un punto. */
 export const MINIMO = 1;
 export const MAX_FORMAS = 12;
-export const TIPOS = ['linea', 'rect', 'circulo', 'elipse'];
+export const TIPOS = ['linea', 'rect', 'circulo', 'elipse', 'trazo'];
+/** Un trazo libre con más puntos que esto pesa sin verse mejor: hay que simplificarlo. */
+export const MAX_PUNTOS = 300;
 
 export const CATEGORIAS = [
   'interfaz',
@@ -36,7 +38,8 @@ export const CATEGORIAS = [
 export const GUIA = [
   { id: 'lienzo', titulo: 'Cuadrícula de 24×24', texto: 'Se dibuja sobre 24×24 con imán a medio píxel. El tamaño final lo pone quien usa el icono.' },
   { id: 'zona', titulo: 'Zona segura de 2 a 22', texto: 'Las formas dejan 2 px de margen, para que a 16 px el trazo no toque el borde.' },
-  { id: 'formas', titulo: 'Formas limpias', texto: 'Líneas, rectángulos, círculos y elipses exactos. El carácter de dibujo lo pone el estilo, no la mano: así todos los iconos tienen la misma letra.' },
+  { id: 'formas', titulo: 'Formas limpias', texto: 'Líneas, rectángulos, círculos y elipses exactos para lo geométrico. El carácter de dibujo lo pone el estilo: así todos los iconos tienen la misma letra.' },
+  { id: 'lapiz', titulo: 'Trazo libre con lápiz', texto: 'Con el lápiz de una tableta, la presión decide el grosor, siempre dentro del rango de la guía (0.75 a 1.25) y con las puntas finas. Se normaliza por icono: da igual si aprietas mucho o poco. Sin lápiz, el grosor sigue la curva de la guía.' },
   { id: 'trazo', titulo: 'Dos trazos', texto: 'Contorno para la silueta y detalle (más fino) para lo interior: renglones, brillos, texturas.' },
   { id: 'tamano', titulo: 'Nada demasiado pequeño', texto: `Ninguna forma por debajo de ${MINIMO} px: a 16 px se quedaría en un punto. Huecos de al menos 2 px.` },
   { id: 'sencillez', titulo: 'Sencillo', texto: `Pocas formas (${MAX_FORMAS} como mucho): tiene que leerse a 16 px.` },
@@ -50,6 +53,7 @@ const numero = (n) => typeof n === 'number' && Number.isFinite(n);
 /** Puntos que definen una forma (para la caja y los decimales). */
 export function puntosDeForma(f) {
   if (f.tipo === 'linea') return f.puntos ?? [];
+  if (f.tipo === 'trazo') return (f.puntos ?? []).map((p) => [p[0], p[1]]);
   if (f.tipo === 'rect') return [[f.x, f.y], [f.x + f.ancho, f.y + f.alto]];
   if (f.tipo === 'circulo') return [[f.cx - f.r, f.cy - f.r], [f.cx + f.r, f.cy + f.r]];
   if (f.tipo === 'elipse') return [[f.cx - f.rx, f.cy - f.ry], [f.cx + f.rx, f.cy + f.ry]];
@@ -66,6 +70,10 @@ export function medidaMinima(f) {
     const tramos = p.slice(1).map((q, i) => Math.hypot(q[0] - p[i][0], q[1] - p[i][1]));
     return tramos.length ? Math.max(...tramos) : 0;
   }
+  if (f.tipo === 'trazo') {
+    const [xs, ys] = [0, 1].map((k) => (f.puntos ?? []).map((p) => p[k]));
+    return xs.length ? Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) : 0;
+  }
   if (f.tipo === 'rect') return Math.min(f.ancho, f.alto);
   if (f.tipo === 'circulo') return f.r * 2;
   if (f.tipo === 'elipse') return Math.min(f.rx, f.ry) * 2;
@@ -80,6 +88,12 @@ function problemaDeForma(f) {
     if (!Array.isArray(f.puntos) || f.puntos.length < 2) return 'una línea necesita al menos 2 puntos';
     if (!f.puntos.every((p) => Array.isArray(p) && p.length === 2 && p.every(numero))) return 'hay un punto que no son dos números';
     if (f.cerrada !== undefined && typeof f.cerrada !== 'boolean') return 'cerrada tiene que ser true o false';
+    return null;
+  }
+  if (f.tipo === 'trazo') {
+    if (!Array.isArray(f.puntos) || f.puntos.length < 2) return 'un trazo necesita al menos 2 puntos';
+    if (!f.puntos.every((p) => Array.isArray(p) && (p.length === 2 || p.length === 3) && p.every(numero))) return 'hay un punto que no es [x, y] ni [x, y, presión]';
+    if (f.puntos.some((p) => p.length === 3 && (p[2] < 0 || p[2] > 1))) return 'la presión va de 0 a 1';
     return null;
   }
   const campos = { rect: ['x', 'y', 'ancho', 'alto'], circulo: ['cx', 'cy', 'r'], elipse: ['cx', 'cy', 'rx', 'ry'] }[f.tipo];
@@ -124,6 +138,7 @@ export function revisarIcono(icono, { nombre } = {}) {
     const ys = puntos.map((p) => p[1]);
     const [min, max] = [Math.min(...xs, ...ys), Math.max(...xs, ...ys)];
     if (min < ZONA.min || max > ZONA.max) error('zona', `La forma ${n} sale de la zona segura (llega de ${r(min)} a ${r(max)}; tiene que estar entre ${ZONA.min} y ${ZONA.max}).`, i);
+    if (f.tipo === 'trazo' && f.puntos.length > MAX_PUNTOS) aviso('lapiz', `El trazo ${n} tiene ${f.puntos.length} puntos (más de ${MAX_PUNTOS}): simplifícalo, pesa sin verse mejor.`, i);
     if (medidaMinima(f) < MINIMO) aviso('tamano', `La forma ${n} mide menos de ${MINIMO} px: a 16 px se quedará en un punto.`, i);
     const sucios = [...puntos.flat(), f.radio].filter((v) => numero(v) && (String(v).split('.')[1] ?? '').length > 2);
     if (sucios.length) aviso('lienzo', `La forma ${n} tiene medidas con más de 2 decimales (${sucios.slice(0, 2).join(', ')}): usa la cuadrícula.`, i);

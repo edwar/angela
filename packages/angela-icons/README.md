@@ -1,6 +1,6 @@
 # @angela-ui/icons
 
-Iconos de [angela](https://angela.cognilab.dev/iconos) **a mano alzada**: cada uno se dibuja con formas limpias sobre una cuadrícula de 24×24 y el estilo los convierte en trazos de presión variable (finos al empezar y al terminar, más gruesos en medio). Son siluetas rellenas en `currentColor`. Todos siguen la misma guía, que el paquete comprueba al generarse.
+Iconos de [angela](https://angela.cognilab.dev/iconos) **a mano alzada**: se dibujan sobre una cuadrícula de 24×24 con el lápiz de una tableta (la presión real decide el grosor) o con formas limpias, y el estilo los convierte en trazos de presión variable (finos al empezar y al terminar, más gruesos en medio, entre 0.75 y 1.25). Son siluetas rellenas en `currentColor`. Todos siguen la misma guía, que el paquete comprueba al generarse.
 
 ```sh
 pnpm add @angela-ui/icons

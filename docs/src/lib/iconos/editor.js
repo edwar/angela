@@ -5,13 +5,36 @@
  * Todo lo que se hace con el puntero tiene su camino con el teclado: atajos en el lienzo y
  * campos numéricos en el panel de la forma seleccionada.
  */
-import { CATEGORIAS, revisarIcono } from '@angela-ui/icons/reglas';
+import { CATEGORIAS, ZONA, revisarIcono } from '@angela-ui/icons/reglas';
 import { RAIZ, dibujar, formaLimpia, piezasSvg } from '@angela-ui/icons/mano-alzada';
 import { githubToken } from '../lab/storage.js';
 
 const BORRADOR = 'angela-iconos:borrador';
 const AUTOR = 'angela-iconos:autor';
-const NOMBRES = { linea: 'Línea', rect: 'Rectángulo', circulo: 'Círculo', elipse: 'Elipse' };
+const NOMBRES = { linea: 'Línea', rect: 'Rectángulo', circulo: 'Círculo', elipse: 'Elipse', trazo: 'Trazo libre' };
+
+/* ---------- Trazo libre ---------- */
+
+/** Distancia mínima entre puntos capturados y suavizado de la entrada (0 = nada, 1 = todo). */
+const LAPIZ = { separacion: 0.12, estabilizador: 0.45, tolerancia: 0.06 };
+
+/** Douglas-Peucker sobre x, y: conserva la presión de los puntos que quedan. */
+function simplificarTrazo(puntos, tolerancia) {
+  if (puntos.length < 3) return puntos;
+  const [a, b] = [puntos[0], puntos.at(-1)];
+  const largo = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1e-9;
+  let peor = 0;
+  let indice = 0;
+  for (let i = 1; i < puntos.length - 1; i++) {
+    const p = puntos[i];
+    const dist = Math.abs((b[0] - a[0]) * (a[1] - p[1]) - (a[0] - p[0]) * (b[1] - a[1])) / largo;
+    // La presión también cuenta: un cambio de presión en una recta no se puede perder.
+    const presion = p.length > 2 ? Math.abs(p[2] - (a[2] + ((b[2] - a[2]) * i) / (puntos.length - 1))) * 2 : 0;
+    if (Math.max(dist, presion) > peor) [peor, indice] = [Math.max(dist, presion), i];
+  }
+  if (peor <= tolerancia) return [a, b];
+  return [...simplificarTrazo(puntos.slice(0, indice + 1), tolerancia).slice(0, -1), ...simplificarTrazo(puntos.slice(indice), tolerancia)];
+}
 
 const leer = (clave, defecto) => {
   try {
@@ -141,6 +164,14 @@ export function iniciarEditor() {
 
   /* ---------- Coordenadas ---------- */
 
+  /** Punto del puntero en la cuadrícula de 24, sin imán y dentro de la zona segura (trazo libre). */
+  function puntoLibre(evento) {
+    const m = el.lienzo.getScreenCTM().inverse();
+    const p = new DOMPoint(evento.clientX, evento.clientY).matrixTransform(m);
+    const dentro = (v) => Math.min(ZONA.max, Math.max(ZONA.min, v));
+    return [dentro(p.x), dentro(p.y)];
+  }
+
   /** Punto del puntero en la cuadrícula de 24, con imán. */
   function punto(evento) {
     const m = el.lienzo.getScreenCTM().inverse();
@@ -229,6 +260,12 @@ export function iniciarEditor() {
       el.borrador.innerHTML = '';
       return;
     }
+    if (d.tipo === 'trazo') {
+      // Mientras dibujas ya ves el grosor que le da la presión.
+      const f = d.puntos.length > 1 ? { tipo: 'trazo', puntos: d.puntos, ...(estado.detalle && { detalle: true }) } : null;
+      el.borrador.innerHTML = f ? `<g class="ed-tinta">${piezasSvg(dibujar([f], { semilla: nombre() || 'icono' }))}</g>` : '';
+      return;
+    }
     const f = formaEnCurso();
     el.borrador.innerHTML = f ? formaLimpia(f) : '';
     if (d.tipo === 'linea') {
@@ -237,10 +274,16 @@ export function iniciarEditor() {
   }
 
   /** La forma que se está dibujando, con el cursor como último punto. */
-  function formaEnCurso() {
-    const d = estado.dibujando;
+  function formaEnCurso(d = estado.dibujando) {
     if (!d) return null;
     const detalle = estado.detalle ? { detalle: true } : {};
+    if (d.tipo === 'trazo') {
+      const puntos = simplificarTrazo(d.puntos, LAPIZ.tolerancia).map((p) => p.map(r2));
+      const xs = puntos.map((p) => p[0]);
+      const ys = puntos.map((p) => p[1]);
+      if (puntos.length < 2 || Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) < 0.5) return null;
+      return { tipo: 'trazo', puntos, ...detalle };
+    }
     if (d.tipo === 'linea') return { tipo: 'linea', puntos: [...d.puntos, d.cursor ?? d.puntos.at(-1)], ...detalle };
     const [x1, y1] = d.inicio;
     const [x2, y2] = d.fin;
@@ -251,6 +294,7 @@ export function iniciarEditor() {
   }
 
   const describir = (f) => {
+    if (f.tipo === 'trazo') return `${NOMBRES.trazo}${f.puntos.some((p) => p.length > 2) ? ' con presión' : ''}, ${f.puntos.length} puntos`;
     if (f.tipo === 'linea') return `${NOMBRES.linea}${f.cerrada ? ' cerrada' : ''}, ${f.puntos.length} puntos`;
     if (f.tipo === 'rect') return `${NOMBRES.rect} ${f.ancho}×${f.alto}${f.radio ? `, radio ${f.radio}` : ''}`;
     if (f.tipo === 'circulo') return `${NOMBRES.circulo} de radio ${f.r}`;
@@ -340,7 +384,14 @@ export function iniciarEditor() {
     fila.className = 'ed-campos-fila';
     const extra = [];
 
-    if (f.tipo === 'linea') {
+    if (f.tipo === 'trazo') {
+      const nota = document.createElement('p');
+      nota.className = 'muted';
+      nota.textContent = f.puntos.some((p) => p.length > 2)
+        ? 'Dibujado a mano, con la presión del lápiz. Muévelo arrastrándolo o con las flechas; para cambiar su forma, vuelve a dibujarlo.'
+        : 'Dibujado a mano, sin presión (ratón o dedo): el grosor sigue la curva de la guía. Muévelo arrastrándolo o con las flechas.';
+      extra.push(nota);
+    } else if (f.tipo === 'linea') {
       f.puntos.forEach((p, k) => {
         fila.append(campoNumero(`Punto ${k + 1} · x`, p[0], (n) => (f.puntos[k][0] = n)), campoNumero(`Punto ${k + 1} · y`, p[1], (n) => (f.puntos[k][1] = n)));
       });
@@ -456,7 +507,7 @@ export function iniciarEditor() {
 
   /** Desplaza una forma (devuelve la misma forma, cambiada). */
   function mover(f, dx, dy) {
-    if (f.tipo === 'linea') f.puntos = f.puntos.map(([x, y]) => [r2(x + dx), r2(y + dy)]);
+    if (f.tipo === 'linea' || f.tipo === 'trazo') f.puntos = f.puntos.map(([x, y, ...resto]) => [r2(x + dx), r2(y + dy), ...resto]);
     else if (f.tipo === 'rect') Object.assign(f, { x: r2(f.x + dx), y: r2(f.y + dy) });
     else Object.assign(f, { cx: r2(f.cx + dx), cy: r2(f.cy + dy) });
     return f;
@@ -530,6 +581,16 @@ export function iniciarEditor() {
       return;
     }
 
+    if (estado.herramienta === 'trazo') {
+      // Solo el lápiz de una tableta da presión real; el ratón y el dedo, no.
+      const conPresion = evento.pointerType === 'pen';
+      const [x, y] = puntoLibre(evento);
+      estado.dibujando = { tipo: 'trazo', conPresion, puntos: [conPresion ? [x, y, evento.pressure] : [x, y]], suave: [x, y, evento.pressure] };
+      el.lienzo.setPointerCapture(evento.pointerId);
+      pintarBorrador();
+      return;
+    }
+
     if (estado.herramienta === 'linea') {
       const d = estado.dibujando;
       if (!d) {
@@ -561,8 +622,23 @@ export function iniciarEditor() {
 
   el.lienzo.addEventListener('pointermove', (evento) => {
     const p = punto(evento);
-    el.coordenadas.textContent = `x ${p[0]} · y ${p[1]}`;
+    el.coordenadas.textContent = `x ${p[0]} · y ${p[1]}${evento.pointerType === 'pen' ? ` · presión ${evento.pressure.toFixed(2)}` : ''}`;
     const a = estado.arrastre;
+    if (estado.dibujando?.tipo === 'trazo') {
+      const d = estado.dibujando;
+      // Los eventos agrupados traen todos los puntos del lápiz entre dos fotogramas.
+      for (const e of evento.getCoalescedEvents?.() ?? [evento]) {
+        const [x, y] = puntoLibre(e);
+        const k = 1 - LAPIZ.estabilizador;
+        // Estabilizador: el punto sigue al lápiz con un poco de retraso y se lleva el temblor.
+        d.suave = [d.suave[0] + (x - d.suave[0]) * k, d.suave[1] + (y - d.suave[1]) * k, d.suave[2] + (e.pressure - d.suave[2]) * k];
+        const ultimo = d.puntos.at(-1);
+        if (Math.hypot(d.suave[0] - ultimo[0], d.suave[1] - ultimo[1]) < LAPIZ.separacion) continue;
+        d.puntos.push(d.conPresion ? [...d.suave] : [d.suave[0], d.suave[1]]);
+      }
+      pintarBorrador();
+      return;
+    }
     if (a?.modo === 'tirador') {
       moverTirador(estado.formas[estado.seleccion], a.id, p);
       pintar();
@@ -580,7 +656,7 @@ export function iniciarEditor() {
     }
   });
 
-  el.lienzo.addEventListener('pointerup', () => {
+  el.lienzo.addEventListener('pointerup', (evento) => {
     const a = estado.arrastre;
     if (a) {
       // Un clic sin mover no deja un paso vacío en el historial.
@@ -590,6 +666,19 @@ export function iniciarEditor() {
       return;
     }
     const d = estado.dibujando;
+    if (d?.tipo === 'trazo') {
+      estado.dibujando = null;
+      // El estabilizador va por detrás del lápiz: el trazo acaba donde se levantó, no antes.
+      const [x, y] = puntoLibre(evento);
+      d.puntos.push(d.conPresion ? [x, y, d.suave[2]] : [x, y]);
+      const f = formaEnCurso(d);
+      if (f) anadir(f);
+      else {
+        pintar();
+        avisar('Trazo demasiado corto: no se ha añadido.');
+      }
+      return;
+    }
     if (d && d.tipo !== 'linea') {
       const f = formaEnCurso();
       estado.dibujando = null;
@@ -636,7 +725,7 @@ export function iniciarEditor() {
     }
     if (mod || evento.altKey) return;
 
-    const atajos = { v: 'seleccionar', l: 'linea', r: 'rect', c: 'circulo', e: 'elipse' };
+    const atajos = { p: 'trazo', v: 'seleccionar', l: 'linea', r: 'rect', c: 'circulo', e: 'elipse' };
     if (atajos[k.toLowerCase()]) {
       elegirHerramienta(atajos[k.toLowerCase()]);
       return;
@@ -823,5 +912,5 @@ export function iniciarEditor() {
     el.abrir.value = delRepositorio.nombre;
     avisar(`Abierto «${delRepositorio.nombre}» del repositorio.`);
   } else cargar(leer(BORRADOR, {}));
-  elegirHerramienta('seleccionar');
+  elegirHerramienta('trazo');
 }

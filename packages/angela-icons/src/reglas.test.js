@@ -64,3 +64,14 @@ describe('los iconos del repositorio', () => {
     expect(i.autor).toBeTruthy();
   });
 });
+
+describe('trazo libre', () => {
+  it('acepta puntos con y sin presión', () => {
+    expect(revisarIcono({ formas: [{ tipo: 'trazo', puntos: [[4, 4, 0.3], [12, 12, 0.8], [20, 6]] }] })).toEqual([]);
+  });
+  it('rechaza una presión fuera de 0–1 y avisa si tiene demasiados puntos', () => {
+    expect(revisarIcono({ formas: [{ tipo: 'trazo', puntos: [[4, 4, 2], [12, 12, 0.8]] }] })[0]).toMatchObject({ nivel: 'error', regla: 'formas' });
+    const largo = { tipo: 'trazo', puntos: Array.from({ length: 301 }, (_, k) => [4 + (k % 160) * 0.1, 4 + Math.floor(k / 160)]) };
+    expect(revisarIcono({ formas: [largo] }).map((h) => h.regla)).toContain('lapiz');
+  });
+});

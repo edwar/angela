@@ -9,6 +9,7 @@ const href = (p: string) => `${base}${p}`;
 const lineas = Array.from({ length: 25 }, (_, i) => i);
 
 const herramientas = [
+  { id: 'trazo', nombre: 'Lápiz', tecla: 'P', ayuda: 'Dibuja a mano. Con el lápiz de una tableta, la presión decide el grosor; con ratón o dedo, sigue la curva de la guía.' },
   { id: 'seleccionar', nombre: 'Seleccionar', tecla: 'V', ayuda: 'Pulsa una forma para elegirla; arrástrala o arrastra sus tiradores.' },
   { id: 'linea', nombre: 'Línea', tecla: 'L', ayuda: 'Pulsa punto a punto. Doble clic o Intro para terminar; pulsa el primer punto para cerrarla.' },
   { id: 'rect', nombre: 'Rectángulo', tecla: 'R', ayuda: 'Arrastra de una esquina a la opuesta.' },
@@ -31,8 +32,9 @@ const repositorio = catalogo.map(({ nombre, categoria, etiquetas, autor, licenci
       <h1 id="contenido" tabindex="-1">Editor de iconos</h1>
       <span class="cota" aria-hidden="true"></span>
       <p class="page-lead">
-        Dibuja con formas limpias; el estilo a mano alzada se aplica solo, igual para todos los iconos. Cuando esté listo,
-        propónlo al proyecto: cada icono va en su propio pull request.
+        Dibuja a mano con el lápiz de una tableta (la presión decide el grosor) o con formas limpias para lo geométrico;
+        el estilo deja todos los iconos con la misma letra. Cuando esté listo, propónlo: cada icono va en su propio pull
+        request.
       </p>
     </div>
     <a class="button" data-variant="ghost" data-tone="neutral" href={href('/iconos')}>Ver el catálogo</a>
