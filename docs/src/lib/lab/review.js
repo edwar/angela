@@ -9,7 +9,7 @@
  *  - level 'warn':  probablemente sobra o falta algo; revísalo y decide.
  */
 
-import { findEntryFunction } from './js-entry.js';
+import { findEntryFunction, jsSinEfecto } from './js-entry.js';
 
 /** Quita comentarios y cadenas para no dar falsos positivos con el texto de ejemplo. */
 const stripCss = (css) => css.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/"[^"]*"|'[^']*'/g, '""');
@@ -190,6 +190,15 @@ const HTML_RULES = [
 ];
 
 const JS_RULES = [
+  {
+    id: 'sin-efecto',
+    level: 'error',
+    check(js) {
+      return jsSinEfecto(js)
+        ? 'Este JS no hace nada: no escucha eventos, no observa ni toca el DOM. Si el componente se resuelve con CSS, vacía la pestaña JS: así no se sube un módulo que hay que registrar, testar y cargar en todas las webs.'
+        : null;
+    },
+  },
   {
     id: 'activacion',
     level: 'error',

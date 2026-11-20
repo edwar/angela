@@ -138,3 +138,29 @@ describe('veredicto y comentario', () => {
     expect(render(ok, [])).toContain('Pasa las comprobaciones');
   });
 });
+
+describe('JS de un componente', () => {
+  const head = (js, extra = {}) => ({
+    [CSS]: CSS_OK,
+    [JS]: js,
+    [CSS_ENTRY]: ENTRY_OK,
+    [JS_ENTRY]: INDEX_OK,
+    ...extra,
+  });
+  const docs = { base: {}, head: { galeria: DOC() } };
+  const unidad = { slugs: ['galeria'], css: 'galeria', js: 'galeria' };
+
+  it('un JS sin efecto da un solo error, quitarlo; no pide test ni registro', () => {
+    const vacio = `export function enhanceGaleria(root = globalThis.document) {\n  if (typeof window === 'undefined' || !root) return () => {};\n  return () => {};\n}`;
+    const ids = reviewUnit(unidad, ctx({ head: head(vacio) }, docs)).findings.map((f) => f.id);
+    expect(ids).toEqual(['sin-efecto']);
+  });
+
+  it('avisa si la función de activación no lleva el nombre del componente', () => {
+    const otro = JS_OK.replace('enhanceGaleria', 'enhanceNota');
+    const r = reviewUnit(unidad, ctx({ head: head(otro, { [JS_ENTRY]: "import { enhanceNota } from './galeria.js';", 'packages/angela/src/js/galeria.test.js': 'x' }) }, docs));
+    expect(r.findings.find((f) => f.id === 'nombre-js')).toMatchObject({ level: 'warn' });
+    const bien = reviewUnit(unidad, ctx({ head: head(JS_OK, { 'packages/angela/src/js/galeria.test.js': 'x' }) }, docs));
+    expect(bien.findings.find((f) => f.id === 'nombre-js')).toBeUndefined();
+  });
+});

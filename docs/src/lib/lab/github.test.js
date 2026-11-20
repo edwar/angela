@@ -47,9 +47,16 @@ const prBody = (calls) => calls.find((c) => c.path.endsWith('/pulls')).body;
 afterEach(() => vi.restoreAllMocks());
 
 describe('proposeComponent', () => {
+  it('no sube un JS sin efecto (una plantilla que quedó en la pestaña)', async () => {
+    const vacio = `export function enhanceNota(root = globalThis.document) {\n  if (typeof window === 'undefined' || !root) return () => {};\n  return () => {};\n}`;
+    const calls = fakeGitHub();
+    await proposeComponent(input(vacio));
+    expect(writes(calls).some((c) => c.path.includes('/src/js/'))).toBe(false);
+  });
+
   it('sube el JS y lo registra en @angela-ui/angela/js', async () => {
     const calls = fakeGitHub();
-    await proposeComponent(input(`export function enhanceGaleria(root = globalThis.document) { return () => {}; }`));
+    await proposeComponent(input(`export function enhanceGaleria(root = globalThis.document) { const f = () => {}; root.addEventListener('click', f); return () => root.removeEventListener('click', f); }`));
 
     expect(written(calls, '/js/galeria.js')).toBeTruthy();
     const index = written(calls, '/js/index.js');
@@ -71,7 +78,7 @@ describe('proposeComponent', () => {
   it('al partir de un componente de angela, escribe en su módulo (forms.js) y no lo registra dos veces', async () => {
     const calls = fakeGitHub();
     await proposeComponent(
-      input(`export function enhanceForms(root = globalThis.document) { return () => {}; }`, { id: 'field', jsFile: 'forms.js' }),
+      input(`export function enhanceForms(root = globalThis.document) { const f = () => {}; root.addEventListener('input', f); return () => root.removeEventListener('input', f); }`, { id: 'field', jsFile: 'forms.js' }),
     );
 
     expect(written(calls, '/js/forms.js')).toBeTruthy();
