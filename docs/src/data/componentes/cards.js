@@ -13,19 +13,19 @@ export default {
       note: 'Las columnas se acomodan solas: no hay que elegir cuántas. Con tarjetas card-3d dentro, todas giran hacia el mismo punto.',
       code: `<section class="cards" style="--cards-min: 14rem">
   <article class="card card-3d stack" style="--stack-gap: var(--space-2)">
-    <img src="https://placehold.co/400x240" alt="">
+    <img src="/img/tecnologia/portatil.webp" alt="" width="720" height="480">
     <h3 class="heading" data-size="lg">Laptop</h3>
     <p class="text" data-size="sm" data-muted>Potencia para crear.</p>
     <p class="text" data-size="2xl" data-weight="bold" data-numeric>$2.800.000</p>
   </article>
   <article class="card card-3d stack" style="--stack-gap: var(--space-2)">
-    <img src="https://placehold.co/400x240" alt="">
+    <img src="/img/productos/auriculares.webp" alt="" width="720" height="480">
     <h3 class="heading" data-size="lg">Audífonos</h3>
     <p class="text" data-size="sm" data-muted>Sonido sin distracciones.</p>
     <p class="text" data-size="2xl" data-weight="bold" data-numeric>$2.499.000</p>
   </article>
   <article class="card card-3d stack" style="--stack-gap: var(--space-2)">
-    <img src="https://placehold.co/400x240" alt="">
+    <img src="/img/productos/camara-compacta.webp" alt="" width="720" height="480">
     <h3 class="heading" data-size="lg">Cámara</h3>
     <p class="text" data-size="sm" data-muted>Captura cada detalle.</p>
     <p class="text" data-size="2xl" data-weight="bold" data-numeric>$12.999.000</p>

@@ -162,6 +162,22 @@ export const PREVIEW_CSP = [
   "base-uri 'none'",
 ].join('; ');
 
+/**
+ * La CSP de la vista previa, admitiendo además las imágenes del propio sitio. En producción
+ * ya entran por https:, pero en local el sitio va por http://localhost y quedarían bloqueadas.
+ * Solo se acepta un origen bien formado: nada que pueda colar otra directiva en la CSP.
+ * @param {string | null} [imageOrigin]  Origen de la página (location.origin).
+ */
+export function previewCsp(imageOrigin = null) {
+  let origin = null;
+  try {
+    origin = imageOrigin && new URL(imageOrigin).origin === imageOrigin ? imageOrigin : null;
+  } catch {
+    origin = null;
+  }
+  return origin ? PREVIEW_CSP.replace('img-src https: data: blob:', `img-src https: data: blob: ${origin}`) : PREVIEW_CSP;
+}
+
 /** Evita que un texto cierre antes de tiempo la etiqueta que lo contiene. */
 const escapeClosingTag = (text, tag) => text.replace(new RegExp(`</(${tag})`, 'gi'), '<\\/$1');
 
@@ -303,6 +319,7 @@ export function buildPreviewDocument({
   modules = angelaJs,
   dependencies = [],
   ignoreReducedMotion = false,
+  imageOrigin = null,
 }) {
   const dependencyCss = dependencies.map((d) => `/* Componente: ${d.name.replace(/\*\//g, '')} */\n${d.css}`).join('\n\n');
   const dependencyJs = dependencies.filter((d) => d.js.trim()).map(({ name, js: code }) => ({ name, js: code }));
@@ -310,7 +327,7 @@ export function buildPreviewDocument({
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="${PREVIEW_CSP}">
+<meta http-equiv="Content-Security-Policy" content="${previewCsp(imageOrigin)}">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <meta name="color-scheme" content="${scheme === 'dark' ? 'dark' : 'light'}">

@@ -1,0 +1,88 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { icon } from '../data/icons.js';
+import { CATEGORIAS, imagenes, rutaImagen } from '../data/imagenes.js';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const href = (p: string) => `${base}${p}`;
+const porCategoria = CATEGORIAS.map((c) => ({ ...c, lista: imagenes.filter((i) => i.categoria === c.id) }));
+---
+
+<Layout
+  title="Imágenes"
+  description="Fotos de dominio público para diseñar y probar componentes: productos, personas, animales, comida, naturaleza, ciudad y tecnología."
+  eyebrow="angela · recursos"
+>
+  <section class="doc-section" aria-labelledby="usar">
+    <h2 id="usar">Cómo usarlas</h2>
+    <p>
+      Todas son <strong>CC0 1.0</strong> (dominio público): úsalas como quieras, también en proyectos comerciales, sin
+      pedir permiso ni citar. Aun así, cada una lleva su autor y su página de origen. Vienen en 720×480 (3:2), con una
+      miniatura de 360×240; las de personas, también en 320×320 para avatares.
+    </p>
+    <p>
+      Copia la URL o el <code>&lt;img&gt;</code> completo (con su texto alternativo, ancho y alto), o insértalas
+      directamente desde el <a href={href('/laboratorio')}>laboratorio</a> con «Insertar imagen».
+    </p>
+    <nav class="cluster imagenes-indice" aria-label="Categorías">
+      {porCategoria.map((c) => <a class="button" data-variant="soft" data-tone="neutral" data-size="sm" href={`#${c.id}`}>{c.nombre} <span class="muted">{c.lista.length}</span></a>)}
+    </nav>
+    <p class="muted imagenes-estado" id="imagenes-estado" role="status"></p>
+  </section>
+
+  {
+    porCategoria.map((c) => (
+      <section class="doc-section imagenes-categoria" aria-labelledby={c.id}>
+        <h2 id={c.id}>{c.nombre}</h2>
+        <ul class="imagenes-rejilla" role="list">
+          {c.lista.map((img) => (
+            <li class="imagen-ficha plano-marco">
+              <img src={href(rutaImagen(img, '360'))} alt={img.alt} width="360" height="240" loading="lazy" decoding="async" />
+              <div class="imagen-ficha-texto">
+                <p class="imagen-ficha-alt">{img.alt}</p>
+                <p class="archivo-ruta">{rutaImagen(img)}</p>
+                <div class="cluster">
+                  <button class="button" type="button" data-variant="outline" data-tone="neutral" data-size="sm" data-copiar="url" data-ruta={rutaImagen(img)} aria-label={`Copiar la URL de «${img.alt}»`}>
+                    <Fragment set:html={icon('copy')} /> URL
+                  </button>
+                  <button class="button" type="button" data-variant="outline" data-tone="neutral" data-size="sm" data-copiar="html" data-ruta={rutaImagen(img)} data-alt={img.alt} aria-label={`Copiar el HTML de «${img.alt}»`}>
+                    <Fragment set:html={icon('copy')} /> &lt;img&gt;
+                  </button>
+                  {img.cuadrada && (
+                    <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" data-copiar="avatar" data-ruta={rutaImagen(img, 'cuadrada')} data-alt={img.alt} aria-label={`Copiar el HTML del avatar de «${img.alt}»`}>
+                      Avatar
+                    </button>
+                  )}
+                </div>
+                <p class="imagen-ficha-credito">
+                  Foto de {img.autor} en <a href={img.origen} rel="noopener" target="_blank">{img.fuente}</a> · {img.licencia}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))
+  }
+
+  <script>
+    const estado = document.getElementById('imagenes-estado')!;
+    document.addEventListener('click', async (event) => {
+      const boton = (event.target as Element).closest<HTMLButtonElement>('[data-copiar]');
+      if (!boton) return;
+      const url = new URL(boton.dataset.ruta!, location.origin).href;
+      const alt = (boton.dataset.alt ?? '').replaceAll('"', '&quot;');
+      const texto = {
+        url,
+        html: `<img src="${url}" alt="${alt}" width="720" height="480">`,
+        avatar: `<img src="${url}" alt="${alt}" width="320" height="320">`,
+      }[boton.dataset.copiar!];
+      try {
+        await navigator.clipboard.writeText(texto!);
+        estado.textContent = `Copiado: ${texto}`;
+      } catch {
+        estado.textContent = 'No se pudo copiar. Selecciona el texto de la ruta y cópialo a mano.';
+      }
+    });
+  </script>
+</Layout>

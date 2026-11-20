@@ -23,6 +23,7 @@ packages/angela-react/    Componentes de React 19 sobre angela (paquete npm "@an
 docs/                     Sitio de documentación (Astro)
   src/data/components.js  Ejemplos, API y notas de accesibilidad de cada componente
   src/styles/docs.css     Estilo «plano» del sitio (tema data-angela-theme="plano")
+  src/data/imagenes.js    Índice de las imágenes de ejemplo (public/img): autor, origen y licencia
 ```
 
 ## Comandos
@@ -49,6 +50,7 @@ docs/                     Sitio de documentación (Astro)
   - El estado que gestiona el DOM nativo (`<angela-tabs>`, `<dialog>`) se pinta solo al principio; los cambios van por la API del elemento.
   - `autoFocus` necesita el atributo real (`autofocusRef`): React lo omite en el cliente.
 - El sitio de documentación tiene su propio tema, «plano» (`data-angela-theme="plano"` en `<html>`, definido en `docs/src/styles/docs.css`). La librería sigue con sus valores por defecto: los ejemplos de componentes y el playground de la guía llevan `data-angela-theme="angela"` para mostrarla tal como la recibe quien la instala. Si cambias las entradas del tema, verifica: `pnpm --filter @angela-ui/angela check:contrast --brand 78 0.11 --neutral 262 0.06 --info 215 0.12 --warning 50 0.14 --danger 18 0.18`.
+- Imágenes en ejemplos y pruebas: las de `/img/…` (página «Imágenes»), no servicios externos como placehold.co. Solo se añaden fotos CC0 o equivalente, con su entrada en `docs/src/data/imagenes.js` (autor, origen, licencia y texto alternativo que describa lo que se ve): se redistribuyen desde la web.
 - Cada componente nuevo se documenta en `docs/src/data/components.js` (ejemplos + API + accesibilidad) y, si encaja, tiene su envoltorio en `@angela-ui/react`.
 - Antes de terminar: `pnpm test`, `pnpm check:contrast` y revisión con teclado y lector de pantalla.
 
