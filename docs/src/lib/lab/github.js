@@ -204,7 +204,7 @@ function cambiosDocs(resumen) {
   return ['## Documentación', '', lineas.length ? lineas.join('\n') : '- Sin cambios en ejemplos ni API.', ''].join('\n');
 }
 
-function prBody({ partes, id, nuevo, resumen, html, hallazgos, documentado, docs, js }) {
+function prBody({ partes, id, nuevo, sinCss = false, resumen, html, hallazgos, documentado, docs, js }) {
   const modulo = jsLines(js);
   const avisos = hallazgos.filter((h) => h.level === 'warn');
   const conjunto = partes.length > 1;
@@ -219,7 +219,9 @@ function prBody({ partes, id, nuevo, resumen, html, hallazgos, documentado, docs
           .join('\n')}`
       : nuevo
         ? `Añade \`${cssPath(id)}\` y su \`@import\` en \`${ENTRY}\`.`
-        : `Modifica \`${cssPath(id)}\`.`,
+        : sinCss
+          ? `El CSS no cambia (\`${cssPath(id)}\`): ${sinCss.js ? (sinCss.docs ? 'cambian el JavaScript y la documentación' : 'cambia el JavaScript') : 'cambia solo la documentación'}.`
+          : `Modifica \`${cssPath(id)}\`.`,
     conjunto ? `\nEl marcado de ejemplo de abajo los usa juntos: así se espera que se usen.` : '',
     modulo.intro,
     '',
@@ -256,12 +258,35 @@ function prBody({ partes, id, nuevo, resumen, html, hallazgos, documentado, docs
     .replace(/\n{3,}/g, '\n\n');
 }
 
+/** JSON con las claves ordenadas: dos objetos con los mismos datos dan el mismo texto. */
+const estable = (value) =>
+  JSON.stringify(value, (_, v) =>
+    v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : 1))) : v,
+  );
+
+/**
+ * ¿La página de main tiene ya estos datos? Se comparan los datos, no el texto: un archivo con
+ * otro formato (comillas, comentario de cabecera) pero el mismo contenido no es un cambio.
+ * El archivo es el mismo que ya ejecuta el sitio, así que importarlo no añade confianza.
+ */
+async function mismaPagina(fuente, docs) {
+  if (fuente == null) return false;
+  if (fuente === docs.content) return true;
+  if (!docs.entry) return false;
+  try {
+    const actual = (await import(/* @vite-ignore */ `data:text/javascript;charset=utf-8,${encodeURIComponent(fuente)}`)).default;
+    return estable(actual) === estable(docs.entry);
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Abre el pull request. Informa del avance por `onStep` para que la interfaz lo cuente.
  * @param {{
  *   token: string, id: string, name: string, summary: string,
  *   parts: { id: string, css: string }[],
- *   docs?: { slug: string, content: string, actualiza?: boolean, resumen?: object } | null,
+ *   docs?: { slug: string, content: string, actualiza?: boolean, resumen?: object, entry?: object } | null,
  *   jsFile?: string | null,
  *   files: { html: string, css: string, js: string },
  *   findings?: { level: string, text: string }[],
@@ -294,13 +319,26 @@ export async function proposeComponent({
     part.igual = actual.existe && actual.css === `${part.css.trimEnd()}\n`;
   }
   const nuevo = parts.every((p) => !p.existe);
+  // Con el CSS igual aún puede haber algo que proponer: la página de documentación (otros
+  // ejemplos o notas) o el JS. Solo si tampoco cambian no hay nada que hacer.
+  const soloDocs = { docs: false, js: false };
   if (parts.every((p) => p.igual)) {
-    throw new GitHubError(
-      parts.length > 1
-        ? 'Los componentes son idénticos a los que ya están en el repositorio: no hay nada que proponer.'
-        : `El CSS de «${name}» es idéntico al que ya está en el repositorio: no hay nada que proponer.`,
-    );
+    const enMain = async (path) => {
+      const file = await call(`/repos/${REPO.owner}/${REPO.name}/contents/${path}?ref=${REPO.branch}`, { ...opts, allow404: true });
+      return file?.content ? fromBase64(file.content.replace(/\n/g, '')) : null;
+    };
+    soloDocs.docs = Boolean(docs?.actualiza) && !(await mismaPagina(await enMain(docsPath(docs.slug)), docs));
+    const conJs = hasCode(files.js) && !jsSinEfecto(files.js);
+    soloDocs.js = conJs && (await enMain(jsPath(jsFile || `${id}.js`))) !== `${files.js.trimEnd()}\n`;
+    if (!soloDocs.docs && !soloDocs.js) {
+      throw new GitHubError(
+        parts.length > 1
+          ? 'Los componentes son idénticos a los que ya están en el repositorio, también su documentación: no hay nada que proponer.'
+          : `«${name}» es idéntico al que ya está en el repositorio (CSS${conJs ? ', JS' : ''} y documentación): no hay nada que proponer.`,
+      );
+    }
   }
+  const sinCss = parts.every((p) => p.igual);
 
   paso('Identificando tu cuenta…');
   const me = await call('/user', opts);
@@ -345,9 +383,12 @@ export async function proposeComponent({
   };
 
   const conjunto = parts.length > 1;
+  const quienes = conjunto ? `los componentes ${parts.map((p) => p.id).join(' y ')}` : `el componente ${name}`;
   const titulo = nuevo
-    ? `feat(${id}): añade ${conjunto ? `los componentes ${parts.map((p) => p.id).join(' y ')}` : `el componente ${name}`}`
-    : `fix(${id}): mejora ${conjunto ? `los componentes ${parts.map((p) => p.id).join(' y ')}` : `el componente ${name}`}`;
+    ? `feat(${id}): añade ${quienes}`
+    : sinCss && !soloDocs.js
+      ? `docs(${id}): pone al día la documentación de ${conjunto ? quienes.replace('los componentes ', '') : `«${name}»`}`
+      : `fix(${id}): mejora ${quienes}`;
 
   for (const part of parts) {
     if (part.igual) continue;
@@ -376,7 +417,8 @@ export async function proposeComponent({
   // fusionó con la que hay (docs.actualiza): una generada de cero la duplicaría o perdería lo
   // escrito a mano. Si no, queda como tarea en el PR.
   const documentado = Boolean(docs) && (nuevo || Boolean(docs.actualiza));
-  if (documentado) {
+  // Con el CSS igual y la página igual (solo cambia el JS), la página ya está al día.
+  if (documentado && !(sinCss && !soloDocs.docs)) {
     paso(docs.actualiza ? 'Poniendo al día la página de documentación…' : 'Escribiendo la página de documentación…');
     await put(
       docsPath(docs.slug),
@@ -388,7 +430,7 @@ export async function proposeComponent({
   // El JS se sube y se registra en @angela-ui/angela/js: si no, angela() no lo ejecuta nunca.
   // Un JS sin efecto (una plantilla que quedó en la pestaña) no se sube: solo añadiría peso.
   let js = null;
-  if (hasCode(files.js) && !jsSinEfecto(files.js)) {
+  if (hasCode(files.js) && !jsSinEfecto(files.js) && !(sinCss && !soloDocs.js)) {
     const file = jsFile || `${id}.js`;
     paso('Subiendo el JavaScript…');
     await put(jsPath(file), `${files.js.trimEnd()}\n`, `feat(${id}): módulo JavaScript del componente`);
@@ -418,6 +460,7 @@ export async function proposeComponent({
           partes: parts,
           id,
           nuevo,
+          sinCss: sinCss && soloDocs,
           resumen: summary,
           html: files.html,
           js,
