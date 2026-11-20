@@ -461,7 +461,7 @@
 /* Laboratorio */
 
 /* Los componentes fijan su display; el atributo hidden debe ganar igualmente. */
-:is(.lab-toolbar, .lab-workspace, .lab-ai, #lab-settings, #lab-propose) [hidden]:not([hidden="until-found"]) {
+:is(.lab-step, #lab-settings, #lab-propose, #lab-reset) [hidden]:not([hidden="until-found"]) {
   display: none;
 }
 
@@ -472,29 +472,101 @@
   justify-content: space-between;
   gap: var(--space-4);
   max-inline-size: none;
-}
 
-.lab-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: var(--space-4);
-
-  & .field {
-    flex: 1 1 16rem;
-    max-inline-size: 22rem;
+  /* El texto ocupa lo que haya; Ajustes se queda arriba a la derecha (debajo, en móvil). */
+  & > div {
+    flex: 1 1 28rem;
   }
 }
 
+/* Los pasos del flujo: 1 punto de partida, 2 escribe y prueba, 3 revisa, 4 propón. */
+.lab-step {
+  display: grid;
+  gap: var(--space-4);
+  margin-block-start: var(--space-10);
+  padding-block-start: var(--space-8);
+  border-block-start: 1px solid var(--color-border);
+
+  & h3 {
+    margin: 0;
+    font-size: var(--fs-lg);
+  }
+}
+
+.lab-header + .lab-step {
+  margin-block-start: var(--space-6);
+}
+
+.lab-step-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: var(--fs-2xl);
+}
+
+/* El número es decorativo: el paso se anuncia con texto oculto. */
+.lab-step-num {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: 2rem;
+  block-size: 2rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-muted);
+}
+
+.lab-step-lead {
+  margin: 0;
+  max-inline-size: var(--measure);
+}
+
+/* Paso 1: de dónde partes, a la izquierda; la IA, a la derecha. Uno debajo del otro en móvil. */
+.lab-start {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-6) var(--space-8);
+  align-items: start;
+}
+
+.lab-start-base {
+  max-inline-size: 26rem;
+}
+
 .lab-status {
-  flex-basis: 100%;
   margin: 0;
   min-block-size: 1lh;
   font-size: var(--fs-sm);
 }
 
-.lab-done {
-  flex-basis: 100%;
+.lab-ai p {
+  margin: 0;
+}
+
+/* Paso 3: las tres revisiones como partes del mismo nivel. */
+.lab-review-part {
+  max-inline-size: 60rem;
+
+  & > p {
+    margin: 0;
+  }
+}
+
+.lab-review-part + .lab-review-part {
+  margin-block-start: var(--space-4);
+}
+
+.lab-checklist {
+  margin: 0;
+  padding-inline-start: var(--space-5);
+  max-inline-size: var(--measure);
+}
+
+.lab-tips summary {
+  font-size: var(--fs-sm);
 }
 
 /* El avance va en el pie: así se ve siempre, aunque el cuerpo del modal tenga scroll. */
@@ -536,7 +608,8 @@
     font-size: var(--fs-lg);
   }
 
-  & .cluster {
+  & .cluster,
+  & > .button:last-child {
     margin-inline-start: auto;
   }
 
@@ -669,7 +742,7 @@
 }
 
 .lab-proposal {
-  margin-block-start: var(--space-6);
+  max-inline-size: 60rem;
 
   & h3,
   & h4 {
@@ -690,6 +763,109 @@
   max-block-size: 20rem;
   margin: 0;
   font-size: var(--fs-xs);
+}
+
+.lab-ai-review {
+  max-inline-size: 60rem;
+
+  & h3,
+  & h4 {
+    margin: 0;
+  }
+}
+
+/* Los botones de un aviso no se estiran a todo el ancho. */
+.lab-ai-review .callout .button {
+  justify-self: start;
+}
+
+.lab-ai-review-changes p {
+  margin: 0;
+}
+
+.lab-ai-review-status {
+  margin: 0;
+  font-size: var(--fs-sm);
+}
+
+.lab-ai-review-issues {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  & > li {
+    display: grid;
+    gap: var(--space-2);
+    padding-block-start: var(--space-4);
+    border-block-start: 1px solid var(--color-border);
+  }
+
+  & > li:first-child {
+    padding-block-start: 0;
+    border-block-start: 0;
+  }
+}
+
+/* Antes y después, lado a lado si hay sitio; uno debajo del otro en móvil. */
+.lab-ai-review-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--space-3);
+
+  & figure {
+    margin: 0;
+    min-inline-size: 0;
+  }
+
+  & figcaption {
+    margin-block-end: var(--space-1);
+    font-size: var(--fs-sm);
+    font-weight: var(--fw-medium);
+  }
+}
+
+.lab-code {
+  max-block-size: 20rem;
+  margin: 0;
+  overflow: auto;
+  font-size: var(--fs-xs);
+}
+
+/* Diff: el signo (+ / −) dice qué cambia; el color solo lo refuerza. */
+.lab-diff {
+  max-block-size: 28rem;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  font-size: var(--fs-xs);
+
+  & > span {
+    display: block;
+    padding-inline: var(--space-3);
+    white-space: pre;
+  }
+
+  & [data-kind="add"] {
+    background-color: var(--color-success-subtle);
+  }
+
+  & [data-kind="del"] {
+    background-color: var(--color-danger-subtle);
+  }
+
+  & [data-kind="skip"] {
+    color: var(--color-text-muted);
+    font-style: italic;
+  }
+}
+
+@media (forced-colors: active) {
+  .lab-diff [data-kind="add"],
+  .lab-diff [data-kind="del"] {
+    font-weight: var(--fw-bold);
+  }
 }
 
 .lab-review {

@@ -226,11 +226,18 @@ const JS_RULES = [
   },
   {
     id: 'delegacion',
-    level: 'warn',
+    level: 'error',
     check(js) {
       const limpio = stripJs(js);
-      return /querySelectorAll\([^)]*\)\s*\.forEach\([^)]*addEventListener/s.test(limpio)
-        ? 'Escuchar uno a uno solo alcanza a lo que existe al arrancar. Delega en el documento o usa MutationObserver: los frameworks montan nodos después.'
+      // Un MutationObserver o un custom element ya alcanzan a lo que se monte después.
+      if (/MutationObserver|customElements\.define|extends\s+HTMLElement/.test(limpio)) return null;
+      if (!/querySelector(All)?\s*\(|getElementBy|getElementsBy/.test(limpio)) return null;
+      // Escuchar en la raíz es delegar; en cualquier otra cosa, es escuchar elemento a elemento.
+      const raices = new Set(['root', 'document', 'window', 'globalThis', 'self', 'this']);
+      const objetivos = [...limpio.matchAll(/([\w$.]+?)\s*\.addEventListener\s*\(/g)].map((m) => m[1]);
+      const sueltos = objetivos.filter((o) => !raices.has(o) && !/^(document|window)\./.test(o));
+      return sueltos.length
+        ? `Escuchas sobre elementos que buscaste al arrancar (${[...new Set(sueltos)].join(', ')}.addEventListener): solo alcanza a los que ya existen, y los frameworks montan nodos después. Escucha en la raíz y encuentra el elemento con event.target.closest('.componente'), o usa un MutationObserver.`
         : null;
     },
   },

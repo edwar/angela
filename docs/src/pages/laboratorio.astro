@@ -32,55 +32,63 @@ const tabs = [
     <div>
       <h1 id="contenido" tabindex="-1">Laboratorio</h1>
       <p class="page-lead">
-        Escribe un componente, pruébalo y propónlo al proyecto. El código se ejecuta aislado: sin acceso a esta página ni a
-        la red, salvo imágenes por https.
+        Escribe un componente, pruébalo, revísalo y propónlo al proyecto. El código se ejecuta aislado: sin acceso a esta
+        página ni a la red, salvo imágenes por https.
       </p>
     </div>
-    <div class="cluster">
-      <button
-        class="button"
-        type="button"
-        data-variant="ghost"
-        data-tone="neutral"
-        data-icon-only
-        id="lab-scheme"
-        aria-pressed="false"
-      >
-        <span data-when="light"><Fragment set:html={icon('moon')} /><span class="visually-hidden">Ver la vista previa en oscuro</span></span>
-        <span data-when="dark"><Fragment set:html={icon('sun')} /><span class="visually-hidden">Ver la vista previa en claro</span></span>
-      </button>
-      <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-settings" command="show-modal">
-        <Fragment set:html={icon('settings')} /> Ajustes
-      </button>
-    </div>
+    <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-settings" command="show-modal">
+      <Fragment set:html={icon('settings')} /> Ajustes
+    </button>
   </header>
 
-  <section class="doc-section lab-ai" aria-labelledby="lab-ai-title">
-    <h2 id="lab-ai-title">Empieza con ayuda de la IA</h2>
-    <p class="muted" id="lab-ai-state"></p>
-    <form class="stack" id="lab-ai-form">
-      <div class="field">
-        <label for="lab-ai-prompt">¿Qué componente quieres?</label>
-        <p class="hint" id="lab-ai-prompt-hint">
-          Descríbelo y la IA escribe el primer código, siguiendo las reglas de angela. A partir de ahí lo ajustas tú.
-        </p>
-        <textarea class="input" id="lab-ai-prompt" name="instruccion" rows="3" required aria-describedby="lab-ai-prompt-hint"></textarea>
+  <section class="lab-step" aria-labelledby="lab-step-start">
+    <h2 class="lab-step-title" id="lab-step-start">
+      <span class="lab-step-num" aria-hidden="true">1</span><span class="visually-hidden">Paso 1: </span>Punto de partida
+    </h2>
+    <div class="lab-start">
+      <div class="stack lab-start-base">
+        <div class="field">
+          <label for="lab-base">Parte de</label>
+          <p class="hint" id="lab-base-hint">Un componente de angela para mejorarlo, o uno nuevo desde cero.</p>
+          <select class="input" id="lab-base" aria-describedby="lab-base-hint">
+            <option value="">Componente nuevo, desde cero</option>
+            {components.map((c) => <option value={c.slug}>{c.title}</option>)}
+          </select>
+        </div>
+        <p class="muted lab-status" id="lab-status" role="status"></p>
       </div>
-      <div class="cluster" role="group" aria-label="Ideas rápidas">
-        {
-          quickPrompts.map(([label, text]) => (
-            <button class="button" type="button" data-variant="soft" data-tone="neutral" data-size="sm" data-prompt={text}>
-              {label}
-            </button>
-          ))
-        }
-      </div>
-      <div class="cluster">
-        <button class="button" type="submit" id="lab-ai-submit">Generar código</button>
-        <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-ai-cancel" hidden>Cancelar</button>
-        <progress class="lab-ai-progress" id="lab-ai-progress" hidden aria-label="Esperando la respuesta"></progress>
-      </div>
-    </form>
+
+      <section class="stack lab-ai" aria-labelledby="lab-ai-title">
+        <div>
+          <h3 id="lab-ai-title">Con ayuda de la IA</h3>
+          <p class="muted" id="lab-ai-state"></p>
+        </div>
+        <form class="stack" id="lab-ai-form">
+          <div class="field">
+            <label for="lab-ai-prompt">¿Qué quieres que haga?</label>
+            <p class="hint" id="lab-ai-prompt-hint">
+              Describe un componente nuevo o un cambio sobre el código del editor. La IA sigue las reglas de angela y tú decides si
+              aplicas su propuesta.
+            </p>
+            <textarea class="input" id="lab-ai-prompt" name="instruccion" rows="3" required aria-describedby="lab-ai-prompt-hint"></textarea>
+          </div>
+          <div class="cluster" role="group" aria-label="Ideas rápidas">
+            {
+              quickPrompts.map(([label, text]) => (
+                <button class="button" type="button" data-variant="soft" data-tone="neutral" data-size="sm" data-prompt={text}>
+                  {label}
+                </button>
+              ))
+            }
+          </div>
+          <div class="cluster">
+            <button class="button" type="submit" data-variant="outline" data-tone="neutral" id="lab-ai-submit">Generar código</button>
+            <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-ai-cancel" hidden>Cancelar</button>
+            <progress class="lab-ai-progress" id="lab-ai-progress" hidden aria-label="Esperando la respuesta"></progress>
+          </div>
+        </form>
+      </section>
+    </div>
 
     <article class="card stack lab-proposal" id="lab-proposal" hidden aria-labelledby="lab-proposal-title">
       <h3 id="lab-proposal-title">Propuesta</h3>
@@ -116,36 +124,13 @@ const tabs = [
     </article>
   </section>
 
-  <section class="lab-toolbar" aria-label="Punto de partida">
-    <div class="field">
-      <label for="lab-base">Punto de partida</label>
-      <select class="input" id="lab-base">
-        <option value="">Componente nuevo, desde cero</option>
-        {components.map((c) => <option value={c.slug}>{c.title}</option>)}
-      </select>
-    </div>
-    <div class="cluster">
-      <button class="button" type="button" id="lab-propose-open">
-        <Fragment set:html={icon('upload')} /> Proponer al proyecto
-      </button>
-      <a class="button" data-variant="ghost" data-tone="neutral" href={href('/contribuir')}>Cómo aportar</a>
-    </div>
-    <p class="muted lab-status" id="lab-status" role="status"></p>
-    <div class="callout lab-done" data-tone="success" id="lab-done" tabindex="-1" hidden>
-      <Fragment set:html={icon('check')} />
-      <div>
-        <p class="callout-title" id="lab-done-title">Pull request abierto</p>
-        <p>
-          Lo que escribiste ya está en GitHub y el laboratorio empieza de cero.
-          <a id="lab-done-link" href="#" target="_blank" rel="noopener">Ver el pull request</a>
-        </p>
-      </div>
-    </div>
-  </section>
-
+  <section class="lab-step" aria-labelledby="lab-step-edit">
+    <h2 class="lab-step-title" id="lab-step-edit">
+      <span class="lab-step-num" aria-hidden="true">2</span><span class="visually-hidden">Paso 2: </span>Escribe y prueba
+    </h2>
   <div class="lab-workspace">
     <section class="lab-pane" aria-labelledby="lab-editor-title">
-      <h2 class="visually-hidden" id="lab-editor-title">Editor</h2>
+      <h3 class="visually-hidden" id="lab-editor-title">Editor</h3>
       <div class="lab-ide">
         <angela-tabs class="tabs lab-ide-tabs" id="lab-tabs">
           <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label="Archivos">
@@ -174,21 +159,43 @@ const tabs = [
           <span class="lab-ide-saved" id="lab-ide-saved"></span>
         </div>
       </div>
-      <p class="hint" id="lab-code-hint">
-        Emmet: escribe una abreviatura (por ejemplo .tarjeta o ul&gt;li*3) y pulsa Tab. Tab también sangra; Esc y luego Tab
-        sale del editor. Se guarda solo mientras escribes.
-      </p>
-      <p class="hint" id="lab-parts-hint">
-        ¿Dos componentes que se usan juntos? Sepáralos en el CSS con
-        <code>/* @componente nombre */</code>: se ven juntos aquí y al proponerlos salen como archivos separados.
-      </p>
       <p class="text" data-size="sm" id="lab-parts-state" data-muted role="status"></p>
+      <details class="disclosure lab-tips">
+        <summary>Atajos y consejos del editor</summary>
+        <div class="stack">
+          <p class="hint" id="lab-code-hint">
+            Emmet: escribe una abreviatura (por ejemplo .tarjeta o ul&gt;li*3) y pulsa Tab. Tab también sangra; Esc y luego
+            Tab sale del editor. Se guarda solo mientras escribes.
+          </p>
+          <p class="hint" id="lab-parts-hint">
+            ¿Dos componentes que se usan juntos? Sepáralos en el CSS con
+            <code>/* @componente nombre */</code>: se ven juntos aquí y al proponerlos salen como archivos separados.
+          </p>
+        </div>
+      </details>
     </section>
 
     <section class="lab-pane" aria-labelledby="lab-preview-title">
       <div class="lab-pane-head">
-        <h2 id="lab-preview-title">Vista previa</h2>
+        <h3 id="lab-preview-title">Vista previa</h3>
         <span class="badge" data-tone="info" id="lab-preview-mode" hidden>Propuesta de la IA</span>
+        <div class="cluster">
+          <button
+            class="button"
+            type="button"
+            data-variant="ghost"
+            data-tone="neutral"
+            data-icon-only
+            id="lab-scheme"
+            aria-pressed="false"
+          >
+            <span data-when="light"><Fragment set:html={icon('moon')} /><span class="visually-hidden">Ver la vista previa en oscuro</span></span>
+            <span data-when="dark"><Fragment set:html={icon('sun')} /><span class="visually-hidden">Ver la vista previa en claro</span></span>
+          </button>
+          <button class="button" type="button" data-variant="ghost" data-tone="danger" id="lab-reset-open" aria-haspopup="dialog">
+            <Fragment set:html={icon('trash')} /> Restablecer
+          </button>
+        </div>
       </div>
       <div class="callout" data-tone="info" id="lab-motion-notice" hidden>
         <Fragment set:html={icon('info')} />
@@ -218,23 +225,132 @@ const tabs = [
       </details>
     </section>
   </div>
+  </section>
 
-  <section class="doc-section" aria-labelledby="lab-review-title">
-    <div class="lab-pane-head">
-      <h2 id="lab-review-title">Revisión</h2>
-      <span class="badge" id="lab-review-count" data-tone="neutral">—</span>
-    </div>
-    <p class="muted">
-      Comprueba el componente contra las reglas de angela. Es una ayuda, no un juez: lo que no se puede revisar con código
-      queda abajo.
+  <section class="lab-step" aria-labelledby="lab-review-title">
+    <h2 class="lab-step-title" id="lab-review-title">
+      <span class="lab-step-num" aria-hidden="true">3</span><span class="visually-hidden">Paso 3: </span>Revisa
+    </h2>
+    <p class="muted lab-step-lead">
+      Tres revisiones, de la más rápida a la más fina. Son una ayuda, no un juez: lo último lo decides tú.
     </p>
-    <ul class="lab-review" id="lab-review-list" role="list" aria-live="polite"></ul>
-    <details class="disclosure">
-      <summary>Comprobaciones que hay que hacer a mano</summary>
-      <ul>
+
+    <section class="stack lab-review-part" aria-labelledby="lab-auto-review-title">
+      <div class="lab-pane-head">
+        <h3 id="lab-auto-review-title">Revisión automática</h3>
+        <span class="badge" id="lab-review-count" data-tone="neutral">—</span>
+      </div>
+      <p class="muted">Comprueba en vivo, mientras escribes, las reglas que se pueden verificar con código.</p>
+      <ul class="lab-review" id="lab-review-list" role="list" aria-live="polite"></ul>
+    </section>
+
+    <section class="lab-ai-review lab-review-part stack" aria-labelledby="lab-ai-review-title">
+      <h3 id="lab-ai-review-title">Revisión con IA</h3>
+      <p class="muted" id="lab-ai-review-hint">
+        Tu agente de IA repasa el HTML, el CSS y el JS contra las reglas de angela. Si algo no cumple, te enseña qué había y
+        qué propone, y tú decides si lo aceptas.
+      </p>
+      <div class="cluster">
+        <button class="button" type="button" data-variant="outline" data-tone="neutral" id="lab-ai-review-run" aria-describedby="lab-ai-review-hint">
+          <Fragment set:html={icon('check')} /> Revisar con IA
+        </button>
+        <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-ai-review-cancel" hidden>Cancelar</button>
+        <progress class="lab-ai-progress" id="lab-ai-review-progress" hidden aria-label="Esperando la revisión"></progress>
+        <p class="muted lab-ai-review-status" id="lab-ai-review-status" role="status"></p>
+      </div>
+
+      <div class="callout" data-tone="info" id="lab-ai-review-setup" tabindex="-1" hidden>
+        <Fragment set:html={icon('info')} />
+        <div>
+          <p class="callout-title">Primero configura tu agente de IA</p>
+          <p>La revisión usa la IA de Ajustes: la URL de tu API, el modelo y su clave. Sin ellos no se puede revisar.</p>
+          <button class="button" type="button" data-variant="outline" data-tone="neutral" data-size="sm" commandfor="lab-settings" command="show-modal">
+            <Fragment set:html={icon('settings')} /> Abrir ajustes
+          </button>
+        </div>
+      </div>
+
+      <div class="callout" id="lab-ai-review-ok" tabindex="-1" hidden>
+        <Fragment set:html={icon('check').replace('<svg', '<svg data-when="cumple"')} />
+        <Fragment set:html={icon('alert').replace('<svg', '<svg data-when="pendiente" hidden')} />
+        <div class="stack" style="--stack-gap: var(--space-2)">
+          <p class="callout-title" id="lab-ai-review-ok-title"></p>
+          <p id="lab-ai-review-ok-summary"></p>
+          <details class="disclosure" id="lab-ai-review-checked-box">
+            <summary>Qué revisó</summary>
+            <ul id="lab-ai-review-checked"></ul>
+          </details>
+        </div>
+      </div>
+
+      <article class="card stack lab-ai-review-changes" id="lab-ai-review-changes" tabindex="-1" hidden aria-labelledby="lab-ai-review-changes-title">
+        <h4 id="lab-ai-review-changes-title"></h4>
+        <p id="lab-ai-review-summary"></p>
+        <div class="callout" data-tone="danger" id="lab-ai-review-api" hidden>
+          <Fragment set:html={icon('error')} />
+          <div>
+            <p class="callout-title">Esta propuesta rompe el componente para quien ya lo usa</p>
+            <p>Quita o renombra nombres públicos de los que dependen las páginas que lo usan:</p>
+            <ul id="lab-ai-review-api-list"></ul>
+            <p>Las reglas de angela no piden cambiarlos. Lo más seguro es rechazarla y volver a revisar.</p>
+          </div>
+        </div>
+        <ol class="lab-ai-review-issues" id="lab-ai-review-issues" role="list"></ol>
+        <p class="text" data-size="sm" data-muted id="lab-ai-review-after"></p>
+        <div class="callout" data-tone="warning" id="lab-ai-review-warnings" hidden>
+          <Fragment set:html={icon('alert')} />
+          <div>
+            <p class="callout-title">Revisa antes de aceptar</p>
+            <ul id="lab-ai-review-warning-list"></ul>
+          </div>
+        </div>
+        <details class="disclosure">
+          <summary>Ver todos los cambios, archivo por archivo</summary>
+          <div class="stack" id="lab-ai-review-diff"></div>
+        </details>
+        <div class="cluster">
+          <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="lab-ai-review-reject">Rechazar</button>
+          <button class="button" type="button" data-variant="outline" data-tone="neutral" id="lab-ai-review-try" aria-pressed="false">
+            Probar en la vista previa
+          </button>
+          <button class="button" type="button" id="lab-ai-review-accept">Aceptar cambios</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="stack lab-review-part" aria-labelledby="lab-manual-review-title">
+      <h3 id="lab-manual-review-title">Comprobaciones a mano</h3>
+      <p class="muted">Lo que ningún programa revisa por ti. Hazlo antes de proponerlo.</p>
+      <ul class="lab-checklist">
         {manualChecks.map((item) => <li>{item}</li>)}
       </ul>
-    </details>
+    </section>
+  </section>
+
+  <section class="lab-step" aria-labelledby="lab-step-propose">
+    <h2 class="lab-step-title" id="lab-step-propose">
+      <span class="lab-step-num" aria-hidden="true">4</span><span class="visually-hidden">Paso 4: </span>Propón al proyecto
+    </h2>
+    <p class="muted lab-step-lead">
+      Abre un pull request con tu componente, su página de documentación y lo que encontró la revisión. Queda a tu nombre
+      y se mezcla cuando pase la revisión del proyecto.
+    </p>
+    <div class="cluster">
+      <button class="button" type="button" id="lab-propose-open">
+        <Fragment set:html={icon('upload')} /> Proponer al proyecto
+      </button>
+      <a class="button" data-variant="ghost" data-tone="neutral" href={href('/contribuir')}>Cómo aportar</a>
+    </div>
+    <div class="callout lab-done" data-tone="success" id="lab-done" tabindex="-1" hidden>
+      <Fragment set:html={icon('check')} />
+      <div>
+        <p class="callout-title" id="lab-done-title">Pull request abierto</p>
+        <p>
+          Lo que escribiste ya está en GitHub y el laboratorio empieza de cero.
+          <a id="lab-done-link" href="#" target="_blank" rel="noopener">Ver el pull request</a>
+        </p>
+      </div>
+    </div>
   </section>
 
   <dialog class="dialog" id="lab-settings" data-size="lg" aria-labelledby="lab-settings-title" closedby="any">
@@ -273,6 +389,11 @@ const tabs = [
               ))
             }
           </div>
+          <p class="hint">
+            ¿Sin una clave de pago? Groq tiene una capa gratuita: crea tu clave en{' '}
+            <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> y elige «Groq
+            (gratis)». Permite pocas peticiones por minuto: si llegas al límite, el laboratorio te dice cuánto esperar.
+          </p>
           <div class="field">
             <label for="lab-ai-url">URL de la API</label>
             <p class="hint" id="lab-ai-url-hint">El servidor debe permitir llamadas desde el navegador (CORS).</p>
@@ -378,6 +499,27 @@ const tabs = [
         <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-propose" command="close">Cancelar</button>
         <button class="button" type="submit" value="proponer" id="lab-propose-send">Abrir pull request</button>
       </footer>
+    </form>
+  </dialog>
+  <dialog class="dialog" id="lab-reset" data-size="sm" aria-labelledby="lab-reset-title" aria-describedby="lab-reset-desc" closedby="any">
+    <div class="dialog-body stack" style="--stack-gap: var(--space-3)">
+      <h2 id="lab-reset-title" style="font-size: var(--fs-lg); margin: 0">¿Restablecer el código?</h2>
+      <p id="lab-reset-desc"></p>
+      <div id="lab-reset-loss">
+        <p class="text" data-weight="bold">Se perderá:</p>
+        <ul id="lab-reset-list"></ul>
+      </div>
+      <div class="callout" data-tone="warning">
+        <Fragment set:html={icon('alert')} />
+        <div>
+          <p class="callout-title">No se puede deshacer</p>
+          <p id="lab-reset-warning">Si quieres conservar algo, cópialo antes de continuar.</p>
+        </div>
+      </div>
+    </div>
+    <form class="dialog-footer" method="dialog">
+      <button class="button" value="cancelar" data-variant="ghost" data-tone="neutral" autofocus>Cancelar</button>
+      <button class="button" value="restablecer" data-tone="danger" id="lab-reset-confirm">Restablecer el código</button>
     </form>
   </dialog>
 </Layout>
