@@ -63,6 +63,16 @@ invokers y popover → polyfill condicional (`loadPolyfills`); anchor positionin
 
 Una regla nueva que se pueda comprobar con código va en `review.js` (la ven el laboratorio y el CI) o, si es del PR en conjunto, en `docs/scripts/revision/revision.js`.
 
+## Publicar en npm
+
+Los paquetes son `@angela-ui/angela` y `@angela-ui/react` (organización `angela-ui`, con 2FA obligatorio). Se publican desde GitHub Actions con Trusted Publishing (`.github/workflows/publicar.yml`): sin tokens y con procedencia verificada.
+
+1. Sube la versión en **los dos** `package.json` (la misma), por PR. Corrección: `0.1.1 → 0.1.2`; algo nuevo: `0.2.0`; prueba: `0.2.0-beta.1` (sale con la etiqueta `next`).
+2. Al mezclar, crea un release en GitHub con la etiqueta `v` + versión (`v0.1.2`).
+3. El workflow comprueba que la etiqueta coincide con las versiones, pasa tests, contraste y build, y publica primero `@angela-ui/angela` y luego `@angela-ui/react`. Si una versión ya existe, la salta: relanzarlo es seguro.
+
+Se empaqueta con pnpm (convierte `workspace:^` en la versión real) y se publica con npm (OIDC). El entorno `npm` de GitHub solo admite etiquetas `v*`. La configuración de cada paquete en npm debe coincidir con el workflow: `npm trust list @angela-ui/angela`.
+
 ## Git
 
 Ramas `feat/…`, `fix/…`, `chore/…` → PR. Commits en español con Conventional Commits. No commitear ni hacer push sin permiso.
