@@ -52,6 +52,14 @@ const STARTER = {
   }
 }`,
   js: `// JavaScript opcional (módulo ES). Se ejecuta aislado: sin red ni acceso a la página.
+// Exporta una función de activación: angela() la llama en la web, y aquí también.
+//
+// export function enhanceNota(root = document) {
+//   if (typeof window === 'undefined') return () => {};
+//   const onClick = (event) => { /* event.target.closest('.nota') … */ };
+//   root.addEventListener('click', onClick);
+//   return () => root.removeEventListener('click', onClick);
+// }
 `,
 };
 
@@ -801,6 +809,7 @@ export function startLab() {
             .map((p) => p.id),
         }),
         files: { ...state.files },
+        jsFile: sources().js ?? null,
         findings: state.findings,
         onStep: (text) => (el.proposeStep.textContent = text),
         signal: state.request.signal,

@@ -10,6 +10,8 @@
  * nada sensible (ni clave ni cookies), así que una imagen no tiene qué sacar.
  */
 
+import { findEntryFunction } from './js-entry.js';
+
 // Fuentes de angela, tal cual están en el paquete (una sola fuente de verdad).
 const cssSources = import.meta.glob('../../../../packages/angela/src/**/*.css', {
   query: '?raw',
@@ -207,13 +209,14 @@ const consoleBridge = `
  * Carga los módulos de angela desde blobs (dentro del iframe, sin red) y luego el JS del editor.
  * Si el editor tiene el código de un módulo de angela (p. ej. tabs.js), lo sustituye.
  */
-function moduleLoader({ modules, userJs, userModule, dependencyJs = [], ignoreReducedMotion = false }) {
+function moduleLoader({ modules, userJs, userModule, userEntry = null, dependencyJs = [], ignoreReducedMotion = false }) {
   return `
 ${ignoreReducedMotion ? IGNORE_REDUCED_MOTION : ''}
 const files = ${scriptJson(modules)};
 const dependencyJs = ${scriptJson(dependencyJs)};
 const userJs = ${scriptJson(userJs)};
 const userModule = ${scriptJson(userModule ?? null)};
+const userEntry = ${scriptJson(userEntry)};
 if (userModule) files[userModule] = userJs;
 const urls = {};
 const load = (name) => {
@@ -241,7 +244,9 @@ for (const [index, { name, js }] of dependencyJs.entries()) {
 if (!userModule && userJs.trim()) {
   try {
     files['__editor.js'] = userJs;
-    await import(load('__editor.js'));
+    const mod = await import(load('__editor.js'));
+    // Igual que angela() en la web: llama a la función de activación que exporta el módulo.
+    if (userEntry && typeof mod[userEntry] === 'function') mod[userEntry](document);
   } catch (error) {
     console.error(error);
   }
@@ -319,7 +324,14 @@ export function buildPreviewDocument({
 <style>${escapeClosingTag(css, 'style')}</style>
 <!-- En el <head> y no tras el HTML del editor: un atributo o comentario sin cerrar no puede
      tragárselo. Los módulos se ejecutan al terminar de analizar el documento. -->
-<script type="module">${escapeClosingTag(moduleLoader({ modules, userJs: js, userModule: jsModule, dependencyJs, ignoreReducedMotion }), 'script')}</script>
+<script type="module">${escapeClosingTag(moduleLoader({
+    modules,
+    userJs: js,
+    userModule: jsModule,
+    userEntry: jsModule ? null : findEntryFunction(js),
+    dependencyJs,
+    ignoreReducedMotion,
+  }), 'script')}</script>
 </head>
 <body>
 ${html}

@@ -9,6 +9,8 @@
  *  - level 'warn':  probablemente sobra o falta algo; revísalo y decide.
  */
 
+import { findEntryFunction } from './js-entry.js';
+
 /** Quita comentarios y cadenas para no dar falsos positivos con el texto de ejemplo. */
 const stripCss = (css) => css.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/"[^"]*"|'[^']*'/g, '""');
 const stripHtml = (html) => html.replace(/<!--[\s\S]*?-->/g, ' ');
@@ -188,6 +190,16 @@ const HTML_RULES = [
 ];
 
 const JS_RULES = [
+  {
+    id: 'activacion',
+    level: 'error',
+    check(js) {
+      if (!stripJs(js).trim()) return null;
+      return findEntryFunction(js)
+        ? null
+        : 'Exporta una función de activación (export function enhanceNombre(root = document) { …; return limpieza; }): es la que angela() llama en la web. Sin ella, el módulo se sube pero no se ejecuta nunca.';
+    },
+  },
   {
     id: 'ssr',
     level: 'warn',

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "pnpm --filter docs dev",
     "build": "pnpm --filter angela build && pnpm --filter angela-react build && pnpm --filter docs build",
-    "test": "pnpm --filter angela test && pnpm --filter angela-react test",
+    "test": "pnpm --filter angela test && pnpm --filter angela-react test && pnpm --filter docs test",
     "check:contrast": "pnpm --filter angela check:contrast",
     "typecheck": "pnpm --filter angela build:types && pnpm --filter angela-react typecheck"
   }
