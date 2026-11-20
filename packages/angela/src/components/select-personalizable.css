@@ -1,0 +1,130 @@
+/*
+ * Select personalizable: mejora progresiva de select.input con appearance: base-select.
+ * Sin soporte, en pantallas táctiles (conservan su selector del sistema) o en alto
+ * contraste se queda el select nativo de «Campos de texto». Sin JS.
+ *
+ * Opciones con descripción:
+ *   <option>Pro<span class="option-sep"> — </span><span class="option-hint">12 €/mes</span></option>
+ * Sin soporte se lee «Pro — 12 €/mes». Con <button><selectedcontent></selectedcontent></button>
+ * como primer hijo del select, el botón muestra solo el nombre.
+ */
+@layer angela.components {
+  @supports (appearance: base-select) {
+    @media (pointer: fine) and (forced-colors: none) {
+      /* Lo que pisa a select.input de «Campos de texto»: necesita su especificidad. */
+      select.input:not([multiple], [size]) {
+        &,
+        &::picker(select) {
+          appearance: base-select;
+        }
+
+        padding-inline-end: var(--space-3);
+        background-image: none;
+      }
+
+      /* Valores por defecto (especificidad 0): data-* y el CSS de quien lo use ganan. */
+      :where(select.input:not([multiple], [size])) {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        cursor: pointer;
+
+        & > button {
+          display: contents;
+        }
+
+        &::picker-icon {
+          margin-inline-start: auto;
+          color: var(--color-text-muted);
+        }
+
+        &:open::picker-icon {
+          rotate: 180deg;
+          color: var(--color-brand-text);
+        }
+
+        &::picker(select) {
+          margin-block: var(--space-1);
+          padding: var(--space-1);
+          max-block-size: min(20rem, 50dvb);
+          border: 1px solid var(--color-border);
+          border-radius: var(--radius-lg);
+          background-color: var(--color-surface);
+          color: var(--color-text);
+          box-shadow: var(--elevation-2);
+        }
+
+        & option {
+          gap: var(--space-2);
+          min-block-size: var(--control-h-sm);
+          padding-block: var(--space-1-5);
+          padding-inline: var(--space-2) var(--space-3);
+          border-radius: var(--radius-sm);
+
+          &:hover,
+          &:focus-visible {
+            background-color: var(--color-surface-hover);
+            outline: none;
+          }
+
+          &:checked {
+            font-weight: var(--fw-medium);
+          }
+
+          &::checkmark {
+            color: var(--color-brand-text);
+          }
+
+          &:disabled {
+            color: var(--color-text-muted);
+            cursor: not-allowed;
+          }
+        }
+
+        & option:has(.option-hint) {
+          display: grid;
+          grid-template-columns: auto 1fr;
+          align-items: baseline;
+          row-gap: var(--space-0-5);
+        }
+
+        & .option-sep,
+        & selectedcontent :is(.option-sep, .option-hint) {
+          display: none;
+        }
+
+        & .option-hint {
+          grid-column: 2;
+          color: var(--color-text-muted);
+          font-size: var(--fs-sm);
+          font-weight: var(--fw-regular);
+        }
+
+        @media (prefers-reduced-motion: no-preference) {
+          &::picker-icon {
+            transition: rotate var(--duration-fast) var(--ease-standard);
+          }
+
+          &::picker(select) {
+            transition: opacity, translate, overlay, display;
+            transition-duration: var(--duration-normal);
+            transition-timing-function: var(--ease-standard);
+            transition-behavior: allow-discrete;
+          }
+
+          &:not(:open)::picker(select) {
+            opacity: 0;
+            translate: 0 calc(-1 * var(--space-1));
+          }
+
+          @starting-style {
+            &:open::picker(select) {
+              opacity: 0;
+              translate: 0 calc(-1 * var(--space-1));
+            }
+          }
+        }
+      }
+    }
+  }
+}
