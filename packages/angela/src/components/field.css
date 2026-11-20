@@ -79,7 +79,7 @@
       opacity: 1;
     }
 
-    &:hover:not(:disabled, [readonly], :focus-visible) {
+    &:hover:not(:disabled, [readonly], :focus-visible, :user-invalid, [aria-invalid="true"]) {
       border-color: var(--color-text-muted);
     }
 
