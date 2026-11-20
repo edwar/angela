@@ -1,0 +1,54 @@
+/* @componente spotlight
+ * Punto de luz que sigue al puntero y revela el contenido por partes.
+ * Parámetros: --spotlight-radius · --spotlight-shade
+ */
+@property --spotlight-x {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+
+@property --spotlight-y {
+  syntax: "<length-percentage>";
+  inherits: true;
+  initial-value: 50%;
+}
+
+@layer angela.components {
+  :where(.spotlight) {
+    --spotlight-radius: 120px;
+    --spotlight-shade: color-mix(in oklch, var(--color-canvas) 95%, transparent);
+  }
+
+  .spotlight {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+  }
+
+  .spotlight > img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+  }
+
+  .spotlight-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      circle var(--spotlight-radius) at var(--spotlight-x) var(--spotlight-y),
+      transparent 0,
+      var(--spotlight-shade) 100%
+    );
+  }
+
+  /* La luz se desliza sin saltos */
+  @media (prefers-reduced-motion: no-preference) {
+    .spotlight-overlay {
+      transition:
+        --spotlight-x var(--duration-normal) var(--ease-standard),
+        --spotlight-y var(--duration-normal) var(--ease-standard);
+    }
+  }
+}
