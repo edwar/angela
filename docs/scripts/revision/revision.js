@@ -104,7 +104,7 @@ const examplesHtml = (entries) =>
  *   findEntryFunction: (js: string) => string | null,
  * }} ctx
  */
-export function reviewUnit(unit, { read, docs, reviewComponent, findEntryFunction }) {
+export function reviewUnit(unit, { read, docs, reviewComponent, findEntryFunction, apiTokens = null, rowToken = null }) {
   const cssPath = unit.css ? `${CSS_DIR}${unit.css}.css` : null;
   // Aunque el PR no toque el JS, si el componente lo tiene se revisa con lo demás.
   if (!unit.js && unit.css && read('head', `${JS_DIR}${unit.css}.js`) != null) unit = { ...unit, js: unit.css };
@@ -148,7 +148,7 @@ export function reviewUnit(unit, { read, docs, reviewComponent, findEntryFunctio
 
   for (const slug of unit.duplica ?? []) {
     if (read('head', `${DOCS_DIR}${slug}.js`) == null) continue; // el PR la borra: bien
-    add('error', 'pagina-duplicada', `\`${DOCS_DIR}${slug}.js\` crea una segunda página de «${title}»: actualiza la que ya existe (\`/componentes/${unit.slugs[0]}\`, en \`docs/src/data/components.js\`) y borra este archivo.`);
+    add('error', 'pagina-duplicada', `\`${DOCS_DIR}${slug}.js\` crea una segunda página de «${title}»: actualiza la que ya existe (\`${DOCS_DIR}${unit.slugs[0]}.js\`, en \`/componentes/${unit.slugs[0]}\`) y borra este archivo.`);
   }
 
   if (head.docs.length === 0) {
@@ -161,6 +161,22 @@ export function reviewUnit(unit, { read, docs, reviewComponent, findEntryFunctio
       !entry.a11y?.length && 'notas de accesibilidad',
     ].filter(Boolean);
     if (faltan.length) add('error', 'documentacion', `La documentación de «${entry.title}» no tiene ${faltan.join(', ')}.`);
+  }
+
+  // Lo que el CSS añade para quien lo usa (clases, data-*, variables) tiene su fila en la API.
+  if (apiTokens && rowToken && head.css && head.docs.length) {
+    const antes = apiTokens(base.css ?? '');
+    const ahora = apiTokens(head.css);
+    const filas = head.docs.flatMap((entry) => entry.api ?? []).map(([name]) => rowToken(name)).filter(Boolean);
+    const documentado = (tipo, nombre) => filas.some((t) => t.tipo === tipo && t.nombre === nombre);
+    const faltan = [
+      ...[...ahora.clases].filter((n) => !antes.clases.has(n) && !documentado('clases', n)).map((n) => `.${n}`),
+      ...[...ahora.atributos.keys()].filter((n) => !antes.atributos.has(n) && !documentado('atributos', n)),
+      ...[...ahora.parametros.keys()].filter((n) => !antes.parametros.has(n) && !documentado('parametros', n)),
+    ];
+    if (faltan.length) {
+      add('warn', 'api-sin-documentar', `El CSS añade ${faltan.map((n) => `\`${n}\``).join(', ')} y la API de «${title}» no lo explica: añade su fila.`);
+    }
   }
 
   // Un JS sin efecto ya lo marca «sin-efecto»: pedirle registro y test sería ruido (la solución es quitarlo).

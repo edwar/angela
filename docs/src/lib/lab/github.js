@@ -190,7 +190,21 @@ function jsLines(js) {
   }
 }
 
-function prBody({ partes, id, nuevo, resumen, html, hallazgos, documentado, js }) {
+/** Lo que cambió en la página de documentación, para quien revisa. */
+function cambiosDocs(resumen) {
+  if (!resumen) return '';
+  const lista = (titulo, items) => (items?.length ? `- ${titulo}: ${items.map((i) => `«${i}»`).join(', ')}` : null);
+  const lineas = [
+    lista('Ejemplos nuevos', resumen.ejemplos?.nuevos),
+    lista('Ejemplos con cambios', resumen.ejemplos?.cambiados),
+    lista('Ejemplos quitados (comprueba que sobran)', resumen.ejemplos?.quitados),
+    lista('API: filas nuevas', resumen.api?.nuevos),
+    lista('API: filas quitadas (el CSS ya no las tiene)', resumen.api?.quitados),
+  ].filter(Boolean);
+  return ['## Documentación', '', lineas.length ? lineas.join('\n') : '- Sin cambios en ejemplos ni API.', ''].join('\n');
+}
+
+function prBody({ partes, id, nuevo, resumen, html, hallazgos, documentado, docs, js }) {
   const modulo = jsLines(js);
   const avisos = hallazgos.filter((h) => h.level === 'warn');
   const conjunto = partes.length > 1;
@@ -221,13 +235,14 @@ function prBody({ partes, id, nuevo, resumen, html, hallazgos, documentado, js }
       ? '- Sin avisos: cumple las reglas que se pueden comprobar con código.'
       : avisos.map((h) => `- Pendiente de revisar: ${h.text}`).join('\n'),
     '',
+    documentado && docs.actualiza ? cambiosDocs(docs.resumen) : '',
     '## Falta por hacer al integrarlo',
     '',
-    documentado
-      ? `- [x] Página de documentación en \`${docsPath(id)}\`: repásala y añade los ejemplos que falten.`
-      : nuevo
-        ? `- [ ] Entrada en \`docs/src/data/components.js\` (ejemplos, API y accesibilidad).`
-        : `- [ ] Actualiza la página que ya existe (en \`docs/src/data/components.js\` o \`docs/src/data/componentes/\`) con lo que cambia: ejemplos, API y accesibilidad. El laboratorio no la reescribe para no perder lo escrito a mano.`,
+    !documentado
+      ? `- [ ] ${nuevo ? 'Página de documentación' : 'Pon al día la página que ya existe'} en \`${DOCS_DIR}/\` (ejemplos, API y accesibilidad).`
+      : docs.actualiza
+        ? `- [x] Página de documentación puesta al día en \`${docsPath(docs.slug)}\`: describe lo que quedó «Pendiente de describir».`
+        : `- [x] Página de documentación en \`${docsPath(docs.slug)}\`: repásala y añade los ejemplos que falten.`,
     modulo.todo,
     `- [ ] Si encaja, envoltorio en \`packages/angela-react\`.`,
     `- [ ] Repaso con teclado y lector de pantalla.`,
@@ -246,7 +261,7 @@ function prBody({ partes, id, nuevo, resumen, html, hallazgos, documentado, js }
  * @param {{
  *   token: string, id: string, name: string, summary: string,
  *   parts: { id: string, css: string }[],
- *   docsEntry?: string | null,
+ *   docs?: { slug: string, content: string, actualiza?: boolean, resumen?: object } | null,
  *   jsFile?: string | null,
  *   files: { html: string, css: string, js: string },
  *   findings?: { level: string, text: string }[],
@@ -261,7 +276,7 @@ export async function proposeComponent({
   summary,
   parts,
   files,
-  docsEntry = null,
+  docs = null,
   jsFile = null,
   findings = [],
   onStep = () => {},
@@ -357,13 +372,17 @@ export async function proposeComponent({
     if (cambiado) await put(ENTRY, css, `chore(${id}): importa ${conjunto ? 'los componentes' : 'el componente'} en angela.css`);
   }
 
-  // Solo para componentes nuevos. Si ya existe, su página tiene ejemplos y notas escritos a
-  // mano (y la del núcleo vive en components.js con otro slug): generarla la duplicaría o la
-  // empobrecería. Queda como tarea en el PR.
-  const documentado = Boolean(docsEntry) && nuevo;
+  // Un componente nuevo estrena página. Uno que ya existe solo se toca si el laboratorio la
+  // fusionó con la que hay (docs.actualiza): una generada de cero la duplicaría o perdería lo
+  // escrito a mano. Si no, queda como tarea en el PR.
+  const documentado = Boolean(docs) && (nuevo || Boolean(docs.actualiza));
   if (documentado) {
-    paso('Escribiendo la página de documentación…');
-    await put(docsPath(id), docsEntry, `docs(${id}): página del componente`);
+    paso(docs.actualiza ? 'Poniendo al día la página de documentación…' : 'Escribiendo la página de documentación…');
+    await put(
+      docsPath(docs.slug),
+      docs.content,
+      docs.actualiza ? `docs(${id}): pone al día su página` : `docs(${id}): página del componente`,
+    );
   }
 
   // El JS se sube y se registra en @angela-ui/angela/js: si no, angela() no lo ejecuta nunca.
@@ -404,6 +423,7 @@ export async function proposeComponent({
           js,
           hallazgos: findings,
           documentado,
+          docs,
         }),
         maintainer_can_modify: true,
       },

@@ -26,7 +26,7 @@ packages/angela-icons/    Iconos (paquete npm "@angela-ui/icons")
   scripts/build.mjs       Genera dist/: un módulo por icono, «todos», sprite, metadatos y tipos
   src/*.tsx               Un archivo por grupo; 'use client' solo donde hay hooks o refs
 docs/                     Sitio de documentación (Astro)
-  src/data/components.js  Ejemplos, API y notas de accesibilidad de cada componente
+  src/data/componentes/   Una página por componente (<slug>.js): ejemplos, API y accesibilidad. components.js solo las ordena
   src/styles/docs.css     Estilo «plano» del sitio (tema data-angela-theme="plano")
   src/data/imagenes.js    Índice de las imágenes de ejemplo (public/img): autor, origen y licencia
 ```
@@ -58,7 +58,7 @@ docs/                     Sitio de documentación (Astro)
 - Imágenes en ejemplos y pruebas: las de `/img/…` (página «Imágenes»), no servicios externos como placehold.co. Solo se añaden fotos CC0 o equivalente, con su entrada en `docs/src/data/imagenes.js` (autor, origen, licencia y texto alternativo que describa lo que se ve): se redistribuyen desde la web.
 - Iconos de `@angela-ui/icons`: se diseñan en el editor (`/iconos/editor`) dentro de la zona segura 2–22 de 24×24, con trazo libre (tipo `trazo`, puntos `[x, y, presión]` del lápiz de una tableta) o formas limpias (línea, rectángulo, círculo, elipse) para lo geométrico. La fuente es el JSON y el SVG lo genera `mano-alzada.js`: grosor 0.75→1.25 con puntas finas; la presión real se normaliza por icono y, sin lápiz, se usa la curva de la guía (semilla = nombre). El estilo es global: no se retoca a mano un SVG generado. El build no publica un icono que incumpla `reglas.js`. Nombre en inglés y kebab-case; etiquetas en español e inglés. Cada icono, su propio PR. Sin iconos copiados de otras librerías.
 - Los iconos de la interfaz del sitio (`icon()` de `docs/src/data/icons.js`) son de Lucide, con su licencia en `docs/src/data/LICENSE-LUCIDE`; no forman parte de `@angela-ui/icons`.
-- Cada componente nuevo se documenta en `docs/src/data/components.js` (ejemplos + API + accesibilidad) y, si encaja, tiene su envoltorio en `@angela-ui/react`.
+- Cada componente se documenta en `docs/src/data/componentes/<slug>.js` (ejemplos + API + accesibilidad) y, si encaja, tiene su envoltorio en `@angela-ui/react`. El laboratorio crea la página de un componente nuevo y pone al día la de uno existente: los ejemplos por título (`<!-- Título -->` en la pestaña HTML), la API con lo que el CSS añade o quita (lo nuevo queda «Pendiente de describir») y las notas del diálogo. Cuando cambies un componente a mano, cambia también su página.
 - Antes de terminar: `pnpm test`, `pnpm check:contrast` y revisión con teclado y lector de pantalla.
 
 ## Soporte de navegadores

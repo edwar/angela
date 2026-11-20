@@ -20,12 +20,24 @@ export function readClasses(css) {
   return [...found];
 }
 
-/** Propiedades personalizadas pensadas para quien usa el componente (las `--_privadas` no). */
+/** Prefijos de los tokens de angela: leerlos no los convierte en parámetros del componente. */
+const TOKENS = /^--(color|space|radius|fs|lh|fw|font|duration|ease|elevation|control|focus|tone|angela|measure)\b/;
+
+/**
+ * Propiedades personalizadas pensadas para quien usa el componente (las `--_privadas` no):
+ * las que declara y las que solo lee con un valor de reserva, `var(--x, …)`, para que se
+ * puedan poner en un contenedor o en :root.
+ */
 export function readParameters(css) {
+  const code = stripComments(css);
   const found = new Map();
-  for (const [, name, value] of stripComments(css).matchAll(/(--[a-z][\w-]*)\s*:\s*([^;}]+)/g)) {
+  for (const [, name, value] of code.matchAll(/(--[a-z][\w-]*)\s*:\s*([^;}]+)/g)) {
     if (name.startsWith('--_') || found.has(name)) continue;
     found.set(name, value.trim());
+  }
+  for (const [, name] of code.matchAll(/var\(\s*(--[a-z][\w-]*)\s*,/g)) {
+    if (name.startsWith('--_') || TOKENS.test(name) || found.has(name)) continue;
+    found.set(name, null);
   }
   return [...found];
 }
@@ -52,7 +64,7 @@ export function buildApi(css, html) {
     api.push([attr, values.length ? values.join(' · ') : 'Atributo sin valor (presente o ausente).']);
   }
   for (const [name, value] of readParameters(css)) {
-    api.push([name, `Parámetro. Por defecto: ${value}.`]);
+    api.push([name, value == null ? 'Parámetro.' : `Parámetro. Por defecto: ${value}.`]);
   }
   if (/\bdata-slot\b/.test(html)) {
     api.push(['data-slot', 'Marca el elemento que recibe el contenido de dentro.']);
@@ -60,11 +72,60 @@ export function buildApi(css, html) {
   return api;
 }
 
-/** Deja el texto listo para ir dentro de una cadena de JavaScript. */
-const literal = (value) => JSON.stringify(value);
+/* ---------- Escribir el archivo ---------- */
 
 /**
- * Archivo de datos del componente, listo para `docs/src/data/componentes/<id>.js`.
+ * Texto como literal de JavaScript: el HTML de varias líneas, con comillas invertidas para
+ * que se lea como en el editor; el resto, con comillas dobles.
+ */
+export function literal(value) {
+  const text = String(value);
+  if (!text.includes('\n')) return JSON.stringify(text);
+  return `\`${text.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')}\``;
+}
+
+const CABECERA = 'Página de documentación del componente. La genera y la actualiza el laboratorio al\n * proponer cambios; también se puede editar a mano.';
+
+/**
+ * Archivo de datos de una página de documentación (`docs/src/data/componentes/<slug>.js`).
+ * @param {{ slug: string, title: string, summary: string,
+ *   examples: { title: string, note?: string, code: string }[],
+ *   api: [string, string][], a11y: string[] }} entry
+ */
+export function serializeDocsEntry(entry) {
+  const ejemplo = (ex) =>
+    [
+      '    {',
+      `      title: ${literal(ex.title)},`,
+      ex.note ? `      note: ${literal(ex.note)},` : null,
+      `      code: ${literal(ex.code)},`,
+      '    },',
+    ]
+      .filter(Boolean)
+      .join('\n');
+  return `/**
+ * ${entry.title}
+ * ${CABECERA}
+ */
+export default {
+  slug: ${literal(entry.slug)},
+  title: ${literal(entry.title)},
+  summary: ${literal(entry.summary)},
+  examples: [
+${entry.examples.map(ejemplo).join('\n')}
+  ],
+  api: [
+${entry.api.map(([name, desc]) => `    [${literal(name)}, ${literal(desc)}],`).join('\n')}
+  ],
+  a11y: [
+${entry.a11y.map((nota) => `    ${literal(nota)},`).join('\n')}
+  ],
+};
+`;
+}
+
+/**
+ * Archivo de datos de un componente nuevo, listo para `docs/src/data/componentes/<id>.js`.
  *
  * @param {{
  *   id: string, title: string, summary: string,
@@ -73,36 +134,145 @@ const literal = (value) => JSON.stringify(value);
  * }} input
  */
 export function buildDocsEntry({ id, title, summary, files, a11y = [], relatedTo = [] }) {
-  const api = buildApi(files.css, files.html);
   const notas = a11y.length
     ? a11y
     : ['Pendiente de documentar: repasa el componente con teclado y lector de pantalla y anota aquí lo que haya que saber.'];
+  const relacion = relatedTo.length ? `Se usa junto con ${relatedTo.map((otro) => `«${otro}»`).join(' y ')}.` : '';
+  const bloques = splitExamples(files.html);
+  return serializeDocsEntry({
+    slug: id,
+    title,
+    summary,
+    examples: (bloques.length ? bloques : [{ title: 'Ejemplo', code: files.html.trim() }]).map((ex, i) => ({
+      ...ex,
+      ...(i === 0 && relacion && !ex.note && { note: relacion }),
+    })),
+    api: buildApi(files.css, files.html),
+    a11y: notas,
+  });
+}
 
-  const relacion = relatedTo.length
-    ? `Se usa junto con ${relatedTo.map((otro) => `«${otro}»`).join(' y ')}.`
-    : '';
+/* ---------- Actualizar la página de un componente que ya existe ---------- */
 
-  return `/**
- * ${title}
- * Generado desde el laboratorio al proponer el componente. Edítalo con libertad:
- * añade ejemplos, afina la tabla de API y completa las notas de accesibilidad.
+/**
+ * Ejemplos de la pestaña HTML. El laboratorio carga cada ejemplo como «<!-- Título -->» +
+ * su código; aquí se deshace el camino. Solo cuentan los comentarios al principio de línea
+ * (sin sangría): los de dentro de un ejemplo son parte de su código. «<!-- Título: nota -->»
+ * separa el título de una nota. Lo que haya antes del primer comentario es un ejemplo sin título.
+ * @returns {{ title: string, note?: string, comment: string, code: string }[]}
  */
-export default {
-  slug: ${literal(id)},
-  title: ${literal(title)},
-  summary: ${literal(summary)},
-  examples: [
-    {
-      title: 'Ejemplo',${relacion ? `\n      note: ${literal(relacion)},` : ''}
-      code: ${literal(files.html.trim())},
-    },
-  ],
-  api: [
-${api.map(([name, desc]) => `    [${literal(name)}, ${literal(desc)}],`).join('\n')}
-  ],
-  a11y: [
-${notas.map((nota) => `    ${literal(nota)},`).join('\n')}
-  ],
-};
-`;
+export function splitExamples(html) {
+  const bloques = [];
+  let actual = { title: 'Ejemplo', comment: '', lines: [] };
+  const cerrar = () => {
+    const code = actual.lines.join('\n').trim();
+    if (code) bloques.push({ title: actual.title, ...(actual.note && { note: actual.note }), comment: actual.comment, code });
+  };
+  for (const linea of (html ?? '').split('\n')) {
+    const m = /^<!--\s*(.+?)\s*-->\s*$/.exec(linea);
+    if (!m) {
+      actual.lines.push(linea);
+      continue;
+    }
+    cerrar();
+    const [title, ...resto] = m[1].split(/:\s+/);
+    const note = resto.join(': ').trim();
+    actual = { title: title.trim(), ...(note && { note: note[0].toUpperCase() + note.slice(1) + (/[.!?]$/.test(note) ? '' : '.') }), comment: m[1], lines: [] };
+  }
+  cerrar();
+  return bloques;
+}
+
+/** Lo que el CSS ofrece a quien lo usa: clases, atributos data-* y parámetros. */
+export function apiTokens(css) {
+  return {
+    clases: new Set(readClasses(css)),
+    atributos: new Map(readVariants(css)),
+    parametros: new Map(readParameters(css)),
+  };
+}
+
+/** A qué parte del CSS se refiere una fila de la API, o null si no sale del CSS (p. ej. name="grupo"). */
+export function rowToken(name) {
+  const variable = /--[a-z][\w-]*/.exec(name);
+  if (variable) return { tipo: 'parametros', nombre: variable[0] };
+  const atributo = /data-[\w-]+/.exec(name);
+  if (atributo) return { tipo: 'atributos', nombre: atributo[0] };
+  const clase = /\.([a-z][\w-]*)/.exec(name);
+  if (clase) return { tipo: 'clases', nombre: clase[1] };
+  return null;
+}
+
+const igualTitulo = (a, b) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/**
+ * Pone al día la página de un componente con lo que se propone desde el laboratorio, sin
+ * perder lo escrito a mano: los ejemplos se cambian por título (y conservan su nota), la API
+ * conserva sus descripciones y solo gana o pierde las filas de lo que el CSS añade o quita, y
+ * las notas de accesibilidad son las del diálogo (que se abre con las actuales).
+ *
+ * @param {{ slug: string, title: string, summary: string,
+ *   examples: { title: string, note?: string, code: string }[],
+ *   api: [string, string][], a11y: string[] }} existing
+ * @param {{ html: string, css: string, oldCss: string, a11y?: string[] }} cambios
+ */
+export function mergeDocsEntry(existing, { html, css, oldCss, a11y = [] }) {
+  const resumen = { ejemplos: { nuevos: [], cambiados: [], quitados: [] }, api: { nuevos: [], quitados: [] } };
+
+  // --- Ejemplos ---
+  const bloques = splitExamples(html);
+  const usados = new Set();
+  const examples = bloques.length
+    ? bloques.map((b) => {
+        const previo = existing.examples.find(
+          (ex) => !usados.has(ex) && (igualTitulo(ex.title, b.comment) || igualTitulo(ex.title, b.title)),
+        );
+        if (!previo) {
+          resumen.ejemplos.nuevos.push(b.title);
+          return { title: b.title, ...(b.note && { note: b.note }), code: b.code };
+        }
+        usados.add(previo);
+        if (previo.code.trim() !== b.code) resumen.ejemplos.cambiados.push(previo.title);
+        return { ...previo, code: b.code };
+      })
+    : existing.examples;
+  if (bloques.length) {
+    resumen.ejemplos.quitados = existing.examples.filter((ex) => !usados.has(ex)).map((ex) => ex.title);
+  }
+
+  // --- API ---
+  const antes = apiTokens(oldCss ?? '');
+  const ahora = apiTokens(css ?? '');
+  const api = existing.api.filter(([name]) => {
+    const token = rowToken(name);
+    // Solo se quita lo que salía del CSS anterior y el nuevo ya no tiene.
+    const quitar = token && antes[token.tipo].has(token.nombre) && !ahora[token.tipo].has(token.nombre);
+    if (quitar) resumen.api.quitados.push(name);
+    return !quitar;
+  });
+  const cubierto = (tipo, nombre) =>
+    api.some(([name]) => {
+      const t = rowToken(name);
+      return t?.tipo === tipo && t.nombre === nombre;
+    });
+  const nueva = (name, desc) => {
+    api.push([name, desc]);
+    resumen.api.nuevos.push(name);
+  };
+  for (const clase of ahora.clases) {
+    if (!antes.clases.has(clase) && !cubierto('clases', clase)) nueva(`.${clase}`, 'Pendiente de describir.');
+  }
+  for (const [atributo, valores] of ahora.atributos) {
+    if (antes.atributos.has(atributo) || cubierto('atributos', atributo)) continue;
+    nueva(valores.length ? `${atributo}="${valores.join(' | ')}"` : atributo, 'Pendiente de describir.');
+  }
+  for (const [parametro, valor] of ahora.parametros) {
+    if (antes.parametros.has(parametro) || cubierto('parametros', parametro)) continue;
+    nueva(parametro, valor == null ? 'Pendiente de describir.' : `Pendiente de describir. Por defecto: ${valor}.`);
+  }
+
+  return {
+    entry: { ...existing, examples, api, a11y: a11y.length ? a11y : existing.a11y },
+    resumen,
+  };
 }

@@ -20,7 +20,7 @@ import { aiKey, drafts, githubToken, settings, toComponentId } from './storage.j
 import { getRenderedScheme } from '@angela-ui/angela/js/theme';
 import { createCodeEditor } from './editor.js';
 import { reviewComponent } from './review.js';
-import { buildDocsEntry } from './docs-entry.js';
+import { buildDocsEntry, mergeDocsEntry, serializeDocsEntry } from './docs-entry.js';
 import { guessFormat } from './ai.js';
 import { diffStats, lineDiff, withContext } from './diff.js';
 
@@ -1058,7 +1058,8 @@ export function startLab() {
     const info = componentInfo();
     el.proposeName.value = info ? info.title : '';
     el.proposeSummary.value = '';
-    el.proposeA11y.value = '';
+    // Si parte de un componente, vienen las notas de su página: lo que quede es lo que tendrá.
+    el.proposeA11y.value = info ? info.a11y.join('\n') : '';
     el.proposeStep.textContent = '';
     showProposeError(null);
     el.done.hidden = true;
@@ -1103,6 +1104,42 @@ export function startLab() {
     el.done.focus();
   }
 
+  /**
+   * Página de documentación que acompaña al pull request. Si parte de un componente que ya
+   * existe, se pone al día la suya (ejemplos por título, API y notas) sin perder lo escrito a
+   * mano; si es nuevo, se genera.
+   */
+  function docsForProposal(id) {
+    const a11y = el.proposeA11y.value
+      .split('\n')
+      .map((linea) => linea.trim())
+      .filter(Boolean);
+    const info = componentInfo();
+    if (info) {
+      const { entry, resumen } = mergeDocsEntry(info, {
+        html: state.files.html,
+        css: state.files.css,
+        oldCss: original(info.slug).css,
+        a11y,
+      });
+      return { slug: info.slug, content: serializeDocsEntry(entry), actualiza: true, resumen };
+    }
+    return {
+      slug: id,
+      content: buildDocsEntry({
+        id,
+        title: el.proposeName.value.trim(),
+        summary: el.proposeSummary.value.trim(),
+        files: { ...state.files },
+        a11y,
+        // Si el conjunto define varias piezas, la página dice con cuáles se usa.
+        relatedTo: currentParts()
+          .filter((p) => p.declared && p.id !== id)
+          .map((p) => p.id),
+      }),
+    };
+  }
+
   on(el.proposeForm, 'submit', async (event) => {
     event.preventDefault();
     const token = githubToken.get();
@@ -1129,20 +1166,7 @@ export function startLab() {
         name: el.proposeName.value.trim(),
         summary: el.proposeSummary.value.trim(),
         parts: currentParts().map(({ id: parteId, css }) => ({ id: parteId, css })),
-        docsEntry: buildDocsEntry({
-          id,
-          title: el.proposeName.value.trim(),
-          summary: el.proposeSummary.value.trim(),
-          files: { ...state.files },
-          a11y: el.proposeA11y.value
-            .split('\n')
-            .map((linea) => linea.trim())
-            .filter(Boolean),
-          // Si el conjunto define varias piezas, la página dice con cuáles se usa.
-          relatedTo: currentParts()
-            .filter((p) => p.declared && p.id !== id)
-            .map((p) => p.id),
-        }),
+        docs: docsForProposal(id),
         files: { ...state.files },
         jsFile: sources().js ?? null,
         findings: state.findings,
