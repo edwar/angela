@@ -3,15 +3,15 @@ import Layout from '../layouts/Layout.astro';
 import { icon } from '../data/icons.js';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-const install = `pnpm add angela`;
+const install = `pnpm add @angela-ui/angela`;
 
 const usageCss = `/* En tu CSS global */
-@import "angela/css";
+@import "@angela-ui/angela/css";
 
 /* Opcional, con Tailwind v4 */
 @import "tailwindcss";
-@import "angela/css";
-@import "angela/tailwind.css";`;
+@import "@angela-ui/angela/css";
+@import "@angela-ui/angela/tailwind.css";`;
 
 const usageHtml = `<!-- En el <head>, antes de pintar -->
 <meta name="color-scheme" content="light dark">
@@ -21,7 +21,7 @@ const usageHtml = `<!-- En el <head>, antes de pintar -->
 <button class="button" type="button">Guardar</button>`;
 
 const usageJs = `// Opcional: validación accesible, pestañas, tema y polyfills
-import { angela } from 'angela/js';
+import { angela } from '@angela-ui/angela/js';
 angela();`;
 
 const usageTheme = `:root {
@@ -115,7 +115,7 @@ const usageTheme = `:root {
       <li class="card feature plano-marco">
         <p class="eyebrow">06</p>
         <h3>JS opcional</h3>
-        <p>El CSS funciona solo. <code>angela/js</code> añade validación accesible, pestañas y tema, y carga polyfills solo si faltan.</p>
+        <p>El CSS funciona solo. <code>@angela-ui/angela/js</code> añade validación accesible, pestañas y tema, y carga polyfills solo si faltan.</p>
       </li>
     </ul>
   </section>

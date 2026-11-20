@@ -5,21 +5,21 @@ Componentes accesibles sobre HTML nativo.
 ## Instalación
 
 ```sh
-pnpm add angela
+pnpm add @angela-ui/angela
 ```
 
 ## CSS
 
 ```css
-@import "angela/css";          /* dist/angela.css, todo en @layer angela.* */
+@import "@angela-ui/angela/css";          /* dist/angela.css, todo en @layer angela.* */
 ```
 
 Con Tailwind v4 (los tokens pasan a ser utilidades: `bg-surface`, `text-muted`, `bg-brand-solid`, `shadow-elevation-2`…):
 
 ```css
 @import "tailwindcss";
-@import "angela/css";
-@import "angela/tailwind.css";
+@import "@angela-ui/angela/css";
+@import "@angela-ui/angela/tailwind.css";
 ```
 
 Sin bundler: copia `dist/angela.css` y enlázalo con `<link rel="stylesheet">`.
@@ -33,7 +33,7 @@ En el `<head>`:
 <script>try{document.querySelector('meta[name="color-scheme"]').content=localStorage.getItem("color-scheme")??"light dark"}catch(e){}</script>
 ```
 
-El script es opcional (solo hace falta si usas el selector de tema); también se exporta como `themeInlineScript` desde `angela/js/theme`.
+El script es opcional (solo hace falta si usas el selector de tema); también se exporta como `themeInlineScript` desde `@angela-ui/angela/js/theme`.
 
 Selector de tema: un botón con `data-theme-toggle` y dos `<span data-when="light|dark">` (ver la página de inicio de la documentación).
 
@@ -57,7 +57,7 @@ pnpm check:contrast --brand 20 0.19
 ## JavaScript (opcional)
 
 ```js
-import { angela } from 'angela/js';
+import { angela } from '@angela-ui/angela/js';
 const cleanup = angela(); // validación accesible, <angela-tabs>, diálogos, popovers, tema y polyfills
 ```
 
@@ -71,28 +71,28 @@ El CSS y el marcado son los mismos en todos: elementos nativos con `class` y `da
 
 | | CSS | JS | Notas |
 |---|---|---|---|
-| **HTML / Astro** | `@import "angela/css"` o `<link>` | `<script type="module">import { angela } from 'angela/js'; angela();</script>` | — |
-| **React / Next.js** | `import 'angela/css'` en el layout raíz | `<Angela />` de [`angela-react`](../angela-react) | Usa `angela-react` (componentes tipados) o el marcado directo con `angela/jsx`. |
-| **Vue** | `import 'angela/css'` en `main.ts` | `onMounted(() => angela())` | `compilerOptions.isCustomElement: (t) => t.startsWith('angela-')` |
+| **HTML / Astro** | `@import "@angela-ui/angela/css"` o `<link>` | `<script type="module">import { angela } from '@angela-ui/angela/js'; angela();</script>` | — |
+| **React / Next.js** | `import '@angela-ui/angela/css'` en el layout raíz | `<Angela />` de [`@angela-ui/react`](../angela-react) | Usa `@angela-ui/react` (componentes tipados) o el marcado directo con `@angela-ui/angela/jsx`. |
+| **Vue** | `import '@angela-ui/angela/css'` en `main.ts` | `onMounted(() => angela())` | `compilerOptions.isCustomElement: (t) => t.startsWith('angela-')` |
 | **Angular** | `"styles": ["node_modules/angela/dist/angela.css"]` en `angular.json` | `afterNextRender(() => angela())` | `CUSTOM_ELEMENTS_SCHEMA` donde uses `<angela-tabs>`. Atributos dinámicos con `[attr.commandfor]`. |
-| **Svelte** | `import 'angela/css'` | `onMount(() => angela())` | — |
+| **Svelte** | `import '@angela-ui/angela/css'` | `onMount(() => angela())` | — |
 
 Reglas comunes:
 
 - **Pestañas:** renderiza el estado inicial (`aria-selected`, `hidden`) y deja que `<angela-tabs>` lo gestione. Para saber cuál está activa, escucha el evento `tabchange`; no lo controles con el estado del framework.
 - **Diálogos con estado:** ábrelos con `dialog.showModal()` (por referencia), no con el atributo `open`, que los abre sin modal.
-- **`autofocus`:** React no escribe el atributo en el cliente (llama a `.focus()` al montar), así que un `<dialog>` cerrado no sabe qué enfocar. `angela-react` lo corrige; con marcado propio, ponlo con `el.setAttribute('autofocus', '')`.
+- **`autofocus`:** React no escribe el atributo en el cliente (llama a `.focus()` al montar), así que un `<dialog>` cerrado no sabe qué enfocar. `@angela-ui/react` lo corrige; con marcado propio, ponlo con `el.setAttribute('autofocus', '')`.
 - **Tema sin destello:** el script de `themeInlineScript` va en el `<head>` del HTML del servidor, justo después del `<meta name="color-scheme">`. Como cambia ese `<meta>` antes de hidratar, en React ponle `suppressHydrationWarning`. En una SPA sin SSR, cópialo en el `index.html`.
 
 ## TypeScript
 
-`angela/js` y `angela/palette` traen sus tipos, y `import 'angela/css'` también tipa (TypeScript 6+ marca como error los imports de efecto sin declaración).
+`@angela-ui/angela/js` y `@angela-ui/angela/palette` traen sus tipos, y `import '@angela-ui/angela/css'` también tipa (TypeScript 6+ marca como error los imports de efecto sin declaración).
 
 Para escribir el marcado nativo en JSX sin `as any` (`commandfor`, `command`, `switch`, `focusgroup`, `<angela-tabs ontabchange>`):
 
 ```jsonc
 // tsconfig.json
-{ "compilerOptions": { "types": ["angela/jsx"] } }
+{ "compilerOptions": { "types": ["@angela-ui/angela/jsx"] } }
 ```
 
 En React 19 escribe esos atributos en minúsculas (`commandfor`, no `commandFor`): React pasa tal cual los que no conoce, pero descarta el camelCase con un aviso. `switch` se escribe `switch=""`, no `switch={true}`.

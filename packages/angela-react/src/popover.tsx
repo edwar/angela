@@ -44,7 +44,7 @@ export interface PopoverItemProps extends ComponentProps<'button'> {
   closes?: boolean;
 }
 
-/** Acción dentro de un `<Popover>`. Al cerrar, angela/js devuelve el foco al botón que lo abrió. */
+/** Acción dentro de un `<Popover>`. Al cerrar, @angela-ui/angela/js devuelve el foco al botón que lo abrió. */
 export function PopoverItem({ tone, closes = true, className, type = 'button', ...props }: PopoverItemProps) {
   const popoverId = useContext(PopoverContext);
   return (

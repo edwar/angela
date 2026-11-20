@@ -109,7 +109,7 @@ const nucleo = [
       },
       {
         title: 'Validación accesible',
-        note: 'El error aparece al salir del campo (no mientras escribes) gracias a :user-invalid. angela/js sincroniza aria-invalid, enlaza el mensaje y lo anuncia. Prueba a escribir un correo incompleto y salir del campo, o envía el formulario vacío.',
+        note: 'El error aparece al salir del campo (no mientras escribes) gracias a :user-invalid. @angela-ui/angela/js sincroniza aria-invalid, enlaza el mensaje y lo anuncia. Prueba a escribir un correo incompleto y salir del campo, o envía el formulario vacío.',
         code: `<form class="stack" action="#" method="post" aria-labelledby="c-form-titulo">
   <h4 id="c-form-titulo">Crear cuenta</h4>
   <div class="field">
@@ -181,7 +181,7 @@ const nucleo = [
       ['.input', 'Para <input>, <select> y <textarea>. data-size="sm|lg".'],
       ['.hint', 'Texto de ayuda. Enlázalo con aria-describedby.'],
       ['.error', 'Mensaje de error. Se muestra con :user-invalid o aria-invalid="true".'],
-      ['data-error', 'En el control: id de su mensaje de error (lo usa angela/js).'],
+      ['data-error', 'En el control: id de su mensaje de error (lo usa @angela-ui/angela/js).'],
       ['.fieldset', 'Para <fieldset> con <legend> como primer hijo.'],
     ],
     a11y: [
@@ -317,7 +317,7 @@ const nucleo = [
       ['.dialog-form', 'Un <form> que envuelve cabecera, cuerpo y pie, para que el botón de enviar del pie quede dentro del formulario.'],
       ['command="show-modal"', 'En el botón que abre, junto con commandfor="id-del-diálogo".'],
       ['command="close"', 'Cierra el diálogo. Fuera de un <form>, o con type="button".'],
-      ['closedby="any"', 'Permite cerrar con clic fuera (angela/js lo completa en Safari).'],
+      ['closedby="any"', 'Permite cerrar con clic fuera (@angela-ui/angela/js lo completa en Safari).'],
     ],
     a11y: [
       'El navegador vuelve inerte la página, contiene el foco, cierra con Esc y devuelve el foco al botón que lo abrió. No añadas role="dialog", aria-modal ni trampas de foco.',
@@ -361,7 +361,7 @@ const nucleo = [
     a11y: [
       'El botón expone automáticamente su estado expandido; no añadas aria-haspopup (prometería un menú ARIA).',
       'Coloca el panel justo después de su botón en el DOM, para que el orden de lectura sea natural.',
-      'Al cerrar desde un botón interno, angela/js devuelve el foco al botón que lo abrió.',
+      'Al cerrar desde un botón interno, @angela-ui/angela/js devuelve el foco al botón que lo abrió.',
       'Para un menú con flechas (role="menu") hace falta más comportamiento: está en la hoja de ruta.',
     ],
   },
@@ -434,11 +434,11 @@ const nucleo = [
   </details>
   <details class="disclosure">
     <summary>¿Necesito JavaScript?</summary>
-    <p>No para los estilos. angela/js solo añade mejoras: validación accesible, pestañas y tema.</p>
+    <p>No para los estilos. @angela-ui/angela/js solo añade mejoras: validación accesible, pestañas y tema.</p>
   </details>
   <details class="disclosure">
     <summary>¿Funciona con Tailwind?</summary>
-    <p>Sí. Importa angela/tailwind.css para usar los tokens como utilidades.</p>
+    <p>Sí. Importa @angela-ui/angela/tailwind.css para usar los tokens como utilidades.</p>
   </details>
 </section>`,
       },

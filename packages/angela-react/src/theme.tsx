@@ -1,4 +1,4 @@
-import { themeInlineScript } from 'angela/js/theme';
+import { themeInlineScript } from '@angela-ui/angela/js/theme';
 import type { ComponentProps } from 'react';
 import { buttonProps, type ButtonStyleProps } from './button-props.js';
 import { MoonIcon, SunIcon } from './icons.js';

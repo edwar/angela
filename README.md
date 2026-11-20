@@ -11,7 +11,7 @@ Componentes accesibles sobre **HTML nativo**, con modo claro/oscuro automático 
 ## Uso rápido
 
 ```css
-@import "angela/css";
+@import "@angela-ui/angela/css";
 ```
 
 ```html
@@ -27,7 +27,7 @@ Componentes accesibles sobre **HTML nativo**, con modo claro/oscuro automático 
 ```
 
 ```js
-import { angela } from 'angela/js'; // opcional
+import { angela } from '@angela-ui/angela/js'; // opcional
 angela();
 ```
 
@@ -35,10 +35,10 @@ Más detalles en [`packages/angela/README.md`](packages/angela/README.md) (inclu
 
 ## React y Next.js
 
-[`angela-react`](packages/angela-react/README.md): componentes de React 19 sobre los mismos elementos nativos, tipados y compatibles con Server Components.
+[`@angela-ui/react`](packages/angela-react/README.md): componentes de React 19 sobre los mismos elementos nativos, tipados y compatibles con Server Components.
 
 ```tsx
-import { Dialog, Field, Input, Button, DialogClose } from 'angela-react';
+import { Dialog, Field, Input, Button, DialogClose } from '@angela-ui/react';
 
 <Dialog title="Nuevo cliente" trigger={{ children: 'Nuevo cliente' }} form={{ action: crearCliente }} closeOnSubmit
   footer={<><DialogClose>Cancelar</DialogClose><Button type="submit">Guardar</Button></>}>
@@ -51,8 +51,8 @@ import { Dialog, Field, Input, Button, DialogClose } from 'angela-react';
 ```sh
 pnpm install
 pnpm dev             # documentación en http://localhost:4321
-pnpm test            # tests de angela y angela-react
-pnpm typecheck       # tipos de angela/js y de angela-react
+pnpm test            # tests de angela y @angela-ui/react
+pnpm typecheck       # tipos de @angela-ui/angela/js y de @angela-ui/react
 pnpm check:contrast  # contraste WCAG en todos los tonos
 pnpm build           # librería + documentación
 ```

@@ -1,4 +1,4 @@
-# angela-react
+# @angela-ui/react
 
 Componentes de React 19 sobre [angela](../angela): envoltorios finos de los elementos nativos (`<button>`, `<dialog>`, `popover`, `<details>`…), tipados y compatibles con Server Components.
 
@@ -7,15 +7,15 @@ No reimplementan nada: generan el mismo marcado que la documentación de angela 
 ## Instalación
 
 ```sh
-pnpm add angela angela-react
+pnpm add @angela-ui/angela @angela-ui/react
 ```
 
 ## Puesta en marcha (Next.js App Router)
 
 ```tsx
 // app/layout.tsx (Server Component)
-import 'angela/css';
-import { Angela, ThemeScript, ThemeToggle } from 'angela-react';
+import '@angela-ui/angela/css';
+import { Angela, ThemeScript, ThemeToggle } from '@angela-ui/react';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -36,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
 No uses también `viewport.colorScheme` de Next: `ThemeScript` ya pinta el `<meta name="color-scheme">`.
 
-En una SPA sin SSR (Vite): importa `angela/css` en `main.tsx`, monta `<Angela />` una vez y copia `themeInlineScript` (de `angela/js/theme`) en el `<head>` del `index.html`.
+En una SPA sin SSR (Vite): importa `@angela-ui/angela/css` en `main.tsx`, monta `<Angela />` una vez y copia `themeInlineScript` (de `@angela-ui/angela/js/theme`) en el `<head>` del `index.html`.
 
 ## Componentes
 
@@ -107,4 +107,4 @@ const [open, setOpen] = useState(false);
 - **Pestañas:** el estado inicial se pinta en el servidor y después lo gestiona `<angela-tabs>`. Con `value`, el cambio se aplica sobre el elemento, sin volver a pintar.
 - **`autoFocus`** funciona dentro de diálogos: los componentes escriben el atributo real, que React omite en el cliente.
 
-Los tipos de `angela/jsx` (`commandfor`, `command`, `switch`, `focusgroup`, `<angela-tabs>`) se cargan solos al importar `angela-react`.
+Los tipos de `@angela-ui/angela/jsx` (`commandfor`, `command`, `switch`, `focusgroup`, `<angela-tabs>`) se cargan solos al importar `@angela-ui/react`.

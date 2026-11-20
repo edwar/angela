@@ -9,7 +9,7 @@
 /*
  * La paleta sale de la receta de angela (palette.js) con otras entradas, así que el
  * contraste sigue garantizado:
- *   pnpm --filter angela check:contrast --brand 78 0.11 --neutral 262 0.06 --info 215 0.12 --warning 50 0.14 --danger 18 0.18
+ *   pnpm --filter @angela-ui/angela check:contrast --brand 78 0.11 --neutral 262 0.06 --info 215 0.12 --warning 50 0.14 --danger 18 0.18
  */
 [data-angela-theme="plano"] {
   /* Marca dorada sobre azul marino, como la tinta dorada de un plano de presentación. */

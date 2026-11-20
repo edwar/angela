@@ -6,7 +6,7 @@ La guía visual es `DESIGN.md`: toda UI la sigue.
 ## Estructura
 
 ```
-packages/angela/          La librería (paquete npm "angela")
+packages/angela/          La librería (paquete npm "@angela-ui/angela")
   src/palette.js          Receta del color (fuente de verdad) + matemática de contraste
   src/tokens/palette.css  GENERADO desde palette.js — no editar a mano
   src/tokens/scale.css    Tipografía, espacio, radios, sombras, movimiento
@@ -16,9 +16,9 @@ packages/angela/          La librería (paquete npm "angela")
   src/tailwind.css        Puente opcional con Tailwind v4
   src/js/                 Mejoras opcionales (sin dependencias, seguras en SSR)
   src/jsx.d.ts            Tipos de JSX para React (commandfor, command, switch, <angela-tabs>)
-  src/css.d.ts            Tipos de los imports de CSS (import 'angela/css')
+  src/css.d.ts            Tipos de los imports de CSS (import '@angela-ui/angela/css')
   scripts/                build, build-palette, check-contrast
-packages/angela-react/    Componentes de React 19 sobre angela (paquete npm "angela-react")
+packages/angela-react/    Componentes de React 19 sobre angela (paquete npm "@angela-ui/react")
   src/*.tsx               Un archivo por grupo; 'use client' solo donde hay hooks o refs
 docs/                     Sitio de documentación (Astro)
   src/data/components.js  Ejemplos, API y notas de accesibilidad de cada componente
@@ -28,10 +28,10 @@ docs/                     Sitio de documentación (Astro)
 ## Comandos
 
 - `pnpm dev` — documentación en local.
-- `pnpm test` — Vitest de `angela` (paleta, tema, pestañas, formularios), de `angela-react` y del laboratorio (`docs/src/lib/lab`).
-- `pnpm typecheck` — genera los tipos de `angela/js` (desde el JSDoc) y comprueba `angela-react`.
-- `pnpm check:contrast` — verifica WCAG AA en todos los tonos. Con valores: `pnpm --filter angela check:contrast --brand 20 0.19`.
-- `pnpm build` — genera paleta, `dist/angela.css`, tipos, `angela-react` y el sitio. Solo antes de push.
+- `pnpm test` — Vitest de `angela` (paleta, tema, pestañas, formularios), de `@angela-ui/react` y del laboratorio (`docs/src/lib/lab`).
+- `pnpm typecheck` — genera los tipos de `@angela-ui/angela/js` (desde el JSDoc) y comprueba `@angela-ui/react`.
+- `pnpm check:contrast` — verifica WCAG AA en todos los tonos. Con valores: `pnpm --filter @angela-ui/angela check:contrast --brand 20 0.19`.
+- `pnpm build` — genera paleta, `dist/angela.css`, tipos, `@angela-ui/react` y el sitio. Solo antes de push.
 
 ## Reglas
 
@@ -43,13 +43,13 @@ docs/                     Sitio de documentación (Astro)
 - Propiedades lógicas, `:focus-visible`, `forced-colors`, `prefers-reduced-motion`.
 - JS: un módulo por función en `src/js/`, exporta funciones que devuelven un `cleanup`, guarda `typeof window` y lleva test. Se registra en `src/js/index.js` (import, reexport y llamada en `angela()`): si no, no se ejecuta en ninguna web. El PR del laboratorio lo hace solo. Los tipos se generan del JSDoc: documenta parámetros y retornos.
 - JS para frameworks: escucha en el documento (delegación) o con `MutationObserver`, nunca solo sobre lo que existe al llamar. Los frameworks montan nodos después.
-- `angela-react`: envoltorios finos que generan el mismo marcado que la documentación, sin estado propio salvo el imprescindible.
+- `@angela-ui/react`: envoltorios finos que generan el mismo marcado que la documentación, sin estado propio salvo el imprescindible.
   - Un módulo sin `'use client'` no importa uno con `'use client'` (lo comprueba `boundaries.test.ts`).
   - Nada de `cloneElement`: un elemento que llega desde un Server Component puede ser una referencia diferida. Los disparadores son objetos de props.
   - El estado que gestiona el DOM nativo (`<angela-tabs>`, `<dialog>`) se pinta solo al principio; los cambios van por la API del elemento.
   - `autoFocus` necesita el atributo real (`autofocusRef`): React lo omite en el cliente.
-- El sitio de documentación tiene su propio tema, «plano» (`data-angela-theme="plano"` en `<html>`, definido en `docs/src/styles/docs.css`). La librería sigue con sus valores por defecto: los ejemplos de componentes y el playground de la guía llevan `data-angela-theme="angela"` para mostrarla tal como la recibe quien la instala. Si cambias las entradas del tema, verifica: `pnpm --filter angela check:contrast --brand 78 0.11 --neutral 262 0.06 --info 215 0.12 --warning 50 0.14 --danger 18 0.18`.
-- Cada componente nuevo se documenta en `docs/src/data/components.js` (ejemplos + API + accesibilidad) y, si encaja, tiene su envoltorio en `angela-react`.
+- El sitio de documentación tiene su propio tema, «plano» (`data-angela-theme="plano"` en `<html>`, definido en `docs/src/styles/docs.css`). La librería sigue con sus valores por defecto: los ejemplos de componentes y el playground de la guía llevan `data-angela-theme="angela"` para mostrarla tal como la recibe quien la instala. Si cambias las entradas del tema, verifica: `pnpm --filter @angela-ui/angela check:contrast --brand 78 0.11 --neutral 262 0.06 --info 215 0.12 --warning 50 0.14 --danger 18 0.18`.
+- Cada componente nuevo se documenta en `docs/src/data/components.js` (ejemplos + API + accesibilidad) y, si encaja, tiene su envoltorio en `@angela-ui/react`.
 - Antes de terminar: `pnpm test`, `pnpm check:contrast` y revisión con teclado y lector de pantalla.
 
 ## Soporte de navegadores

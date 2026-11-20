@@ -5,9 +5,9 @@
   "packageManager": "pnpm@11.2.2",
   "scripts": {
     "dev": "pnpm --filter docs dev",
-    "build": "pnpm --filter angela build && pnpm --filter angela-react build && pnpm --filter docs build",
-    "test": "pnpm --filter angela test && pnpm --filter angela-react test && pnpm --filter docs test",
-    "check:contrast": "pnpm --filter angela check:contrast",
-    "typecheck": "pnpm --filter angela build:types && pnpm --filter angela-react typecheck"
+    "build": "pnpm --filter @angela-ui/angela build && pnpm --filter @angela-ui/react build && pnpm --filter docs build",
+    "test": "pnpm --filter @angela-ui/angela test && pnpm --filter @angela-ui/react test && pnpm --filter docs test",
+    "check:contrast": "pnpm --filter @angela-ui/angela check:contrast",
+    "typecheck": "pnpm --filter @angela-ui/angela build:types && pnpm --filter @angela-ui/react typecheck"
   }
 }

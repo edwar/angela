@@ -18,7 +18,7 @@ export default {
     [".spotlight-overlay", "Clase del componente."],
     ["--spotlight-radius", "Parámetro. Por defecto: 120px."],
     ["--spotlight-shade", "Parámetro. Por defecto: color-mix(in oklch, var(--color-canvas) 100%, transparent)."],
-    ["enhanceSpotlight(root)", "En angela/js. La luz sigue al puntero; angela() ya lo llama. Sin JS, la luz queda fija en el centro."],
+    ["enhanceSpotlight(root)", "En @angela-ui/angela/js. La luz sigue al puntero; angela() ya lo llama. Sin JS, la luz queda fija en el centro."],
   ],
   a11y: [
     "El velo es solo visual: el contenido sigue completo en el DOM, así que el lector de pantalla lo lee entero. Si la imagen informa, necesita un alt que la describa.",

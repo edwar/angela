@@ -33,7 +33,7 @@ Reglas:
 - Los componentes leen `--tone-*`; `data-tone="…"` elige el rol.
 - Nunca colores sueltos (`#hex`, `text-green-600`): siempre tokens.
 - Contraste garantizado para cualquier tono y croma ≤ 0.2: texto ≥ 4.5:1, bordes de controles, foco e indicadores ≥ 3:1. `pnpm check:contrast` lo verifica.
-- La receta vive en `packages/angela/src/palette.js`. `palette.css` se **genera** (`pnpm --filter angela build:palette`): no se edita a mano.
+- La receta vive en `packages/angela/src/palette.js`. `palette.css` se **genera** (`pnpm --filter @angela-ui/angela build:palette`): no se edita a mano.
 - Tematizar una zona: `data-angela-theme` en el contenedor y redefinir allí las `--angela-*`. Fijar esquema en una zona: `data-scheme="dark|light"`.
 
 ## Modo claro/oscuro

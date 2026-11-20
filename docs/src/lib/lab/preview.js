@@ -230,7 +230,7 @@ try {
   const { angela } = await import(load('index.js'));
   angela({ polyfills: false });
 } catch (error) {
-  console.error('No se pudo cargar angela/js:', error);
+  console.error('No se pudo cargar @angela-ui/angela/js:', error);
 }
 // JS de los componentes propios que se usan, antes que el del editor.
 for (const [index, { name, js }] of dependencyJs.entries()) {
