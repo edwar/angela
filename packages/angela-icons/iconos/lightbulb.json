@@ -1,0 +1,64 @@
+{
+  "version": 1,
+  "categoria": "educacion",
+  "etiquetas": [
+    "bombilla",
+    "idea",
+    "luz",
+    "lightbulb"
+  ],
+  "autor": "angela",
+  "licencia": "MIT",
+  "formas": [
+    {
+      "tipo": "circulo",
+      "cx": 12,
+      "cy": 9.5,
+      "r": 6
+    },
+    {
+      "tipo": "linea",
+      "puntos": [
+        [
+          9.5,
+          17.5
+        ],
+        [
+          14.5,
+          17.5
+        ]
+      ]
+    },
+    {
+      "tipo": "linea",
+      "puntos": [
+        [
+          10.2,
+          20.5
+        ],
+        [
+          13.8,
+          20.5
+        ]
+      ]
+    },
+    {
+      "tipo": "linea",
+      "puntos": [
+        [
+          10.2,
+          9.5
+        ],
+        [
+          12,
+          12
+        ],
+        [
+          13.8,
+          9.5
+        ]
+      ],
+      "detalle": true
+    }
+  ]
+}

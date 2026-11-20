@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "categoria": "archivos",
+  "etiquetas": [
+    "documento",
+    "archivo",
+    "texto",
+    "file",
+    "document"
+  ],
+  "autor": "angela",
+  "licencia": "MIT",
+  "formas": [
+    {
+      "tipo": "rect",
+      "x": 5,
+      "y": 3,
+      "ancho": 14,
+      "alto": 18,
+      "radio": 1.5
+    },
+    {
+      "tipo": "linea",
+      "puntos": [
+        [
+          8,
+          8
+        ],
+        [
+          16,
+          8
+        ]
+      ],
+      "detalle": true
+    },
+    {
+      "tipo": "linea",
+      "puntos": [
+        [
+          8,
+          11.5
+        ],
+        [
+          16,
+          11.5
+        ]
+      ],
+      "detalle": true
+    },
+    {
+      "tipo": "linea",
+      "puntos": [
+        [
+          8,
+          15
+        ],
+        [
+          13,
+          15
+        ]
+      ],
+      "detalle": true
+    }
+  ]
+}

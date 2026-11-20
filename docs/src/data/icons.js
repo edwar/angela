@@ -1,5 +1,9 @@
-// Íconos de trazo (estilo lucide). Siempre decorativos: aria-hidden="true".
+// Iconos de la interfaz de la propia documentación. Siempre decorativos: aria-hidden="true".
 // El nombre accesible lo da el texto del botón o su aria-label.
+//
+// Los trazados son de Lucide (https://lucide.dev), licencia ISC; los derivados de Feather,
+// MIT. El texto de las dos licencias está en LICENSE-LUCIDE, junto a este archivo.
+// No forman parte de @angela-ui/icons: se irán sustituyendo por iconos propios.
 const paths = {
   x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
   info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',

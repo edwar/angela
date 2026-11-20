@@ -1,0 +1,154 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { icon } from '../data/icons.js';
+import { catalogo, svgIcono } from '../data/iconos.js';
+import { GUIA, ZONA } from '@angela-ui/icons/reglas';
+import { formaLimpia } from '@angela-ui/icons/mano-alzada';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const href = (p: string) => `${base}${p}`;
+const lineas = Array.from({ length: 25 }, (_, i) => i);
+const muestra = catalogo.find((i) => i.nombre === 'house') ?? catalogo[0];
+
+const usar = [
+  ['Instala', 'pnpm add @angela-ui/icons'],
+  ['Uno a uno (el empaquetador solo incluye los que usas)', `import { iconoHouse } from '@angela-ui/icons';\nboton.innerHTML = iconoHouse;`],
+  ['Por nombre, en tiempo de ejecución', `import { icono } from '@angela-ui/icons/todos';\nicono('house');                      // decorativo\nicono('house', { titulo: 'Inicio' }); // role="img" con su nombre`],
+  ['Con el sprite', `<svg width="24" height="24" aria-hidden="true">\n  <use href="/sprite.svg#icono-house"/>\n</svg>`],
+];
+---
+
+<Layout
+  title="Iconos"
+  description="Iconos a mano alzada: formas limpias sobre 24×24 con un trazo de presión variable. Todos con la misma letra, los dibuje quien los dibuje."
+  eyebrow="angela · recursos"
+>
+  <section class="doc-section" aria-labelledby="estilo">
+    <h2 id="estilo">El estilo</h2>
+    <p>
+      Quien diseña dibuja <strong>formas limpias</strong> sobre la cuadrícula; el estilo las convierte en trazos
+      <strong>a mano alzada</strong>: el trazo empieza fino, engorda en medio y se afina al final, como un lápiz al
+      apoyarlo y levantarlo; las esquinas se cruzan y las formas redondas casi cierran. Los parámetros son de la guía, no
+      de cada icono: así todos tienen la misma letra.
+    </p>
+    {
+      muestra && (
+        <div class="iconos-proceso">
+          <figure class="iconos-plano plano-marco">
+            <svg viewBox="-1 -1 26 26" role="img" aria-labelledby="plano-titulo">
+              <title id="plano-titulo">El icono «{muestra.nombre}» sobre la cuadrícula: sus formas limpias y, encima, el trazo a mano alzada</title>
+              <g class="plano-cuadricula">
+                {lineas.map((i) => <line x1={i} y1="0" x2={i} y2="24" />)}
+                {lineas.map((i) => <line x1="0" y1={i} x2="24" y2={i} />)}
+              </g>
+              <rect class="plano-zona" x={ZONA.min} y={ZONA.min} width={ZONA.max - ZONA.min} height={ZONA.max - ZONA.min} />
+              <g class="plano-formas" set:html={muestra.formas.map((f) => formaLimpia(f)).join('')} />
+              <g class="plano-icono" set:html={muestra.interior} />
+            </svg>
+            <figcaption>
+              <span><i class="leyenda leyenda-zona"></i> Zona segura (2–22)</span>
+              <span><i class="leyenda leyenda-guia"></i> Formas limpias</span>
+            </figcaption>
+          </figure>
+          <div class="iconos-tamanos" aria-label={`«${muestra.nombre}» a 16, 24, 32 y 48 px`} role="img">
+            {[16, 24, 32, 48].map((t) => <span set:html={svgIcono(muestra.interior, t)} />)}
+          </div>
+        </div>
+      )
+    }
+    <h3>La guía</h3>
+    <ol class="iconos-reglas">
+      {GUIA.map((r) => (
+        <li>
+          <strong>{r.titulo}.</strong> {r.texto}
+        </li>
+      ))}
+    </ol>
+    <p>
+      <a class="button" href={href('/iconos/editor')}>
+        <Fragment set:html={icon('pencil')} /> Diseñar un icono
+      </a>
+    </p>
+  </section>
+
+  <section class="doc-section" aria-labelledby="usar">
+    <h2 id="usar">Cómo usarlos</h2>
+    {
+      usar.map(([titulo, codigo]) => (
+        <>
+          <h3>{titulo}</h3>
+          <pre tabindex="0" aria-label={titulo}><code>{codigo}</code></pre>
+        </>
+      ))
+    }
+    <p>
+      Son siluetas rellenas en <code>currentColor</code>: heredan el color del texto. Son decorativos por defecto: el nombre
+      lo da el texto que los acompaña o el aria-label del botón.
+    </p>
+  </section>
+
+  <section class="doc-section iconos-catalogo" aria-labelledby="catalogo">
+    <h2 id="catalogo">Catálogo</h2>
+    <div class="field iconos-buscar">
+      <label for="iconos-buscar">Buscar</label>
+      <p class="hint" id="iconos-buscar-ayuda">Por nombre o etiqueta, en español o inglés.</p>
+      <input class="input" id="iconos-buscar" type="search" autocomplete="off" aria-describedby="iconos-buscar-ayuda" />
+    </div>
+    <p class="muted iconos-estado" id="iconos-estado" role="status">{catalogo.length} iconos</p>
+    <ul class="iconos-rejilla" role="list">
+      {
+        catalogo.map((i) => (
+          <li class="icono-ficha" data-busqueda={[i.nombre, ...i.etiquetas].join(' ').toLowerCase()}>
+            <span class="icono-muestra" set:html={svgIcono(i.interior)} />
+            <span class="icono-nombre">{i.nombre}</span>
+            <span class="icono-etiquetas">{i.etiquetas.join(' · ')}</span>
+            <div class="cluster">
+              <button class="button" type="button" data-variant="outline" data-tone="neutral" data-size="sm" data-copiar={svgIcono(i.interior, 24)} aria-label={`Copiar el SVG de ${i.nombre}`}>
+                <Fragment set:html={icon('copy')} /> SVG
+              </button>
+              <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" data-copiar={`import { ${i.exportacion} } from '@angela-ui/icons';`} aria-label={`Copiar la importación de ${i.nombre}`}>
+                import
+              </button>
+              <a class="button" data-variant="ghost" data-tone="neutral" data-size="sm" href={href(`/iconos/editor?icono=${i.nombre}`)} aria-label={`Editar ${i.nombre} en el editor`}>
+                <Fragment set:html={icon('pencil')} />
+              </a>
+            </div>
+            <span class="icono-credito">{i.autor} · {i.licencia}</span>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="iconos-vacio" id="iconos-vacio" hidden>Ningún icono coincide con la búsqueda.</p>
+  </section>
+
+  <script>
+    const buscar = document.getElementById('iconos-buscar') as HTMLInputElement;
+    const estado = document.getElementById('iconos-estado')!;
+    const vacio = document.getElementById('iconos-vacio')!;
+    const fichas = [...document.querySelectorAll<HTMLElement>('.icono-ficha')];
+    const total = fichas.length;
+
+    buscar.addEventListener('input', () => {
+      const terminos = buscar.value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+      let visibles = 0;
+      for (const ficha of fichas) {
+        const coincide = terminos.every((t) => ficha.dataset.busqueda!.includes(t));
+        ficha.hidden = !coincide;
+        if (coincide) visibles += 1;
+      }
+      vacio.hidden = visibles > 0;
+      estado.textContent = terminos.length ? `${visibles} de ${total} iconos` : `${total} iconos`;
+    });
+
+    document.addEventListener('click', async (event) => {
+      const boton = (event.target as Element).closest<HTMLButtonElement>('[data-copiar]');
+      if (!boton) return;
+      try {
+        await navigator.clipboard.writeText(boton.dataset.copiar!);
+        estado.textContent = `Copiado: ${boton.dataset.copiar!.slice(0, 80)}${boton.dataset.copiar!.length > 80 ? '…' : ''}`;
+      } catch {
+        estado.textContent = 'No se pudo copiar.';
+      }
+    });
+  </script>
+</Layout>

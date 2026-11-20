@@ -416,3 +416,106 @@ export async function proposeComponent({
 
   return { url: pr.html_url, nuevo, partes: parts.length };
 }
+
+/* ---------- Iconos ---------- */
+
+const ICONOS_DIR = 'packages/angela-icons/iconos';
+
+/**
+ * Propone un icono: un archivo (su fuente, iconos/<nombre>.json) en su propio pull request.
+ * Como con los componentes, quien tiene el repositorio trabaja directo; el resto, en su bifurcación.
+ * @param {{
+ *   token: string, nombre: string,
+ *   icono: { version: number, categoria: string, etiquetas: string[], autor: string, licencia: string, formas: object[] },
+ *   svg: string, descripcion?: string, avisos?: string[],
+ *   onStep?: (text: string) => void, signal?: AbortSignal,
+ * }} input
+ * @returns {Promise<{ url: string, nuevo: boolean }>}
+ */
+export async function proposeIcon({ token, nombre, icono, svg, descripcion = '', avisos = [], onStep = () => {}, signal }) {
+  const opts = { token, signal };
+  const ruta = `${ICONOS_DIR}/${nombre}.json`;
+  const contenido = `${JSON.stringify(icono, null, 2)}\n`;
+
+  onStep('Comprobando el icono en el repositorio…');
+  const actual = await call(`/repos/${REPO.owner}/${REPO.name}/contents/${ruta}?ref=${REPO.branch}`, { ...opts, allow404: true });
+  const nuevo = !actual;
+  if (actual?.content && fromBase64(actual.content.replace(/\n/g, '')) === contenido) {
+    throw new GitHubError(`«${nombre}» es idéntico al que ya está en el repositorio: no hay nada que proponer.`);
+  }
+
+  onStep('Identificando tu cuenta…');
+  const me = await call('/user', opts);
+  if (!me?.login) throw new GitHubError('No se pudo leer tu cuenta de GitHub.');
+  const propio = me.login.toLowerCase() === REPO.owner.toLowerCase();
+  let head = { owner: me.login, name: REPO.name };
+  if (!propio) {
+    onStep('Preparando tu copia del repositorio…');
+    const fork = await call(`/repos/${REPO.owner}/${REPO.name}/forks`, { ...opts, method: 'POST' });
+    head = { owner: fork.owner.login, name: fork.name };
+    for (let intento = 0; intento < 10; intento += 1) {
+      if (await call(`/repos/${head.owner}/${head.name}/branches/${REPO.branch}`, { ...opts, allow404: true })) break;
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+  }
+
+  onStep('Creando la rama…');
+  const base = await call(`/repos/${REPO.owner}/${REPO.name}/git/ref/heads/${REPO.branch}`, opts);
+  const branch = `${nuevo ? 'feat' : 'fix'}/icono-${nombre}-${Date.now().toString(36)}`;
+  await call(`/repos/${head.owner}/${head.name}/git/refs`, { ...opts, method: 'POST', body: { ref: `refs/heads/${branch}`, sha: base.object.sha } });
+
+  onStep(`Subiendo ${nombre}.json…`);
+  const existente = await call(`/repos/${head.owner}/${head.name}/contents/${ruta}?ref=${branch}`, { ...opts, allow404: true });
+  await call(`/repos/${head.owner}/${head.name}/contents/${ruta}`, {
+    ...opts,
+    method: 'PUT',
+    body: {
+      message: `${nuevo ? 'feat' : 'fix'}(iconos): ${nuevo ? 'añade' : 'mejora'} ${nombre}`,
+      content: toBase64(contenido),
+      branch,
+      ...(existente?.sha ? { sha: existente.sha } : {}),
+    },
+  });
+
+  onStep('Abriendo el pull request…');
+  const titulo = `${nuevo ? 'feat' : 'fix'}(iconos): ${nuevo ? 'añade' : 'mejora'} ${nombre}`;
+  const cuerpo = [
+    descripcion.trim(),
+    '',
+    `## ${nuevo ? 'Icono nuevo' : 'Cambio sobre un icono existente'}: \`${nombre}\``,
+    '',
+    `| Categoría | Etiquetas | Formas | Autor | Licencia |`,
+    `| --- | --- | --- | --- | --- |`,
+    `| ${icono.categoria} | ${icono.etiquetas.join(', ')} | ${icono.formas.length} | ${icono.autor} | ${icono.licencia} |`,
+    '',
+    `Fuente: \`${ruta}\`. El SVG lo genera el build con el estilo a mano alzada; se ve en la página «Iconos» de la preview.`,
+    '',
+    avisos.length ? `## Avisos de la guía\n\n${avisos.map((a) => `- ${a}`).join('\n')}\n` : '',
+    '<details><summary>SVG generado</summary>',
+    '',
+    '```svg',
+    svg,
+    '```',
+    '',
+    '</details>',
+    '',
+    '---',
+    '',
+    'Propuesto desde el editor de iconos de angela.',
+  ]
+    .filter((l, i, a) => !(l === '' && a[i - 1] === ''))
+    .join('\n');
+
+  const headRef = propio ? branch : `${head.owner}:${branch}`;
+  let pr;
+  try {
+    pr = await call(`/repos/${REPO.owner}/${REPO.name}/pulls`, { ...opts, method: 'POST', body: { title: titulo, head: headRef, base: REPO.branch, body: cuerpo, maintainer_can_modify: true } });
+  } catch (error) {
+    if (error?.name === 'AbortError') throw error;
+    const compare = new URL(`https://github.com/${REPO.owner}/${REPO.name}/compare/${REPO.branch}...${headRef}`);
+    compare.searchParams.set('quick_pull', '1');
+    compare.searchParams.set('title', titulo);
+    throw new GitHubError(`El icono ya está en la rama ${branch}, pero no se pudo abrir el pull request: ${error?.message ?? 'error desconocido'}`, { cause: { compareUrl: compare.href } });
+  }
+  return { url: pr.html_url, nuevo };
+}
