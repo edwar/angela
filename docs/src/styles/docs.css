@@ -86,6 +86,55 @@ body {
   letter-spacing: normal;
 }
 
+/*
+ * El dorado guía la vista: marca dónde empieza cada sección, encabeza las tablas y numera.
+ * Lo técnico y el fondo (cuadrícula, cotas, bordes, texto) se quedan en el neutro.
+ */
+.doc-section > h2::before,
+.lab-review-part h3::before,
+.lab-ai h3::before {
+  content: "";
+  display: inline-block;
+  inline-size: 0.5em;
+  block-size: 0.6em;
+  margin-inline-end: 0.45em;
+  vertical-align: 0.12em;
+  background-color: var(--color-brand-text);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+/* En RTL el marcador apunta hacia el texto. */
+:dir(rtl) :is(.doc-section > h2, .lab-review-part h3, .lab-ai h3)::before {
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+}
+
+@media (forced-colors: active) {
+  :is(.doc-section > h2, .lab-review-part h3, .lab-ai h3)::before {
+    background-color: CanvasText;
+  }
+}
+
+/*
+ * Encabezados de columna de las tablas del sitio, como la tabla de datos de un plano.
+ * Solo los de <thead>: los de fila suelen ser código (.dialog) y no pueden pasar a mayúsculas.
+ * Las tablas de los ejemplos no se tocan.
+ */
+.site-main .table thead th:not([data-angela-theme="angela"] *) {
+  color: var(--color-brand-text);
+  font-family: var(--font-code);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* Número de un paso dentro de un título («1. Instala»). */
+.paso {
+  color: var(--color-brand-text);
+  font-family: var(--font-code);
+  font-weight: var(--fw-medium);
+}
+
 /* Las rutas largas en código en línea parten donde haga falta: sin scroll horizontal a 320 px. */
 .site-main :not(pre) > code {
   overflow-wrap: anywhere;
@@ -94,7 +143,7 @@ body {
 /* Etiqueta pequeña sobre los títulos, como la leyenda de un plano. */
 .eyebrow {
   margin: 0 0 var(--space-2);
-  color: var(--color-text-muted);
+  color: var(--color-brand-text);
   font-family: var(--font-code);
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
@@ -115,7 +164,7 @@ body {
 /* Marco con marcas de esquina, como el recuadro de un plano. */
 .plano-marco {
   --marca: 0.75rem;
-  --marca-color: var(--plano-trazo);
+  --marca-color: var(--color-brand-border);
   position: relative;
   border: 1px solid var(--plano-trazo-suave);
   border-radius: var(--radius-sm);
@@ -245,11 +294,12 @@ body {
 .site-nav-heading {
   margin: var(--space-2) 0 var(--space-1);
   padding-inline: var(--space-3);
-  color: var(--color-text-muted);
+  color: var(--color-brand-text);
+  font-family: var(--font-code);
   font-size: var(--fs-xs);
   font-weight: var(--fw-medium);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.18em;
 }
 
 @media (width >= 60rem) {
@@ -1190,9 +1240,10 @@ body {
     place-items: center;
     inline-size: var(--space-6);
     block-size: var(--space-6);
-    border-radius: var(--radius-full);
-    background-color: var(--color-brand-subtle);
+    border: 1px solid color-mix(in oklab, var(--color-brand-border) 70%, transparent);
+    border-radius: var(--radius-sm);
     color: var(--color-brand-text);
+    font-family: var(--font-code);
     font-size: var(--fs-sm);
     font-weight: var(--fw-bold);
   }
