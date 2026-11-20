@@ -5,6 +5,7 @@ import { icon } from '../data/icons.js';
 import { FORMATS, PRESETS } from '../lib/lab/ai.js';
 import { MANUAL_CHECKS as manualChecks } from '../lib/lab/review.js';
 import { TOKEN_URL } from '../lib/lab/github.js';
+import { CATEGORIAS, imagenes, rutaImagen } from '../data/imagenes.js';
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const href = (p: string) => `${base}${p}`;
@@ -160,6 +161,11 @@ const tabs = [
           <span id="lab-ide-lang">HTML</span>
           <span class="lab-ide-saved" id="lab-ide-saved"></span>
         </div>
+      </div>
+      <div class="cluster">
+        <button class="button" type="button" data-variant="outline" data-tone="neutral" data-size="sm" id="lab-imagenes-abrir" aria-haspopup="dialog">
+          <Fragment set:html={icon('plus')} /> Insertar imagen
+        </button>
       </div>
       <p class="text" data-size="sm" id="lab-parts-state" data-muted role="status"></p>
       <details class="disclosure lab-tips">
@@ -503,6 +509,48 @@ const tabs = [
       </footer>
     </form>
   </dialog>
+  <dialog class="dialog" id="lab-imagenes" data-size="lg" aria-labelledby="lab-imagenes-title" closedby="any">
+    <header class="dialog-header">
+      <h2 id="lab-imagenes-title">Insertar imagen</h2>
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-icon-only commandfor="lab-imagenes" command="close" aria-label="Cerrar" set:html={icon('x')} />
+    </header>
+    <div class="dialog-body">
+      <p class="muted">Fotos de dominio público (CC0). Elige una y se inserta su &lt;img&gt;, con texto alternativo, donde está el cursor del HTML.</p>
+      <div class="cluster lab-imagenes-filtros">
+        <div class="field">
+          <label for="lab-imagenes-tamano">Tamaño</label>
+          <select class="input" id="lab-imagenes-tamano">
+            <option value="">Grande · 720×480</option>
+            <option value="360">Miniatura · 360×240</option>
+            <option value="cuadrada">Avatar · 320×320 (personas)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="lab-imagenes-categoria">Categoría</label>
+          <select class="input" id="lab-imagenes-categoria">
+            <option value="">Todas</option>
+            {CATEGORIAS.map((c) => <option value={c.id}>{c.nombre}</option>)}
+          </select>
+        </div>
+      </div>
+      <ul class="lab-imagenes-rejilla" id="lab-imagenes-rejilla" role="list">
+        {
+          imagenes.map((img) => (
+            <li data-categoria={img.categoria} data-cuadrada={img.cuadrada ? '' : undefined}>
+              <button type="button" data-id={img.id} data-alt={img.alt} aria-label={`Insertar «${img.alt}»`}>
+                <img src={rutaImagen(img, '360')} data-normal={rutaImagen(img, '360')} data-cuadrada={img.cuadrada ? rutaImagen(img, 'cuadrada') : undefined} alt="" width="360" height="240" loading="lazy" decoding="async" />
+              </button>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <footer class="dialog-footer">
+      <a class="button" data-variant="ghost" data-tone="neutral" href={href('/imagenes')} target="_blank">Ver todas y sus créditos</a>
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-imagenes" command="close">Cancelar</button>
+    </footer>
+  </dialog>
+
   <dialog class="dialog" id="lab-reset" data-size="sm" aria-labelledby="lab-reset-title" aria-describedby="lab-reset-desc" closedby="any">
     <div class="dialog-body stack" style="--stack-gap: var(--space-3)">
       <h2 id="lab-reset-title" style="font-size: var(--fs-lg); margin: 0">¿Restablecer el código?</h2>

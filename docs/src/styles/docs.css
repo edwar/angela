@@ -863,10 +863,116 @@ body {
   }
 }
 
+/* Imágenes de ejemplo */
+.imagenes-indice {
+  margin-block-start: var(--space-4);
+}
+
+.imagenes-estado {
+  margin: var(--space-3) 0 0;
+  min-block-size: 1lh;
+  font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
+}
+
+.imagenes-categoria {
+  scroll-margin-block-start: 5rem;
+}
+
+.imagenes-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.imagen-ficha {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+
+  & img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    background-color: var(--color-surface-sunken);
+  }
+}
+
+.imagen-ficha-texto {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+
+  & p {
+    margin: 0;
+  }
+}
+
+.imagen-ficha-alt {
+  font-size: var(--fs-sm);
+}
+
+.imagen-ficha-credito {
+  color: var(--color-text-muted);
+  font-size: var(--fs-xs);
+}
+
+/* Selector de imágenes del laboratorio */
+.lab-imagenes-filtros {
+  margin-block-end: var(--space-4);
+}
+
+.lab-imagenes-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.5rem), 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  & button {
+    display: block;
+    inline-size: 100%;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: none;
+    overflow: hidden;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--color-brand-border);
+    }
+
+    &:focus-visible {
+      outline: var(--focus-width) solid var(--color-focus);
+      outline-offset: var(--focus-offset);
+    }
+  }
+
+  & img {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+  }
+
+  & [data-variante="cuadrada"] img {
+    aspect-ratio: 1;
+  }
+}
+
 /* Laboratorio */
 
 /* Los componentes fijan su display; el atributo hidden debe ganar igualmente. */
-:is(.lab-step, #lab-settings, #lab-propose, #lab-reset) [hidden]:not([hidden="until-found"]) {
+:is(.lab-step, #lab-settings, #lab-propose, #lab-reset, #lab-imagenes) [hidden]:not([hidden="until-found"]) {
   display: none;
 }
 

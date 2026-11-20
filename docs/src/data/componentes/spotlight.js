@@ -10,7 +10,7 @@ export default {
   examples: [
     {
       title: 'Ejemplo',
-      code: "<div class=\"spotlight\">\n  <img src=\"https://placehold.co/400\" alt=\"Describe aquí lo que muestra la imagen\">\n  <div class=\"spotlight-overlay\"></div>\n</div>",
+      code: "<div class=\"spotlight\">\n  <img src=\"/img/naturaleza/lago-de-montana.webp\" alt=\"Lago entre montañas nevadas\" width=\"720\" height=\"480\">\n  <div class=\"spotlight-overlay\"></div>\n</div>",
     },
   ],
   api: [

@@ -166,6 +166,11 @@ export function startLab() {
     aiReviewReject: $('lab-ai-review-reject'),
     aiReviewTry: $('lab-ai-review-try'),
     aiReviewAccept: $('lab-ai-review-accept'),
+    imagenesAbrir: $('lab-imagenes-abrir'),
+    imagenes: $('lab-imagenes'),
+    imagenesTamano: $('lab-imagenes-tamano'),
+    imagenesCategoria: $('lab-imagenes-categoria'),
+    imagenesRejilla: $('lab-imagenes-rejilla'),
     resetOpen: $('lab-reset-open'),
     reset: $('lab-reset'),
     resetDesc: $('lab-reset-desc'),
@@ -234,6 +239,8 @@ export function startLab() {
         scheme: state.scheme,
         jsModule: sources().js ?? null,
         ignoreReducedMotion: state.ignoreReducedMotion,
+        // Las imágenes de ejemplo del sitio (/img/…) también en local, donde el sitio va por http.
+        imageOrigin: location.origin,
       });
     } catch (error) {
       logEntry({ level: 'error', text: `No se pudo preparar la vista previa: ${error.message}` });
@@ -884,6 +891,49 @@ export function startLab() {
     renderMotionNotice();
     el.aiReviewStatus.textContent = 'Cambios aceptados y aplicados al editor. Vuelve a revisar si quieres confirmarlo.';
     el.aiReviewRun.focus();
+  });
+
+  /* ---------- Insertar imagen ---------- */
+
+  /** Medidas de cada tamaño: las mismas que tienen los archivos en /img. */
+  const TAMANOS = { '': [720, 480], 360: [360, 240], cuadrada: [320, 320] };
+
+  /** Filtra la rejilla por categoría y, en modo avatar, deja solo las que tienen versión cuadrada. */
+  function filtrarImagenes() {
+    const tamano = el.imagenesTamano.value;
+    const categoria = el.imagenesCategoria.value;
+    for (const item of el.imagenesRejilla.children) {
+      const avatar = tamano === 'cuadrada';
+      item.hidden = (categoria && item.dataset.categoria !== categoria) || (avatar && !item.hasAttribute('data-cuadrada'));
+      item.dataset.variante = avatar ? 'cuadrada' : '';
+      const img = item.querySelector('img');
+      const src = avatar && img.dataset.cuadrada ? img.dataset.cuadrada : img.dataset.normal;
+      if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+    }
+  }
+
+  on(el.imagenesTamano, 'change', filtrarImagenes);
+  on(el.imagenesCategoria, 'change', filtrarImagenes);
+  on(el.imagenesAbrir, 'click', () => {
+    filtrarImagenes();
+    el.imagenes.showModal();
+  });
+
+  on(el.imagenesRejilla, 'click', (event) => {
+    const boton = event.target.closest('button[data-id]');
+    if (!boton) return;
+    const tamano = el.imagenesTamano.value;
+    const [ancho, alto] = TAMANOS[tamano];
+    // URL completa: el código sigue funcionando si se copia a otro proyecto.
+    const src = new URL(`/img/${boton.dataset.id}${tamano ? `-${tamano}` : ''}.webp`, location.origin).href;
+    const alt = boton.dataset.alt.replaceAll('"', '&quot;');
+    el.imagenes.close();
+    // Siempre en el HTML: se cambia a su pestaña si estaba en otra.
+    const pestana = el.tabs.querySelector('[role="tab"][data-file="html"]');
+    if (activeFile() !== 'html') el.tabs.select(pestana);
+    editors.html.insert(`<img src="${src}" alt="${alt}" width="${ancho}" height="${alto}">`);
+    editors.html.focus();
+    setStatus(`Imagen insertada: ${boton.dataset.alt}.`);
   });
 
   /* ---------- Restablecer el código ---------- */
