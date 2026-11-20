@@ -7,7 +7,7 @@ const b64 = (text) => Buffer.from(text, 'utf8').toString('base64');
 const unb64 = (text) => Buffer.from(text, 'base64').toString('utf8');
 
 /** GitHub de mentira: guarda las llamadas y responde lo mínimo para que el flujo avance. */
-function fakeGitHub({ failPull = false } = {}) {
+function fakeGitHub({ failPull = false, existing = {} } = {}) {
   const calls = [];
   globalThis.fetch = vi.fn(async (url, init = {}) => {
     const path = url.replace('https://api.github.com', '');
@@ -18,6 +18,8 @@ function fakeGitHub({ failPull = false } = {}) {
       return reply({ content: b64('@import "./utilities.css";\n') });
     }
     if (method === 'GET' && path.includes('/contents/packages/angela/src/js/index.js')) return reply({ content: b64(indexJs) });
+    const existente = Object.keys(existing).find((file) => method === 'GET' && path.includes(`/contents/${file}`));
+    if (existente) return reply({ sha: 'x', content: b64(existing[existente]) });
     if (method === 'GET' && path.includes('/contents/')) return new Response('{}', { status: 404 });
     if (path === '/user') return reply({ login: 'edwar' });
     if (path.includes('/git/ref/heads/')) return reply({ object: { sha: 'abc' } });
@@ -47,6 +49,20 @@ const prBody = (calls) => calls.find((c) => c.path.endsWith('/pulls')).body;
 afterEach(() => vi.restoreAllMocks());
 
 describe('proposeComponent', () => {
+  it('componente nuevo: escribe su página de documentación', async () => {
+    const calls = fakeGitHub();
+    await proposeComponent(input(''));
+    expect(written(calls, 'docs/src/data/componentes/galeria.js')).toBeTruthy();
+    expect(prBody(calls).body).toContain('- [x] Página de documentación');
+  });
+
+  it('cambio sobre un componente que ya existe: no genera otra página (duplicaría la que hay) y lo deja como tarea', async () => {
+    const calls = fakeGitHub({ existing: { 'packages/angela/src/components/galeria.css': '.galeria{color:red}\n' } });
+    await proposeComponent(input(''));
+    expect(writes(calls).some((c) => c.path.includes('docs/src/data/'))).toBe(false);
+    expect(prBody(calls).body).toContain('- [ ] Actualiza la página que ya existe');
+  });
+
   it('no sube un JS sin efecto (una plantilla que quedó en la pestaña)', async () => {
     const vacio = `export function enhanceNota(root = globalThis.document) {\n  if (typeof window === 'undefined' || !root) return () => {};\n  return () => {};\n}`;
     const calls = fakeGitHub();

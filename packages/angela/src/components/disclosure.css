@@ -3,21 +3,33 @@
  *
  * Suelto:    <details class="disclosure"><summary>…</summary><p>…</p></details>
  * Acordeón:  <section class="accordion" aria-labelledby="…"> con <details> directos (sin clase).
- * Exclusivo (uno abierto a la vez): mismo atributo name en cada <details>.
+ * Exclusivo (uno abierto a la vez): mismo atributo name en cada <details>. Úsalo con moderación.
+ * Caret al final de la fila: data-marker="end". Icono propio: --disclosure-icon (SVG de un color)
+ * y sus giros --disclosure-rotate (cerrado) y --disclosure-rotate-open (abierto).
  * No pongas encabezados dentro de <summary>: algunos lectores de pantalla los descartan.
  */
 @layer angela.components {
   :where(.disclosure, .accordion > details) {
-    --disclosure-pad: 0px;
-    --disclosure-marker: calc(1em + var(--space-2));
+    /*
+     * Las variables públicas (--disclosure-icon, --disclosure-rotate, --disclosure-rotate-open)
+     * no se declaran aquí: se leen con un valor de reserva, así funcionan puestas en el
+     * <details>, en el .accordion o en :root. Las --_ son internas.
+     */
+    --_disclosure-pad: 0px;
+    --_disclosure-marker: calc(1em + var(--space-2));
+    --_disclosure-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.2 7.2a1 1 0 0 1 1.4 0L10 10.6l3.4-3.4a1 1 0 1 1 1.4 1.4l-4.1 4.1a1 1 0 0 1-1.4 0L5.2 8.6a1 1 0 0 1 0-1.4Z'/%3E%3C/svg%3E");
+    --_disclosure-rotate: -90deg; /* cerrado: apunta hacia donde sigue el texto */
+    --_disclosure-rotate-open: 0deg; /* abierto: apunta hacia abajo */
 
     & > summary {
+      /* En RTL los giros se invierten. */
+      --_disclosure-dir: 1;
       display: flex;
       align-items: center;
       gap: var(--space-2);
       min-block-size: var(--control-h-lg);
       padding-block: var(--space-2);
-      padding-inline: var(--disclosure-pad);
+      padding-inline: var(--_disclosure-pad);
       list-style: none;
       font-weight: var(--fw-medium);
       line-height: var(--lh-snug);
@@ -28,6 +40,10 @@
         display: none;
       }
 
+      &:dir(rtl) {
+        --_disclosure-dir: -1;
+      }
+
       /* Chevron junto al texto: más fácil de asociar con su etiqueta. */
       &::before {
         content: "";
@@ -35,12 +51,8 @@
         inline-size: 1em;
         block-size: 1em;
         background-color: var(--color-text-muted);
-        mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.2 7.2a1 1 0 0 1 1.4 0L10 10.6l3.4-3.4a1 1 0 1 1 1.4 1.4l-4.1 4.1a1 1 0 0 1-1.4 0L5.2 8.6a1 1 0 0 1 0-1.4Z'/%3E%3C/svg%3E") center / contain no-repeat;
-        rotate: -90deg;
-      }
-
-      &:dir(rtl)::before {
-        rotate: 90deg;
+        mask: var(--disclosure-icon, var(--_disclosure-icon)) center / contain no-repeat;
+        rotate: calc(var(--disclosure-rotate, var(--_disclosure-rotate)) * var(--_disclosure-dir));
       }
 
       @media (hover: hover) {
@@ -56,7 +68,7 @@
     }
 
     &[open] > summary::before {
-      rotate: 0deg;
+      rotate: calc(var(--disclosure-rotate-open, var(--_disclosure-rotate-open)) * var(--_disclosure-dir));
       background-color: var(--color-brand-text);
     }
 
@@ -75,7 +87,7 @@
     & > :not(summary) {
       margin-block: 0;
       padding-block-end: var(--space-4);
-      padding-inline: calc(var(--disclosure-pad) + var(--disclosure-marker)) var(--disclosure-pad);
+      padding-inline: calc(var(--_disclosure-pad) + var(--_disclosure-marker)) var(--_disclosure-pad);
       color: var(--color-text-muted);
       max-inline-size: var(--measure);
     }
@@ -113,7 +125,7 @@
     }
 
     & > details {
-      --disclosure-pad: var(--space-4);
+      --_disclosure-pad: var(--space-4);
       background-color: var(--color-surface);
       border: 1px solid var(--color-border);
       border-block-start-width: 0;
@@ -153,52 +165,18 @@
     }
   }
 
-   :where(.disclosure, .accordion > details) {
-    --disclosure-pad: 0px;
-    --disclosure-marker: calc(1em + var(--space-2));
-    /* Cualquier SVG de un color: se pinta con el color del texto. */
-    --disclosure-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M5.2 7.2a1 1 0 0 1 1.4 0L10 10.6l3.4-3.4a1 1 0 1 1 1.4 1.4l-4.1 4.1a1 1 0 0 1-1.4 0L5.2 8.6a1 1 0 0 1 0-1.4Z'/%3E%3C/svg%3E");
-    --disclosure-rotate: -90deg;     /* cerrado: apunta hacia donde sigue el texto */
-    --disclosure-rotate-open: 0deg;  /* abierto: apunta hacia abajo */
-
-    & > summary {
-      --disclosure-dir: 1;
-      /* …lo de antes… */
-
-      &:dir(rtl) {
-        --disclosure-dir: -1;
-      }
-
-      &::before {
-        content: "";
-        flex: none;
-        inline-size: 1em;
-        block-size: 1em;
-        background-color: var(--color-text-muted);
-        mask: var(--disclosure-icon) center / contain no-repeat;
-        rotate: calc(var(--disclosure-rotate) * var(--disclosure-dir));
-      }
-    }
-
-    &[open] > summary::before {
-      rotate: calc(var(--disclosure-rotate-open) * var(--disclosure-dir));
-      background-color: var(--color-brand-text);
-    }
-    /* …resto igual… */
-  }
-
-  /* Variante: icono al final de la fila. */
+  /* Variante: icono al final de la fila (data-marker="end" en .disclosure o en .accordion). */
   :where(.disclosure[data-marker="end"], .accordion[data-marker="end"] > details) {
-    --disclosure-marker: 0px;        /* la respuesta ya no se sangra */
-    --disclosure-rotate: 0deg;       /* cerrado: abajo */
-    --disclosure-rotate-open: 180deg; /* abierto: arriba */
+    --_disclosure-marker: 0px; /* la respuesta ya no se sangra */
+    --_disclosure-rotate: 0deg; /* cerrado: abajo */
+    --_disclosure-rotate-open: 180deg; /* abierto: arriba */
 
     & > summary {
       gap: var(--space-4);
 
       &::before {
-        order: 1;                    /* pasa detrás del texto… */
-        margin-inline-start: auto;   /* …y se va al final */
+        order: 1; /* pasa detrás del texto… */
+        margin-inline-start: auto; /* …y se va al final */
       }
     }
   }

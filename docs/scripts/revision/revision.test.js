@@ -7,6 +7,7 @@ const SOURCES = {
   campos: { css: 'components/field.css', js: 'forms.js' },
   tarjeta: { css: 'components/layout.css' },
   tabla: { css: 'components/layout.css' },
+  desplegable: { css: 'components/disclosure.css' },
 };
 
 const CSS_OK = `@layer angela.components {
@@ -50,6 +51,12 @@ describe('touchedComponents', () => {
     ]);
     expect(touchedComponents(['packages/angela/src/components/layout.css'], SOURCES)).toEqual([
       { slugs: ['tarjeta', 'tabla'], css: 'layout', js: null },
+    ]);
+  });
+
+  it('una página aportada con el nombre del CSS de uno del núcleo es una segunda página suya', () => {
+    expect(touchedComponents(['packages/angela/src/components/disclosure.css', 'docs/src/data/componentes/disclosure.js'], SOURCES)).toEqual([
+      { slugs: ['desplegable'], css: 'disclosure', js: null, duplica: ['disclosure'] },
     ]);
   });
 
@@ -162,5 +169,23 @@ describe('JS de un componente', () => {
     expect(r.findings.find((f) => f.id === 'nombre-js')).toMatchObject({ level: 'warn' });
     const bien = reviewUnit(unidad, ctx({ head: head(JS_OK, { 'packages/angela/src/js/galeria.test.js': 'x' }) }, docs));
     expect(bien.findings.find((f) => f.id === 'nombre-js')).toBeUndefined();
+  });
+});
+
+describe('página duplicada', () => {
+  const unit = { slugs: ['desplegable'], css: 'disclosure', js: null, duplica: ['disclosure'] };
+  const CSS_D = 'packages/angela/src/components/disclosure.css';
+  const docs = { base: { desplegable: DOC({ slug: 'desplegable', title: 'Desplegable' }) }, head: { desplegable: DOC({ slug: 'desplegable', title: 'Desplegable' }) } };
+
+  it('es un error si el PR la crea', () => {
+    const files = { base: { [CSS_D]: CSS_OK }, head: { [CSS_D]: CSS_OK, 'docs/src/data/componentes/disclosure.js': 'export default {}' } };
+    const r = reviewUnit(unit, ctx(files, docs));
+    expect(r.findings.find((h) => h.id === 'pagina-duplicada')?.level).toBe('error');
+  });
+
+  it('no dice nada si el PR la borra', () => {
+    const files = { base: { [CSS_D]: CSS_OK, 'docs/src/data/componentes/disclosure.js': 'export default {}' }, head: { [CSS_D]: CSS_OK } };
+    const r = reviewUnit(unit, ctx(files, docs));
+    expect(r.findings.some((h) => h.id === 'pagina-duplicada')).toBe(false);
   });
 });
