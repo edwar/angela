@@ -51,21 +51,8 @@ export default {
 </div>`,
     },
     {
-      title: "Select y textarea",
-      note: "El select es nativo: en móvil abre el selector del sistema. El textarea crece con el contenido donde se soporta field-sizing.",
+      title: "Textarea",
       code: `<div class="stack">
-  <div class="field">
-    <label for="c-pais">País</label>
-    <select class="input" id="c-pais" name="pais" autocomplete="country">
-      <option value="">Elige un país</option>
-      <option>Argentina</option>
-      <option>Colombia</option>
-      <option>España</option>
-      <option>México</option>
-      <option>Perú</option>
-      <option>Chile</option>
-    </select>
-  </div>
   <div class="field">
     <label for="c-mensaje">Mensaje</label>
     <textarea class="input" id="c-mensaje" name="mensaje"></textarea>
