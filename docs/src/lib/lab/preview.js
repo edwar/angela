@@ -50,6 +50,22 @@ export const componentSources = {
 };
 
 /**
+ * Archivos de un componente. Los del núcleo están en el mapa de arriba (su slug no coincide
+ * con el archivo: «boton» vive en button.css); los aportados desde el laboratorio siguen la
+ * convención components/<slug>.css (+ js/<slug>.js si lo tiene), así funcionan sin tocar nada.
+ * @param {string} slug
+ * @returns {{ css?: string, js?: string }}
+ */
+export function sourcesFor(slug) {
+  if (!slug) return {};
+  if (componentSources[slug]) return componentSources[slug];
+  const css = `components/${slug}.css`;
+  if (angelaCss[css] == null) return {};
+  const js = `${slug}.js`;
+  return angelaJs[js] != null ? { css, js } : { css };
+}
+
+/**
  * Vocabulario de angela para el autocompletado del editor: clases públicas y tokens.
  * Se extrae del propio CSS, así nunca se desincroniza. Los privados (`--_x`) quedan fuera.
  * @returns {{ classes: string[], tokens: string[] }}

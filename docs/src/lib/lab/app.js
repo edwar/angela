@@ -12,7 +12,7 @@ import {
   angelaVocabulary,
   bundleAngelaCss,
   buildPreviewDocument,
-  componentSources,
+  sourcesFor,
   riskyPatterns,
   splitComponents,
 } from './preview.js';
@@ -148,13 +148,13 @@ export function startLab() {
   const on = (target, type, fn) => target.addEventListener(type, fn, { signal: abort.signal });
   const setStatus = (text) => (el.status.textContent = text);
 
-  const sources = () => componentSources[state.slug] ?? {};
+  const sources = () => sourcesFor(state.slug);
   const componentInfo = () => components.find((c) => c.slug === state.slug) ?? null;
 
   function original(slug) {
     const component = components.find((c) => c.slug === slug);
-    const src = componentSources[slug];
-    if (!component || !src) return { ...STARTER };
+    const src = sourcesFor(slug);
+    if (!component || !src.css) return { ...STARTER };
     return {
       html: component.examples.map((ex) => `<!-- ${ex.title} -->\n${ex.code}`).join('\n\n'),
       css: angelaCss[src.css] ?? '',
