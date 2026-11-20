@@ -5,7 +5,7 @@
  */
 export default {
   slug: "flip-card",
-  title: "flip-card",
+  title: "Tarjeta giratoria",
   summary: "Tarjeta con dos caras que da la vuelta al pasar el ratón o al recibir el foco, para mostrar información extra en el reverso. El eje se elige con data-flip=\"vertical\" (horizontal por defecto) y la duración con --flip-duration.",
   examples: [
     {
@@ -14,16 +14,16 @@ export default {
     },
   ],
   api: [
-    [".flip-card", "Clase del componente."],
-    [".flip-container", "Clase del componente."],
-    [".flip-card-inner", "Clase del componente."],
-    [".flip-card-face", "Clase del componente."],
-    [".flip-card-front", "Clase del componente."],
-    [".flip-card-back", "Clase del componente."],
-    ["data-flip", "vertical"],
-    ["--flip-perspective", "Parámetro. Por defecto: 1000px."],
-    ["--flip-duration", "Parámetro. Por defecto: 600ms."],
-    ["--flip-giro", "Parámetro. Por defecto: rotateY(180deg)."],
+    [".flip-card", "La tarjeta: marca la perspectiva y gira al pasar el ratón o al recibir el foco algo de dentro."],
+    [".flip-container", "Opcional: agrupa varias tarjetas en fila; pasan a la siguiente línea si no caben."],
+    [".flip-card-inner", "La pieza que gira: contiene las dos caras."],
+    [".flip-card-face", "Cada cara: ocupa toda la tarjeta y oculta su dorso."],
+    [".flip-card-front", "Cara visible al principio, sobre la superficie."],
+    [".flip-card-back", "Reverso, en el color neutro sólido."],
+    ["data-flip=\"vertical\"", "Gira sobre el eje X (como un calendario de mesa). Sin el atributo, gira en horizontal (como una página)."],
+    ["--flip-perspective", "Profundidad del giro. Por defecto: 1000px."],
+    ["--flip-duration", "Duración del giro. Por defecto: 600ms. Con prefers-reduced-motion no hay animación."],
+    ["--flip-giro", "Giro que aplican la tarjeta y el reverso. Por defecto: rotateY(180deg); data-flip lo cambia."],
   ],
   a11y: [
     "El reverso debe tener al menos un elemento enfocable (botón o enlace): así la tarjeta también gira con el teclado (:focus-within).",
