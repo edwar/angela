@@ -88,9 +88,10 @@ const previewHtml = `
 }`}</code></pre>
 
     <h3 id="playground-titulo">Prueba tu paleta</h3>
-    <p>Mueve los controles: se aplica a toda esta página. Abajo ves los componentes en claro y en oscuro a la vez y el contraste real de los pares clave.</p>
+    <p>Mueve los controles: se aplica a este recuadro, que parte de los valores por defecto de angela. Abajo ves los componentes en claro y en oscuro a la vez y el contraste real de los pares clave.</p>
 
-    <div class="playground card" role="group" aria-labelledby="playground-titulo">
+    <!-- data-angela-theme: la paleta se recalcula solo aquí, sin tocar el tema del sitio. -->
+    <div class="playground card" data-angela-theme="angela" role="group" aria-labelledby="playground-titulo">
       <div class="playground-controls">
         {
           controls.map((c) => (
@@ -295,7 +296,8 @@ const previewHtml = `
   <script>
     import { auditPalette, contrastRatio, resolvePalette, roles } from 'angela/palette';
 
-    const root = document.documentElement;
+    // La paleta de prueba vive en el recuadro del playground, no en toda la página.
+    const root = document.querySelector<HTMLElement>('.playground')!;
     const inputs = [...document.querySelectorAll<HTMLInputElement>('.playground-controls input[type="range"]')];
     const cssOut = document.getElementById('pg-css')!;
     const status = document.getElementById('pg-status')!;

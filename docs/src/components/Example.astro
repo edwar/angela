@@ -18,6 +18,8 @@ const shown = code.replace(/<svg[\s\S]*?<\/svg>/g, '<svg aria-hidden="true">…<
       </div>
     )
   }
-  <div class="example-preview" set:html={code} />
+  <!-- Los ejemplos muestran angela como la recibe quien la instala, no con el tema del sitio. -->
+  <p class="eyebrow example-label">Vista previa · colores por defecto de angela</p>
+  <div class="example-preview" data-angela-theme="angela" set:html={code} />
   <pre class="example-code" tabindex="0" aria-label={`Código${title ? `: ${title}` : ''}`}><code>{shown}</code></pre>
 </section>

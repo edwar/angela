@@ -1,5 +1,8 @@
 ---
 import 'angela/source.css';
+// Títulos condensados del estilo «plano», alojados en el sitio (sin peticiones a terceros).
+import '@fontsource/barlow-condensed/latin-600.css';
+import '@fontsource/barlow-condensed/latin-700.css';
 import '../styles/docs.css';
 import { themeInlineScript } from 'angela/js/theme';
 import { components } from '../data/components.js';
@@ -10,9 +13,11 @@ interface Props {
   description: string;
   /** Si es false, la página pone su propio <h1>. */
   heading?: boolean;
+  /** Etiqueta pequeña sobre el título, como la leyenda de un plano. */
+  eyebrow?: string;
 }
 
-const { title, description, heading = true } = Astro.props;
+const { title, description, heading = true, eyebrow = 'angela · documentación' } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const path = Astro.url.pathname.replace(/\/$/, '') || '/';
 const href = (p: string) => `${base}${p}`;
@@ -28,7 +33,8 @@ const nav = [
 ---
 
 <!doctype html>
-<html lang="es">
+<!-- data-angela-theme="plano": el tema del sitio. La librería sigue con sus valores por defecto. -->
+<html lang="es" data-angela-theme="plano">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -56,10 +62,14 @@ const nav = [
           set:html={icon('menu')}
         />
         <a class="site-logo" href={href('/')}>
-          <span class="site-logo-mark" aria-hidden="true"></span>
+          <svg class="site-logo-mark" viewBox="0 0 24 24" aria-hidden="true">
+            <rect x="3.5" y="3.5" width="17" height="17" />
+            <path d="M12 0v7M12 17v7M0 12h7M17 12h7" />
+            <circle cx="12" cy="12" r="2.5" />
+          </svg>
           angela
         </a>
-        <span class="badge" data-variant="outline" data-tone="neutral">v0.1</span>
+        <span class="badge" data-variant="outline" data-tone="brand">v0.1</span>
         <div class="site-header-actions">
           <button
             class="button"
@@ -110,6 +120,7 @@ const nav = [
         {
           heading && (
             <header class="page-header">
+              <p class="eyebrow">{eyebrow}</p>
               <h1 id="contenido" tabindex="-1">
                 {title}
               </h1>
@@ -122,6 +133,7 @@ const nav = [
     </div>
 
     <footer class="site-footer">
+      <p class="site-footer-motto" aria-hidden="true">Diseña · Prueba · Propón</p>
       <p class="muted">angela · componentes sobre HTML nativo. Hecho con la plataforma web.</p>
     </footer>
 
