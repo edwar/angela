@@ -14,6 +14,26 @@
 const stripComments = (js) => js.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
 
 /**
+ * Lo que delata que un módulo hace algo en la página: escuchar, observar, tocar el DOM o
+ * programar trabajo. Sin nada de esto, el módulo no tiene efecto.
+ */
+const EFECTOS =
+  /addEventListener|Observer\b|customElements|extends\s+HTMLElement|querySelector|getElement|setAttribute|removeAttribute|toggleAttribute|classList|\.style\b|\.dataset|matchMedia|requestAnimationFrame|setTimeout|setInterval|\.append|\.prepend|\.remove\(|\.replaceChildren|innerHTML|textContent|\.show(Modal|Popover)?\(|\.close\(|\.focus\(|\.animate\(|\.scroll|localStorage|fetch\(|import\(/;
+
+/**
+ * ¿Hay JS que no hace nada? Un módulo con su firma (guarda y limpieza vacía) pero sin efecto
+ * en la página: típico cuando el componente es solo CSS y la pestaña JS quedó con una plantilla.
+ * Subirlo obliga a registrarlo, testarlo y cargarlo en todas las webs para nada.
+ * @param {string} js
+ * @returns {boolean}  true si hay código pero ninguno tiene efecto (vacío → false).
+ */
+export function jsSinEfecto(js) {
+  const code = stripComments(js ?? '');
+  if (!code.trim()) return false;
+  return !EFECTOS.test(code);
+}
+
+/**
  * La función que angela() debe llamar: la exportada que empieza por enhance, init o define;
  * si no hay ninguna así, la primera función exportada. Las async no valen (devuelven una
  * promesa, no la limpieza).

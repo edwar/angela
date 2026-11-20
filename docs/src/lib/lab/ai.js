@@ -146,6 +146,7 @@ Tu tarea: revisar el código actual de un componente contra las reglas de angela
 - Corrige lo mínimo: no cambies el comportamiento, el diseño ni el estilo del código más allá de lo que pida la regla. No cambies el valor visual de nada (un tamaño, un color, una distancia) salvo para sustituirlo por el token equivalente. No reformatees lo que ya cumple. Nada de mejoras opcionales: solo incumplimientos.
 - En "revisado" enumera en frases cortas lo que comprobaste (por ejemplo: "Todo el CSS está en @layer angela.components").
 - Si la revisión automática del laboratorio encontró algo, compruébalo y corrígelo si de verdad incumple una regla.
+- Si el componente se resuelve con HTML y CSS, el "js" va vacío (""). No inventes un módulo que no hace nada solo para cumplir el patrón: un JS sin efecto es un error.
 - En el JS comprueba siempre, una por una: que exporta la función de activación; que tiene la guarda de typeof window; que devuelve la limpieza; y que delega en root (ningún addEventListener sobre elementos buscados con querySelector o similares). Si al corregir algo escribes JS nuevo, ese JS también tiene que cumplir el patrón.
 
 ${RULES}

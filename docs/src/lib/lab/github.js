@@ -20,7 +20,7 @@ const ENTRY = 'packages/angela/src/angela.css';
 const JS_ENTRY = 'packages/angela/src/js/index.js';
 const DOCS_DIR = 'docs/src/data/componentes';
 
-import { findEntryFunction, registerJsModule } from './js-entry.js';
+import { findEntryFunction, jsSinEfecto, registerJsModule } from './js-entry.js';
 
 export class GitHubError extends Error {}
 
@@ -361,8 +361,9 @@ export async function proposeComponent({
   }
 
   // El JS se sube y se registra en @angela-ui/angela/js: si no, angela() no lo ejecuta nunca.
+  // Un JS sin efecto (una plantilla que quedó en la pestaña) no se sube: solo añadiría peso.
   let js = null;
-  if (hasCode(files.js)) {
+  if (hasCode(files.js) && !jsSinEfecto(files.js)) {
     const file = jsFile || `${id}.js`;
     paso('Subiendo el JavaScript…');
     await put(jsPath(file), `${files.js.trimEnd()}\n`, `feat(${id}): módulo JavaScript del componente`);

@@ -147,10 +147,16 @@ export function reviewUnit(unit, { read, docs, reviewComponent, findEntryFunctio
     if (faltan.length) add('error', 'documentacion', `La documentación de «${entry.title}» no tiene ${faltan.join(', ')}.`);
   }
 
-  if (jsPath && hasCode(head.js)) {
+  // Un JS sin efecto ya lo marca «sin-efecto»: pedirle registro y test sería ruido (la solución es quitarlo).
+  if (jsPath && hasCode(head.js) && !findings.some((h) => h.id === 'sin-efecto')) {
     const index = read('head', JS_ENTRY) ?? '';
     // Sin función exportada ya avisa la regla «activacion» del laboratorio.
     const fn = findEntryFunction(head.js);
+    // La función de activación lleva el nombre del componente: enhanceFlipCard para flip-card.js.
+    const pascal = unit.js.split('-').map((p) => p[0].toUpperCase() + p.slice(1)).join('');
+    if (fn && !fn.toLowerCase().includes(pascal.toLowerCase())) {
+      add('warn', 'nombre-js', `La función de \`${jsPath}\` se llama \`${fn}\`: lleva el nombre del componente (\`enhance${pascal}\`), así se sabe de dónde viene en \`angela()\`.`);
+    }
     if (fn && !new RegExp(`from\\s+['"]\\./${unit.js}\\.js['"]`).test(index)) {
       add(
         'error',

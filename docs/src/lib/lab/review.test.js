@@ -75,3 +75,14 @@ describe('regla ssr: valor por defecto evaluado antes de la guarda', () => {
     }
   });
 });
+
+describe('sin-efecto', () => {
+  const sinEfecto = (js) => reviewComponent({ html: '', css: '', js }).find((h) => h.id === 'sin-efecto');
+  it('marca como error un JS que no hace nada', () => {
+    expect(sinEfecto("export function enhanceNota(root = globalThis.document) {\n  if (typeof window === 'undefined' || !root) return () => {};\n  return () => {};\n}")?.level).toBe('error');
+  });
+  it('no dice nada sin JS o con un JS que trabaja', () => {
+    expect(sinEfecto('')).toBeUndefined();
+    expect(sinEfecto("export function enhanceX(root = globalThis.document) { if (typeof window === 'undefined') return () => {}; const f = () => {}; root.addEventListener('click', f); return () => root.removeEventListener('click', f); }")).toBeUndefined();
+  });
+});
