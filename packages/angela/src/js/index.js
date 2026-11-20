@@ -9,12 +9,14 @@ import { enhanceForms } from './forms.js';
 import { defineTabs } from './tabs.js';
 import { enhanceDialogs, enhancePopovers } from './overlays.js';
 import { initThemeToggle } from './theme.js';
+import { enhanceSpotlight } from './spotlight.js';
 
 export * from './theme.js';
 export { enhanceForms } from './forms.js';
 export { defineTabs } from './tabs.js';
 export { enhanceDialogs, enhancePopovers } from './overlays.js';
 export { loadPolyfills } from './polyfills.js';
+export { enhanceSpotlight } from './spotlight.js';
 
 /**
  * Activa todas las mejoras. Seguro de llamar en SSR (no hace nada fuera del navegador).
@@ -25,6 +27,12 @@ export function angela({ root = document, polyfills = true } = {}) {
   if (typeof window === 'undefined') return () => {};
   if (polyfills) loadPolyfills();
   defineTabs();
-  const cleanups = [enhanceForms(root), enhanceDialogs(root), enhancePopovers(root), initThemeToggle(root)];
+  const cleanups = [
+    enhanceForms(root),
+    enhanceDialogs(root),
+    enhancePopovers(root),
+    initThemeToggle(root),
+    enhanceSpotlight(root),
+  ];
   return () => cleanups.forEach((fn) => fn());
 }

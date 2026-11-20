@@ -1,7 +1,31 @@
-const spotlight = document.querySelector('.spotlight');
+/**
+ * Spotlight: el punto de luz sigue al puntero.
+ *
+ * El CSS dibuja la luz en (--spotlight-x, --spotlight-y), centrada por defecto; esto solo
+ * pasa la posición del puntero. Escucha en la raíz (delegación), así funciona también con
+ * los .spotlight que un framework monte después.
+ *
+ * Marcado: <div class="spotlight">…contenido… <div class="spotlight-overlay"></div></div>
+ */
 
-spotlight.addEventListener('pointermove', (event) => {
-  const rect = spotlight.getBoundingClientRect();
-  spotlight.style.setProperty('--spotlight-x', `${event.clientX - rect.left}px`);
-  spotlight.style.setProperty('--spotlight-y', `${event.clientY - rect.top}px`);
-});
+/**
+ * Activa el seguimiento del puntero en todos los .spotlight de la raíz, presentes y futuros.
+ * @param {Document|HTMLElement} [root=document]
+ * @returns {() => void} función para desconectar el listener
+ */
+export function enhanceSpotlight(root = document) {
+  if (typeof window === 'undefined') return () => {};
+
+  /** @param {PointerEvent} event */
+  const onMove = (event) => {
+    const target = /** @type {Element | null} */ (event.target);
+    const spotlight = target?.closest?.('.spotlight');
+    if (!(spotlight instanceof HTMLElement) || !root.contains(spotlight)) return;
+    const rect = spotlight.getBoundingClientRect();
+    spotlight.style.setProperty('--spotlight-x', `${event.clientX - rect.left}px`);
+    spotlight.style.setProperty('--spotlight-y', `${event.clientY - rect.top}px`);
+  };
+
+  root.addEventListener('pointermove', /** @type {EventListener} */ (onMove), { passive: true });
+  return () => root.removeEventListener('pointermove', /** @type {EventListener} */ (onMove));
+}
