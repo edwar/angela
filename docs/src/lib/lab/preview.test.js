@@ -5,7 +5,7 @@ const build = (js, extra = {}) => buildPreviewDocument({ html: '<p>Hola</p>', cs
 
 describe('buildPreviewDocument', () => {
   it('llama a la función de activación del editor, como angela() en la web', () => {
-    expect(build(`export function enhanceGaleria(root = document) {}`)).toContain('const userEntry = "enhanceGaleria";');
+    expect(build(`export function enhanceGaleria(root = globalThis.document) {}`)).toContain('const userEntry = "enhanceGaleria";');
   });
 
   it('sin función exportada, el JS se ejecuta tal cual', () => {

@@ -23,8 +23,9 @@ export { enhanceSpotlight } from './spotlight.js';
  * @param {{ root?: Document|HTMLElement, polyfills?: boolean }} options
  * @returns {() => void} función para desconectar los listeners
  */
-export function angela({ root = document, polyfills = true } = {}) {
-  if (typeof window === 'undefined') return () => {};
+export function angela({ root = globalThis.document, polyfills = true } = {}) {
+  // Seguro en el servidor: sin DOM no hay nada que mejorar.
+  if (typeof window === 'undefined' || !root) return () => {};
   if (polyfills) loadPolyfills();
   defineTabs();
   const cleanups = [

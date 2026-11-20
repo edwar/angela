@@ -1,6 +1,6 @@
 {
   "name": "@angela-ui/angela",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Componentes accesibles sobre HTML nativo, con modo claro/oscuro y paleta adaptable.",
   "type": "module",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "url": "git+https://github.com/edwar/angela.git",
     "directory": "packages/angela"
   },
-  "homepage": "https://docs-one-ecru-29.vercel.app",
+  "homepage": "https://angela.cognilab.dev",
   "bugs": {
     "url": "https://github.com/edwar/angela/issues"
   },

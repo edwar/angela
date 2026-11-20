@@ -19,7 +19,7 @@ import { parseArgs } from 'node:util';
 import { runnerImport } from 'vite';
 import { renderComment, reviewUnit, touchedComponents, verdict } from './revision.js';
 
-const PRODUCTION_URL = 'https://docs-one-ecru-29.vercel.app';
+const PRODUCTION_URL = 'https://angela.cognilab.dev';
 
 const { values } = parseArgs({
   options: {

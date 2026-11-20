@@ -100,7 +100,9 @@ function initFields(node) {
  * @param {Document|HTMLElement} root
  * @returns {() => void} función para desconectar
  */
-export function enhanceForms(root = document) {
+export function enhanceForms(root = globalThis.document) {
+  // Seguro en el servidor: sin DOM no hay nada que mejorar.
+  if (typeof window === 'undefined' || !root) return () => {};
   // Todos empiezan en aria-invalid="false": Firefox y Safari exponen un campo requerido vacío
   // como inválido desde la carga si el atributo no está.
   initFields(root);

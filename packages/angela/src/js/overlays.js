@@ -8,7 +8,9 @@
  * @param {Document|HTMLElement} [root]
  * @returns {() => void} función para desconectar
  */
-export function enhanceDialogs(root = document) {
+export function enhanceDialogs(root = globalThis.document) {
+  // Seguro en el servidor: sin DOM no hay nada que mejorar.
+  if (typeof window === 'undefined' || !root) return () => {};
   if (typeof HTMLDialogElement === 'undefined' || 'closedBy' in HTMLDialogElement.prototype) return () => {};
 
   // Se compara la posición del puntero y no event.target: el propio <dialog> también es el
@@ -42,7 +44,9 @@ export function enhanceDialogs(root = document) {
  * @param {Document|HTMLElement} [root]
  * @returns {() => void} función para desconectar
  */
-export function enhancePopovers(root = document) {
+export function enhancePopovers(root = globalThis.document) {
+  // Seguro en el servidor: sin DOM no hay nada que mejorar.
+  if (typeof window === 'undefined' || !root) return () => {};
   const invokers = new WeakMap();
   const onBeforeToggle = (e) => {
     const popover = e.target;

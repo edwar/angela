@@ -185,7 +185,7 @@ function jsLines(js) {
     default:
       return {
         intro: `Incluye el módulo ${ruta}, **sin registrar**: no exporta una función de activación, así que \`angela()\` no lo ejecuta.`,
-        todo: `- [ ] Convertirlo en \`export function enhance…(root = document)\` que devuelva su limpieza, registrarlo en \`${JS_ENTRY}\` y añadir su test.`,
+        todo: `- [ ] Convertirlo en \`export function enhance…(root = globalThis.document)\` que devuelva su limpieza, registrarlo en \`${JS_ENTRY}\` y añadir su test.`,
       };
   }
 }

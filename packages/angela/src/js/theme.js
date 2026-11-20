@@ -85,7 +85,9 @@ export function toggleScheme() {
  * @param {Document|HTMLElement} [root]
  * @returns {() => void} función para desconectar
  */
-export function initThemeToggle(root = document) {
+export function initThemeToggle(root = globalThis.document) {
+  // Seguro en el servidor: sin DOM no hay nada que mejorar.
+  if (typeof window === 'undefined' || !root) return () => {};
   const onClick = (event) => {
     if (event.target.closest?.('[data-theme-toggle]')) toggleScheme();
   };

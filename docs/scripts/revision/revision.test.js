@@ -13,7 +13,7 @@ const CSS_OK = `@layer angela.components {
   :where(.galeria) { --galeria-gap: var(--space-4); }
   .galeria { gap: var(--galeria-gap); }
 }`;
-const JS_OK = `export function enhanceGaleria(root = document) {
+const JS_OK = `export function enhanceGaleria(root = globalThis.document) {
   if (typeof window === 'undefined') return () => {};
   const on = () => {};
   root.addEventListener('click', on);

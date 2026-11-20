@@ -1,6 +1,6 @@
 {
   "name": "@angela-ui/react",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Componentes de React 19 sobre angela: envoltorios finos de HTML nativo, compatibles con Server Components.",
   "type": "module",
   "license": "MIT",
@@ -9,7 +9,7 @@
     "url": "git+https://github.com/edwar/angela.git",
     "directory": "packages/angela-react"
   },
-  "homepage": "https://docs-one-ecru-29.vercel.app",
+  "homepage": "https://angela.cognilab.dev",
   "bugs": {
     "url": "https://github.com/edwar/angela/issues"
   },
@@ -37,10 +37,10 @@
     "react-dom": ">=19"
   },
   "devDependencies": {
+    "@angela-ui/angela": "workspace:^",
     "@types/node": "^24.19.2",
     "@types/react": "19.3.0",
     "@types/react-dom": "^19.3.0",
-    "@angela-ui/angela": "workspace:^",
     "happy-dom": "^21.0.4",
     "react": "19.3.1",
     "react-dom": "19.3.1",

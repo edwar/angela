@@ -49,7 +49,7 @@ afterEach(() => vi.restoreAllMocks());
 describe('proposeComponent', () => {
   it('sube el JS y lo registra en @angela-ui/angela/js', async () => {
     const calls = fakeGitHub();
-    await proposeComponent(input(`export function enhanceGaleria(root = document) { return () => {}; }`));
+    await proposeComponent(input(`export function enhanceGaleria(root = globalThis.document) { return () => {}; }`));
 
     expect(written(calls, '/js/galeria.js')).toBeTruthy();
     const index = written(calls, '/js/index.js');
@@ -71,7 +71,7 @@ describe('proposeComponent', () => {
   it('al partir de un componente de angela, escribe en su módulo (forms.js) y no lo registra dos veces', async () => {
     const calls = fakeGitHub();
     await proposeComponent(
-      input(`export function enhanceForms(root = document) { return () => {}; }`, { id: 'field', jsFile: 'forms.js' }),
+      input(`export function enhanceForms(root = globalThis.document) { return () => {}; }`, { id: 'field', jsFile: 'forms.js' }),
     );
 
     expect(written(calls, '/js/forms.js')).toBeTruthy();
