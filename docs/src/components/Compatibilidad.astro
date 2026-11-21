@@ -1,0 +1,142 @@
+---
+/**
+ * Compatibilidad de un componente con los navegadores. Se calcula al construir el sitio con los
+ * datos de Baseline (web-features) y el uso mundial de cada versión (caniuse vía browserslist).
+ */
+import { angelaCss, sourcesFor } from '../lib/lab/preview.js';
+import { compatibilidad } from '../lib/compatibilidad.js';
+
+interface Props {
+  slug: string;
+  title: string;
+  html: string;
+}
+const { slug, title, html } = Astro.props;
+
+// Lo que usa toda la librería: sin esto no se ve ningún componente.
+const nucleo = ['tokens/palette.css', 'tokens/scale.css', 'base.css', 'components/tone.css']
+  .map((f) => angelaCss[f] ?? '')
+  .join('\n');
+const { css: rutaCss } = sourcesFor(slug);
+const c = compatibilidad({ css: rutaCss ? (angelaCss[rutaCss] ?? '') : '', html, nucleo });
+
+const numero = new Intl.NumberFormat('es', { maximumFractionDigits: 1 });
+const pct = (n: number) => `${numero.format(n)} %`;
+const fecha = new Intl.DateTimeFormat('es', { dateStyle: 'long' }).format(new Date());
+const fuera = c.total - c.identificado;
+const estado = (b: false | 'low' | 'high') =>
+  b === 'high' ? 'Baseline amplio' : b === 'low' ? 'Baseline reciente' : 'Aún no es Baseline';
+---
+
+<section class="doc-section compat" aria-labelledby="compatibilidad">
+  <h2 id="compatibilidad">Compatibilidad</h2>
+  <p class="compat-resumen">
+    <strong>{pct(c.base.global)}</strong> de los usuarios de todo el mundo usan un navegador donde {title} funciona.
+    {c.mejoras.length > 0 && ' Las mejoras progresivas se ven donde hay soporte; en el resto, lo nativo.'}
+  </p>
+
+  <div class="card" data-flush>
+    <div class="table-wrap" role="region" aria-labelledby="compat-cap" tabindex="0">
+      <table class="table compat-tabla">
+        <caption id="compat-cap" class="visually-hidden">Navegadores donde funciona {title}: versión mínima y porcentaje de sus usuarios con soporte</caption>
+        <thead>
+          <tr>
+            <th scope="col">Navegador</th>
+            <th scope="col">Desde</th>
+            <th scope="col">Sus usuarios</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            c.base.navegadores.map((n) => (
+              <tr>
+                <th scope="row">{n.nombre}</th>
+                <td data-numeric>{n.desde ?? 'Sin soporte'}</td>
+                <td>
+                  <span class="compat-uso">
+                    <meter class="meter" min="0" max="100" low="50" high="80" optimum="100" value={n.porcentaje} aria-hidden="true" />
+                    <span data-numeric>{pct(n.porcentaje)}</span>
+                  </span>
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {
+    c.mejoras.length > 0 && (
+      <>
+        <h3>Mejoras progresivas</h3>
+        <p class="muted">Si el navegador no las tiene, el componente funciona igual con lo nativo.</p>
+        <ul class="compat-lista" role="list">
+          {c.mejoras.map((m) => (
+            <li>
+              <span class="compat-nombre">{m.nombre}</span>
+              <span class="badge" data-variant="outline" data-tone={m.baseline === 'high' ? 'success' : m.baseline === 'low' ? 'info' : 'neutral'}>
+                {estado(m.baseline)}
+              </span>
+              <span class="compat-dato">La ve el {pct(m.global)} de los usuarios. {m.nota}</span>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+
+  {
+    c.polyfills.length > 0 && (
+      <>
+        <h3>Con el JS de angela</h3>
+        <ul class="compat-lista" role="list">
+          {c.polyfills.map((p) => (
+            <li>
+              <span class="compat-nombre">{p.nombre}</span>
+              <span class="badge" data-variant="outline" data-tone={p.baseline === 'high' ? 'success' : p.baseline === 'low' ? 'info' : 'neutral'}>
+                {estado(p.baseline)}
+              </span>
+              <span class="compat-dato">{p.nota}</span>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+
+  <details class="disclosure compat-detalle">
+    <summary>Qué necesita para funcionar</summary>
+    {
+      c.propias.length > 0 && (
+        <>
+          <p>Lo que usa este componente:</p>
+          <ul>
+            {c.propias.map((f) => (
+              <li>
+                {f.nombre} <span class="muted">· {estado(f.baseline)}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+    <p>Lo que usa toda angela (tokens, paleta y estilos base), y marca la versión mínima:</p>
+    <ul>
+      {
+        c.nucleo.map((f) => (
+          <li>
+            {f.nombre} <span class="muted">· {estado(f.baseline)}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </details>
+
+  <p class="compat-fuente muted">
+    Soporte: datos de Baseline (<a href="https://github.com/web-platform-dx/web-features">web-features</a>).
+    Uso: <a href="https://caniuse.com/usage-table">caniuse</a>, calculado el {fecha}. Los porcentajes son del uso mundial;
+    Samsung Internet, Opera y otros navegadores ({pct(fuera)}) no están en los datos de Baseline y no se cuentan, aunque
+    muchos lo soporten.
+  </p>
+</section>
