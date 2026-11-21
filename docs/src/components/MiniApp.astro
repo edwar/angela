@@ -1,0 +1,110 @@
+---
+/**
+ * Una pantalla de ejemplo hecha solo con componentes de angela, para ver un tema entero de un
+ * vistazo: acciones, aviso, medidor, formulario, interruptor, tabla con estados y etiquetas.
+ */
+import { icon } from '../data/icons.js';
+
+interface Props {
+  /** Distingue los ids cuando la pantalla aparece dos veces (claro y oscuro). */
+  sufijo: string;
+}
+const { sufijo } = Astro.props;
+const id = (nombre: string) => `${nombre}-${sufijo}`;
+const facturas = [
+  ['F-1042', '1 nov 2026', '49,00 €', 'success', 'Pagada'],
+  ['F-1043', '15 nov 2026', '49,00 €', 'warning', 'Pendiente'],
+  ['F-1031', '1 oct 2026', '12,50 €', 'danger', 'Vencida'],
+];
+---
+
+<div class="taller-app">
+  <header class="taller-app-cabecera">
+    <div>
+      <h3>Facturación</h3>
+      <p class="muted">Plan Pro · se renueva el 1 de diciembre</p>
+    </div>
+    <div class="cluster">
+      <button class="button" type="button" data-variant="outline" data-tone="neutral">
+        <Fragment set:html={icon('download')} /> Exportar
+      </button>
+      <button class="button" type="button"><Fragment set:html={icon('plus')} /> Nueva factura</button>
+    </div>
+  </header>
+
+  <div class="callout" data-tone="warning">
+    <Fragment set:html={icon('alert')} />
+    <div>
+      <p class="callout-title">Tu tarjeta caduca pronto</p>
+      <p>Actualízala antes del 30 de noviembre para no perder el servicio.</p>
+    </div>
+  </div>
+
+  <div class="taller-app-rejilla">
+    <article class="card">
+      <div class="card-header">
+        <h4 id={id('uso')}>Uso este mes</h4>
+        <span class="badge" data-tone="info">Pro</span>
+      </div>
+      <meter class="meter" min="0" max="100" low="70" high="90" optimum="0" value="64" aria-labelledby={id('uso')}></meter>
+      <p class="muted">64 de 100 GB · se reinicia en 9 días</p>
+    </article>
+
+    <form class="card stack" action="#" aria-label="Datos de facturación">
+      <div class="field">
+        <label for={id('correo')}>Correo de facturación</label>
+        <input class="input" id={id('correo')} type="email" value="ana@empresa.com" autocomplete="off" />
+      </div>
+      <div class="choice">
+        <input type="checkbox" role="switch" switch id={id('aviso')} checked />
+        <label for={id('aviso')}>Avisarme antes de cobrar</label>
+      </div>
+      <div class="cluster">
+        <button class="button" type="button" data-variant="ghost" data-tone="neutral">Cancelar</button>
+        <button class="button" type="button">Guardar</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="card" data-flush>
+    <div class="table-wrap" role="region" aria-label="Facturas" tabindex="0">
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">Factura</th>
+            <th scope="col">Fecha</th>
+            <th scope="col" data-numeric>Importe</th>
+            <th scope="col">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            facturas.map(([numero, fecha, importe, tono, estado]) => (
+              <tr>
+                <th scope="row">{numero}</th>
+                <td>{fecha}</td>
+                <td data-numeric>{importe}</td>
+                <td>
+                  <span class="badge" data-tone={tono} data-dot>
+                    {estado}
+                  </span>
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="taller-app-pie">
+    <div class="cluster">
+      <span class="badge" data-tone="brand" data-variant="solid">Nuevo</span>
+      <span class="badge" data-tone="neutral" data-variant="outline">Borrador</span>
+      <span class="badge" data-tone="success" data-variant="outline">Al día</span>
+    </div>
+    <button class="button" type="button" data-variant="soft" data-tone="danger">
+      <Fragment set:html={icon('trash')} /> Eliminar cuenta
+    </button>
+  </div>
+</div>

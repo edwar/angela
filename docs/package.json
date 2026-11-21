@@ -27,9 +27,12 @@
     "codemirror": "^6.0.2"
   },
   "devDependencies": {
+    "@angular/compiler": "^20.3.35",
     "browserslist": "^4.29.6",
+    "happy-dom": "21.0.4",
     "vite": "8.3.8",
     "vitest": "~5.0.5",
+    "vue": "~3.5.45",
     "web-features": "^3.47.0"
   }
 }

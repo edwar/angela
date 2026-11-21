@@ -27,6 +27,7 @@ const isCurrent = (p: string) => (path === `${base}${p}`.replace(/\/$/, '') || (
 const nav = [
   { label: 'Inicio', href: '/' },
   { label: 'Guía de diseño', href: '/guia' },
+  { label: 'Taller de temas', href: '/temas' },
   { label: 'Componentes', href: '/componentes' },
   { label: 'Imágenes', href: '/imagenes' },
   { label: 'Iconos', href: '/iconos' },
@@ -44,6 +45,18 @@ const nav = [
     <!-- Esquemas soportados, antes de pintar. El script siguiente aplica la preferencia guardada. -->
     <meta name="color-scheme" content="light dark" />
     <script is:inline set:html={themeInlineScript} />
+    <!-- El tema del taller (si lo hay) en las vistas previas, antes de pintar: sin destello. -->
+    <script is:inline>
+      try {
+        const t = JSON.parse(localStorage.getItem('angela-docs:tema') ?? 'null');
+        if (t && t.css) {
+          const s = document.createElement('style');
+          s.id = 'tema-usuario';
+          s.textContent = t.css;
+          document.head.append(s);
+        }
+      } catch {}
+    </script>
     <title>{title === 'angela' ? 'angela · componentes sobre HTML nativo' : `${title} · angela`}</title>
     <meta name="description" content={description} />
     <link rel="icon" href={href('/favicon.svg')} type="image/svg+xml" />
@@ -120,6 +133,13 @@ const nav = [
       </nav>
 
       <main class="site-main">
+        <div class="tema-aviso callout" data-tone="info" data-tema-aviso hidden>
+          <Fragment set:html={icon('info')} />
+          <div>
+            <p>Ves los ejemplos con tu tema del taller. <a href={href('/temas')}>Editarlo</a></p>
+          </div>
+          <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm">Quitar</button>
+        </div>
         {
           heading && (
             <header class="page-header">
@@ -153,9 +173,11 @@ const nav = [
       import { angela } from '@angela-ui/angela/js';
       import { botonesDeCopiar } from '../lib/copiar-codigo.js';
       import { recordarFramework } from '../lib/framework-preferido.js';
+      import { avisoTemaUsuario } from '../lib/tema-usuario.js';
       angela();
       botonesDeCopiar();
       recordarFramework();
+      avisoTemaUsuario(import.meta.env.BASE_URL.replace(/\/$/, ''));
     </script>
   </body>
 </html>

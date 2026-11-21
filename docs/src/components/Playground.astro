@@ -1,0 +1,192 @@
+---
+/**
+ * «Pruébalo»: las props de un componente con controles, su vista previa y, para cada framework,
+ * el componente reutilizable (en TypeScript o JavaScript) y su uso con los valores elegidos.
+ * Todo se actualiza al cambiar un control (lib/playground/cliente.js). Sin JS se ve con los valores
+ * iniciales. Solo aparece si el componente tiene definición.
+ */
+import { definicion, htmlDe, valoresPorDefecto, componenteDe } from '../lib/playground/definiciones.js';
+import { codigoPlayground } from '../lib/playground/codigo.js';
+
+interface Props {
+  slug: string;
+  title: string;
+}
+const { slug, title } = Astro.props;
+const def = definicion(slug);
+const valores = def ? valoresPorDefecto(def) : {};
+const codigo = def ? codigoPlayground(def, valores, 'ts') : [];
+const nombre = def ? componenteDe(def).nombre : title;
+const MARCA = { h: 262, c: 0.17 };
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const valorControl = (v: unknown, separador?: string) => (Array.isArray(v) ? v.join(` ${separador} `) : String(v ?? ''));
+---
+
+{
+  def && (
+    <section class="doc-section pruebalo" aria-labelledby="pruebalo" data-playground={slug}>
+      <h2 id="pruebalo">Pruébalo</h2>
+      <p class="pruebalo-intro">
+        Juega con las props, el color de marca y el esquema. Abajo tienes el componente <code>{nombre}</code> listo para copiar
+        en tu proyecto: recibe estas mismas props, en TypeScript o JavaScript, y es tuyo para cambiarlo. Debajo, cómo usarlo con
+        lo que has elegido.
+      </p>
+
+      <div class="example pruebalo-caja">
+        <div class="pruebalo-cuerpo">
+          <div class="pruebalo-vista" data-angela-theme="angela" aria-live="off">
+            <div class="pruebalo-lienzo" data-centrar={def.centrar ? '' : undefined} set:html={htmlDe(def, valores)} />
+          </div>
+
+          <form class="pruebalo-controles" aria-label={`Props de ${nombre}`}>
+            {def.controles.map((c) => (
+              <>
+                {c.tipo === 'opciones' && (
+                  <fieldset class="fieldset pruebalo-opciones">
+                    <legend>
+                      {c.etiqueta} <code>{c.nombre}</code>
+                    </legend>
+                    <div class="cluster">
+                      {c.valores!.map((v) => (
+                        <label class="pruebalo-opcion">
+                          <input type="radio" name={c.nombre} value={v} checked={v === valores[c.nombre]} />
+                          <span>{v}</span>
+                        </label>
+                      ))}
+                    </div>
+                    {c.ayuda && <p class="hint">{c.ayuda}</p>}
+                  </fieldset>
+                )}
+                {c.tipo === 'booleano' && (
+                  <div class="choice">
+                    <input type="checkbox" role="switch" switch id={`pg-c-${c.nombre}`} name={c.nombre} checked={valores[c.nombre] === true} />
+                    <label for={`pg-c-${c.nombre}`}>
+                      {c.etiqueta} <code>{c.nombre}</code>
+                    </label>
+                    {c.ayuda && <p class="hint">{c.ayuda}</p>}
+                  </div>
+                )}
+                {(c.tipo === 'texto' || c.tipo === 'lista') && (
+                  <div class="field">
+                    <label for={`pg-c-${c.nombre}`}>
+                      {c.etiqueta} <code>{c.slot ? (c.slot === 'children' ? 'contenido' : c.slot) : c.nombre}</code>
+                    </label>
+                    <input class="input" data-size="sm" id={`pg-c-${c.nombre}`} name={c.nombre} value={valorControl(valores[c.nombre], c.separador)} autocomplete="off" />
+                    {c.ayuda && <p class="hint">{c.ayuda}</p>}
+                  </div>
+                )}
+                {c.tipo === 'numero' && (
+                  <div class="field">
+                    <label for={`pg-c-${c.nombre}`}>
+                      {c.etiqueta} <output for={`pg-c-${c.nombre}`} data-salida={c.nombre}>{String(valores[c.nombre])}</output>
+                    </label>
+                    <input type="range" id={`pg-c-${c.nombre}`} name={c.nombre} min={c.min} max={c.max} step="1" value={String(valores[c.nombre])} />
+                    {c.ayuda && <p class="hint">{c.ayuda}</p>}
+                  </div>
+                )}
+              </>
+            ))}
+
+            <fieldset class="fieldset">
+              <legend>Color de marca</legend>
+              <div class="field">
+                <label for="pg-marca-h">
+                  Tono <output for="pg-marca-h" data-salida="marca-h">{MARCA.h}</output>
+                </label>
+                <input type="range" id="pg-marca-h" name="marca-h" min="0" max="360" step="1" value={String(MARCA.h)} />
+              </div>
+              <div class="field">
+                <label for="pg-marca-c">
+                  Croma <output for="pg-marca-c" data-salida="marca-c">{MARCA.c}</output>
+                </label>
+                <input type="range" id="pg-marca-c" name="marca-c" min="0" max="0.2" step="0.01" value={String(MARCA.c)} />
+              </div>
+              <p class="hint">
+                El contraste está garantizado con cualquier tono y croma hasta 0,2. Para todos los colores, el
+                <a href={`${base}/temas`}>taller de temas</a>.
+              </p>
+            </fieldset>
+
+            <fieldset class="fieldset pruebalo-opciones">
+              <legend>Esquema</legend>
+              <div class="cluster">
+                {[
+                  ['', 'Sistema'],
+                  ['light', 'Claro'],
+                  ['dark', 'Oscuro'],
+                ].map(([v, n]) => (
+                  <label class="pruebalo-opcion">
+                    <input type="radio" name="esquema" value={v} checked={v === ''} />
+                    <span>{n}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <button class="button" type="reset" data-variant="ghost" data-tone="neutral" data-size="sm">
+              Restablecer
+            </button>
+          </form>
+        </div>
+
+        <div class="pruebalo-lenguaje" role="radiogroup" aria-label="Lenguaje del código">
+          {[
+            ['ts', 'TypeScript'],
+            ['js', 'JavaScript'],
+          ].map(([v, n]) => (
+            <label class="pruebalo-opcion">
+              <input type="radio" name="pg-lenguaje" value={v} checked={v === 'ts'} />
+              <span>{n}</span>
+            </label>
+          ))}
+        </div>
+
+        <angela-tabs class="tabs example-frameworks">
+          <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label={`Código de ${nombre} por framework`}>
+            {codigo.map((fw, i) => (
+              <button type="button" role="tab" id={`pg-tab-${fw.id}`} data-framework={fw.id} aria-selected={i === 0 ? 'true' : 'false'} focusgroupstart={i === 0 ? '' : undefined}>
+                {fw.nombre}
+              </button>
+            ))}
+          </div>
+          {codigo.map((fw, i) => (
+            <div role="tabpanel" aria-labelledby={`pg-tab-${fw.id}`} hidden={i === 0 ? undefined : 'until-found'}>
+              {(['componente', 'uso'] as const).map((p) => (
+                <figure class="example-archivo">
+                  <figcaption>
+                    <span class="archivo-ruta">
+                      <span class="pruebalo-parte">{p === 'componente' ? 'Componente' : 'Uso'}</span>{' '}
+                      <span data-archivo={`${fw.id}-${p}`}>{fw[p].archivo}</span>
+                    </span>
+                    <span class="archivo-lenguaje" data-lenguaje={`${fw.id}-${p}`}>
+                      {fw[p].lenguaje}
+                    </span>
+                  </figcaption>
+                  <pre class="example-code" tabindex="0" aria-label={`${p === 'componente' ? 'Componente' : 'Uso'} en ${fw.nombre}`} data-pg={`${fw.id}-${p}`} data-copiar={fw[p].copiar !== fw[p].codigo ? fw[p].copiar : undefined}><code>{fw[p].codigo}</code></pre>
+                </figure>
+              ))}
+              {fw.id === 'angular' && (
+                <p class="hint pruebalo-nota" data-solo-js hidden>
+                  Angular se escribe siempre en TypeScript.
+                </p>
+              )}
+            </div>
+          ))}
+        </angela-tabs>
+
+        <figure class="example-archivo pruebalo-tema" hidden>
+          <figcaption>
+            <span class="archivo-ruta">Tu tema, en tu CSS</span>
+            <span class="archivo-lenguaje">css</span>
+          </figcaption>
+          <pre class="example-code" tabindex="0" aria-label="CSS del tema"><code /></pre>
+        </figure>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  import { iniciarPlaygrounds } from '../lib/playground/cliente.js';
+  iniciarPlaygrounds();
+</script>
