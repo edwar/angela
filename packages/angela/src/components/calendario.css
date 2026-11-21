@@ -1,0 +1,220 @@
+/*
+ * Calendario: <div class="calendar" data-mode="single|range"> con uno o dos
+ * <input type="date"> dentro (.calendar-fallback). Sin JS se ven esos inputs; con JS,
+ * el calendario (ver js/calendar.js). data-size="sm" para celdas compactas.
+ * El color de la selección sale de --tone-* (data-tone="…").
+ *
+ * Selector de fecha: el calendario dentro de un .popover nativo, abierto por un
+ * .button.calendar-trigger (commandfor/command o popovertarget) con su .calendar-value.
+ */
+@layer angela.components {
+  /* Tono por defecto (marca); data-tone="…" lo cambia. */
+  :where(.calendar) {
+    --tone-solid: var(--color-brand-solid);
+    --tone-solid-hover: var(--color-brand-solid-hover);
+    --tone-on-solid: var(--color-brand-on-solid);
+    --tone-subtle: var(--color-brand-subtle);
+    --tone-subtle-hover: var(--color-brand-subtle-hover);
+    --tone-border: var(--color-brand-border);
+    --tone-text: var(--color-brand-text);
+  }
+
+  :where(.calendar) {
+    --_cell: var(--control-h-md);
+
+    box-sizing: border-box;
+    display: grid;
+    gap: var(--space-3);
+    inline-size: min(100%, calc(var(--_cell) * 7 + var(--space-3) * 2 + 2px));
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  .calendar[data-size="sm"] {
+    --_cell: var(--control-h-sm);
+  }
+
+  :where(.calendar-fallback:not([hidden])) {
+    display: grid;
+    gap: var(--space-3);
+  }
+
+  /* Con JS se oculta aunque lleve otra clase con display (por ejemplo, .field). */
+  .calendar-fallback[hidden] {
+    display: none;
+  }
+
+  :where(.calendar-header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  :where(.calendar-title) {
+    font-size: var(--fs-md);
+    font-weight: var(--fw-bold);
+    line-height: var(--lh-tight);
+    text-align: center;
+
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
+
+  /* Las flechas apuntan al revés en idiomas de derecha a izquierda. */
+  .calendar-header :where(svg):dir(rtl) {
+    scale: -1 1;
+  }
+
+  :where(.calendar-grid) {
+    inline-size: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+
+    & th {
+      padding: 0;
+      padding-block-end: var(--space-1);
+      color: var(--color-text-muted);
+      font-size: var(--fs-xs);
+      font-weight: var(--fw-medium);
+      text-align: center;
+    }
+
+    & td {
+      padding: 0;
+      padding-block: var(--space-0-5);
+      text-align: center;
+    }
+
+    & td[data-date] {
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+
+    & td[aria-disabled="true"] {
+      cursor: not-allowed;
+    }
+  }
+
+  :where(.calendar-day) {
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    inline-size: min(100%, var(--_cell));
+    block-size: var(--_cell);
+    margin-inline: auto;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    font-size: var(--fs-sm);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    transition-property: background-color, border-color, color;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-standard);
+  }
+
+  .calendar-grid td[data-date]:not([aria-disabled="true"], [aria-selected="true"]):hover .calendar-day {
+    background-color: var(--color-surface-hover);
+  }
+
+  .calendar-grid td[data-date]:focus-visible .calendar-day {
+    outline: var(--focus-width) solid var(--color-focus);
+    outline-offset: calc(var(--focus-width) * -1);
+  }
+
+  /* Hoy: borde y negrita, no solo color. */
+  .calendar-grid td[aria-current="date"] .calendar-day {
+    border-color: var(--tone-border);
+    font-weight: var(--fw-bold);
+  }
+
+  .calendar-grid td[aria-disabled="true"] .calendar-day {
+    color: var(--color-text-muted);
+    text-decoration: line-through;
+  }
+
+  /* Rango: la banda va en la celda; los extremos, redondeados (propiedades lógicas → RTL). */
+  .calendar-grid td:is([data-in-range], [data-preview]) {
+    background-color: var(--tone-subtle);
+
+    &:is([data-range-start], :first-child) {
+      border-start-start-radius: var(--radius-md);
+      border-end-start-radius: var(--radius-md);
+    }
+
+    &:is([data-range-end], :last-child) {
+      border-start-end-radius: var(--radius-md);
+      border-end-end-radius: var(--radius-md);
+    }
+
+    & .calendar-day {
+      color: var(--tone-text);
+    }
+  }
+
+  /* Vista previa mientras se elige el fin: la banda con borde discontinuo. */
+  .calendar-grid td[data-preview]:not([data-in-range]) .calendar-day {
+    border-style: dashed;
+    border-color: var(--tone-border);
+  }
+
+  /* Elegida (única) o extremos del rango. */
+  .calendar-grid td:is([aria-selected="true"]:not([data-in-range]), [data-range-start], [data-range-end]) .calendar-day {
+    background-color: var(--tone-solid);
+    color: var(--tone-on-solid);
+    font-weight: var(--fw-bold);
+  }
+
+  .calendar-grid td[data-range-start][data-range-end] {
+    border-radius: var(--radius-md);
+  }
+
+  /* Dentro de un popover, el panel ya es la caja: nada de cajas dentro de cajas. */
+  .popover:has(> .calendar) {
+    padding: var(--space-3);
+  }
+
+  .popover > .calendar {
+    padding: 0;
+    border: 0;
+    background-color: transparent;
+  }
+
+  /* Botón que abre el selector: ancho de un campo, texto a la izquierda. */
+  .calendar-trigger {
+    justify-content: flex-start;
+    inline-size: 100%;
+    max-inline-size: 20rem;
+    font-size: var(--fs-md);
+    font-weight: var(--fw-regular);
+
+    &[data-placeholder] .calendar-value {
+      color: var(--color-text-muted);
+    }
+  }
+
+  :where(.calendar-status) {
+    margin: 0;
+    min-block-size: calc(1em * var(--lh-snug));
+    color: var(--color-text-muted);
+    font-size: var(--fs-sm);
+    line-height: var(--lh-snug);
+  }
+
+  @media (forced-colors: active) {
+    .calendar-grid td:is([aria-selected="true"], [data-range-start], [data-range-end]) .calendar-day {
+      forced-color-adjust: none;
+      background-color: Highlight;
+      color: HighlightText;
+    }
+
+    .calendar-grid td:is([data-in-range], [data-preview]) .calendar-day {
+      border-color: Highlight;
+    }
+  }
+}
