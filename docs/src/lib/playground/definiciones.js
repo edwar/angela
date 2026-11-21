@@ -167,6 +167,28 @@ export const DEFINICIONES = [
   },
 
   {
+    slug: 'acordeon',
+    controles: [
+      { nombre: 'marker', etiqueta: 'Flecha', tipo: 'opciones', valores: ['start', 'end'], defecto: 'start', ayuda: 'end la lleva al final de cada fila: mejor en columnas estrechas.', descripcion: 'start: junto al texto · end: al final de la fila.' },
+      { nombre: 'titulo', etiqueta: 'Encabezado del grupo', tipo: 'texto', inicial: 'Preguntas frecuentes', demo: true },
+      { nombre: 'preguntas', etiqueta: 'Preguntas (separadas por |)', tipo: 'lista', separador: '|', inicial: ['¿Cuánto tarda el envío?', '¿Puedo devolver un pedido?', '¿Qué formas de pago hay?'], defecto: [], demo: true },
+      { nombre: 'exclusivo', etiqueta: 'Solo uno abierto a la vez', tipo: 'booleano', defecto: false, demo: true, ayuda: 'El mismo name en cada <details>. Con moderación: impide comparar respuestas.' },
+    ],
+    componente: {
+      nombre: 'Accordion',
+      slots: { children: 'El encabezado del grupo y un <details> por pregunta.' },
+      raiz: [el('section', { class: 'accordion', 'data-marker': prop('marker', 'start') }, [slot()])],
+    },
+    slots: (v) => {
+      const name = v.exclusivo ? ' name="faq"' : '';
+      const filas = (v.preguntas ?? []).map(
+        (p, i) => `<details${name}${i === 0 ? ' open' : ''}><summary>${esc(p)}</summary><p>Respuesta a «${esc(p)}».</p></details>`,
+      );
+      return { children: [v.titulo ? `<h3>${esc(v.titulo)}</h3>` : '', ...filas].filter(Boolean).join('') };
+    },
+  },
+
+  {
     slug: 'tarjeta',
     controles: [
       { nombre: 'title', etiqueta: 'Título', tipo: 'texto', inicial: 'Plan Pro' },
