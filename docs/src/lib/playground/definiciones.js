@@ -83,7 +83,7 @@ export const DEFINICIONES = [
   },
 
   {
-    slug: 'avisos',
+    slug: 'aviso',
     controles: [
       { nombre: 'title', etiqueta: 'Título', tipo: 'texto', inicial: 'Novedad' },
       { nombre: 'children', etiqueta: 'Texto', tipo: 'texto', slot: 'children', inicial: 'Ya puedes exportar tus informes a PDF.' },
@@ -100,6 +100,43 @@ export const DEFINICIONES = [
       ],
     },
     slots: (v) => ({ children: esc(v.children) }),
+  },
+
+  {
+    slug: 'etiqueta',
+    controles: [
+      { nombre: 'children', etiqueta: 'Texto', tipo: 'texto', slot: 'children', inicial: 'Activo' },
+      { nombre: 'tone', etiqueta: 'Tono', tipo: 'opciones', valores: TONOS, defecto: 'neutral', inicial: 'success', ayuda: 'El estado lo dice el texto: el color solo lo refuerza.' },
+      { nombre: 'variant', etiqueta: 'Variante', tipo: 'opciones', valores: ['soft', 'solid', 'outline'], defecto: 'soft', descripcion: 'soft (por defecto) · solid para destacar · outline para metadatos.' },
+      { nombre: 'dot', etiqueta: 'Punto de estado', tipo: 'booleano', defecto: false, inicial: true },
+    ],
+    componente: {
+      nombre: 'Badge',
+      slots: { children: 'El texto de la etiqueta.' },
+      raiz: [el('span', { class: 'badge', 'data-tone': prop('tone'), 'data-variant': prop('variant'), 'data-dot': bandera('dot') }, [slot()])],
+    },
+    slots: (v) => ({ children: esc(v.children) }),
+  },
+
+  {
+    slug: 'progreso',
+    controles: [
+      { nombre: 'label', etiqueta: 'Etiqueta', tipo: 'texto', inicial: 'Subiendo factura.pdf', descripcion: 'Etiqueta visible: sin ella, el lector solo dice un porcentaje.' },
+      { nombre: 'value', etiqueta: 'Valor', tipo: 'numero', min: 0, max: 100, defecto: 0, inicial: 64 },
+      { nombre: 'max', etiqueta: 'Máximo', tipo: 'numero', min: 1, max: 1000, defecto: 100 },
+      { nombre: 'indeterminate', etiqueta: 'Indeterminado', tipo: 'booleano', defecto: false, ayuda: 'Sin value: una tarea sin fin conocido. El navegador lo anima.', descripcion: 'Sin fin conocido: se pinta sin value.' },
+    ],
+    componente: {
+      nombre: 'Progress',
+      raiz: [
+        el('div', { class: 'field' }, [
+          el('label', { for: id() }, [texto('label')]),
+          si('indeterminate', [el('progress', { class: 'progress', id: id(), max: prop('max') })]),
+          si('!indeterminate', [el('progress', { class: 'progress', id: id(), max: prop('max'), value: prop('value') }, [texto('value')])]),
+        ]),
+      ],
+    },
+    slots: () => ({}),
   },
 
   {

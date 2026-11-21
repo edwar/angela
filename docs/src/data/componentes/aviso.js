@@ -1,12 +1,12 @@
 /**
- * Avisos, etiquetas y progreso
+ * Aviso
  * Página de documentación del componente. La genera y la actualiza el laboratorio al
  * proponer cambios; también se puede editar a mano.
  */
 export default {
-  slug: "avisos",
-  title: "Avisos, etiquetas y progreso",
-  summary: "Mensajes de estado, etiquetas y barras de progreso nativas.",
+  slug: "aviso",
+  title: "Aviso",
+  summary: "Mensajes destacados con ícono y título, teñidos con el tono de su estado.",
   examples: [
     {
       title: "Avisos",
@@ -31,45 +31,21 @@ export default {
 </div>`,
     },
     {
-      title: "Etiquetas",
-      code: `<div class="stack" style="--stack-gap: var(--space-3)">
-  <div class="cluster">
-    <span class="badge">Borrador</span>
-    <span class="badge" data-tone="success" data-dot>Activo</span>
-    <span class="badge" data-tone="warning" data-dot>Pendiente</span>
-    <span class="badge" data-tone="danger" data-dot>Vencido</span>
-    <span class="badge" data-tone="info">Nuevo</span>
-  </div>
-  <div class="cluster">
-    <span class="badge" data-variant="solid" data-tone="brand">Pro</span>
-    <span class="badge" data-variant="outline" data-tone="neutral">v0.1</span>
-  </div>
-</div>`,
-    },
-    {
-      title: "Progreso y medidor",
-      note: "<progress> para tareas en curso; <meter> para una medida dentro de un rango (p. ej. espacio usado).",
-      code: `<div class="stack">
-  <div class="field">
-    <label for="pr-subida">Subiendo factura.pdf</label>
-    <progress class="progress" id="pr-subida" max="100" value="64">64 %</progress>
-  </div>
-  <div class="field">
-    <label for="pr-espacio">Espacio usado: 7,2 de 10 GB</label>
-    <meter class="meter" id="pr-espacio" min="0" max="10" low="7" high="9" optimum="2" value="7.2">7,2 GB</meter>
-  </div>
+      title: "Sin título",
+      note: "Para un mensaje corto basta el texto; el ícono sigue diciendo de qué tipo es.",
+      code: `<div class="callout">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+  <div><p>Los cambios se guardan solos.</p></div>
 </div>`,
     },
   ],
   api: [
-    [".callout", "Aviso con ícono y contenido. data-tone (info por defecto)."],
+    [".callout", "Aviso con ícono y contenido. data-tone=\"info|success|warning|danger|brand|neutral\" (info por defecto)."],
     [".callout-title", "Título del aviso."],
-    [".badge", "Etiqueta. data-tone, data-variant=\"solid|soft|outline\", data-dot."],
-    [".progress / .meter", "Para <progress> y <meter> nativos."],
   ],
   a11y: [
     "Un aviso que aparece tras una acción debe insertarse en una región role=\"status\" (o role=\"alert\" si es crítico) que ya exista en la página.",
-    "No uses regiones vivas para estados intermedios como \"Cargando…\": usa <progress>.",
-    "Las etiquetas son texto: el lector las lee tal cual, sin rol especial.",
+    "El ícono es decorativo (aria-hidden): el tipo de aviso lo dicen el título o el texto, no solo el color.",
+    "No uses regiones vivas para estados intermedios como «Cargando…»: usa <progress>.",
   ],
 };

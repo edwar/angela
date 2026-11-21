@@ -1,0 +1,61 @@
+/*
+ * Aviso (callout): un mensaje destacado con ícono, teñido con su tono (info por defecto).
+ *
+ * <div class="callout" data-tone="warning">
+ *   <svg aria-hidden="true">…</svg>
+ *   <div>
+ *     <p class="callout-title">Atención</p>
+ *     <p>Texto del aviso.</p>
+ *   </div>
+ * </div>
+ *
+ * Si aparece dinámicamente, ponlo dentro de una región role="status" (o role="alert" si es crítico).
+ */
+@layer angela.components {
+  :where(.callout) {
+    --tone-solid: var(--color-info-solid);
+    --tone-subtle: var(--color-info-subtle);
+    --tone-border: var(--color-info-border);
+    --tone-text: var(--color-info-text);
+  }
+
+  .callout {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--tone-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--tone-subtle);
+    color: var(--color-text);
+
+    & > :where(svg) {
+      flex: none;
+      inline-size: 1.25rem;
+      block-size: 1.25rem;
+      margin-block-start: 0.1em;
+      color: var(--tone-text);
+    }
+
+    & p {
+      margin: 0;
+    }
+
+    & > div {
+      display: grid;
+      gap: var(--space-1);
+      min-inline-size: 0;
+    }
+  }
+
+  .callout-title {
+    font-weight: var(--fw-bold);
+    color: var(--tone-text);
+  }
+
+  @media (forced-colors: active) {
+    .callout {
+      border-color: CanvasText;
+    }
+  }
+}

@@ -1,0 +1,63 @@
+/*
+ * Etiqueta (badge): texto corto de estado o categoría.
+ *
+ * <span class="badge" data-tone="success">Activo</span>
+ * data-variant="solid|soft|outline" (soft por defecto), data-dot para un punto de estado.
+ */
+@layer angela.components {
+  :where(.badge) {
+    --tone-solid: var(--color-neutral-solid);
+    --tone-on-solid: var(--color-neutral-on-solid);
+    --tone-subtle: var(--color-neutral-subtle);
+    --tone-border: var(--color-neutral-border);
+    --tone-text: var(--color-neutral-text);
+  }
+
+  .badge {
+    --_bg: var(--tone-subtle);
+    --_fg: var(--tone-text);
+    --_border: transparent;
+
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0.125rem var(--space-2);
+    border: 1px solid var(--_border);
+    border-radius: var(--radius-sm);
+    background-color: var(--_bg);
+    color: var(--_fg);
+    font-size: var(--fs-xs);
+    font-weight: var(--fw-medium);
+    line-height: var(--lh-snug);
+    white-space: nowrap;
+    vertical-align: middle;
+
+    &[data-variant="solid"] {
+      --_bg: var(--tone-solid);
+      --_fg: var(--tone-on-solid);
+    }
+
+    &[data-variant="outline"] {
+      --_bg: transparent;
+      --_border: var(--tone-border);
+    }
+
+    &[data-dot]::before {
+      content: "";
+      inline-size: 0.5em;
+      block-size: 0.5em;
+      border-radius: var(--radius-full);
+      background-color: currentColor;
+    }
+  }
+
+  @media (forced-colors: active) {
+    .badge {
+      border-color: CanvasText;
+    }
+
+    .badge[data-dot]::before {
+      background-color: CanvasText;
+    }
+  }
+}
