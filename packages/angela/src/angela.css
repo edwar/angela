@@ -19,7 +19,9 @@
 @import "./components/popover.css";
 @import "./components/tabs.css";
 @import "./components/disclosure.css";
-@import "./components/feedback.css";
+@import "./components/callout.css";
+@import "./components/badge.css";
+@import "./components/progress.css";
 @import "./components/layout.css";
 @import "./components/theme-toggle.css";
 @import "./components/cards.css";

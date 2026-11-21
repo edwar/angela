@@ -32,7 +32,9 @@ export function readParameters(css) {
   const code = stripComments(css);
   const found = new Map();
   for (const [, name, value] of code.matchAll(/(--[a-z][\w-]*)\s*:\s*([^;}]+)/g)) {
-    if (name.startsWith('--_') || found.has(name)) continue;
+    // --tone-* es el contrato común de los tonos (lo pone data-tone, ver tone.css y la guía):
+    // un componente que fija su tono por defecto no añade API propia.
+    if (name.startsWith('--_') || name.startsWith('--tone-') || found.has(name)) continue;
     found.set(name, value.trim());
   }
   for (const [, name] of code.matchAll(/var\(\s*(--[a-z][\w-]*)\s*,/g)) {
