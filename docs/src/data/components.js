@@ -8,7 +8,7 @@
  */
 
 /** Orden de los componentes del núcleo en el menú; los aportados van después, por título. */
-const ORDEN = ['boton', 'campos', 'seleccion', 'dialogo', 'popover', 'pestanas', 'desplegable', 'avisos', 'tarjeta', 'tabla', 'tipografia'];
+const ORDEN = ['boton', 'campos', 'casilla', 'radio', 'interruptor', 'dialogo', 'popover', 'pestanas', 'desplegable', 'avisos', 'tarjeta', 'tabla', 'tipografia'];
 
 const posicion = (slug) => {
   const i = ORDEN.indexOf(slug);

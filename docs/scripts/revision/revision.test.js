@@ -119,6 +119,23 @@ describe('reviewUnit', () => {
     expect(r.eliminado).toBe(true);
     expect(r.findings).toEqual([expect.objectContaining({ level: 'warn', id: 'elimina' })]);
   });
+
+  it('borrar una página sin CSS propio (al dividirla) solo avisa de los enlaces', () => {
+    const r = reviewUnit({ slugs: ['seleccion'], css: 'seleccion', js: null }, ctx({}, { base: { seleccion: DOC({ slug: 'seleccion', title: 'Selección' }) }, head: {} }));
+    expect(r.eliminado).toBe(true);
+    expect(r.findings).toEqual([expect.objectContaining({ level: 'warn', id: 'elimina' })]);
+    expect(r.findings[0].text).toContain('docs/src/data/componentes/seleccion.js');
+    expect(r.findings[0].text).toContain('redirección');
+  });
+
+  it('un CSS con varias páginas titula cada una con la suya', () => {
+    const casilla = DOC({ slug: 'casilla', title: 'Casilla' });
+    const radio = DOC({ slug: 'radio', title: 'Radio' });
+    const r = reviewUnit({ slugs: ['casilla', 'radio'], css: 'galeria', js: null }, ctx({ base: { [CSS]: CSS_OK }, head: { [CSS]: CSS_OK } }, { base: { casilla, radio }, head: { casilla, radio } }));
+    expect(r.titulos).toEqual({ casilla: 'Casilla', radio: 'Radio' });
+    const md = renderComment({ checks: [{ name: 'Tests', ok: true }], components: [r], manualChecks: MANUAL_CHECKS, productionUrl: 'https://prod.example', sha: 'abcdef123' });
+    expect(md).toContain('| Radio | [ver]({{preview}}/componentes/radio)');
+  });
 });
 
 describe('veredicto y comentario', () => {

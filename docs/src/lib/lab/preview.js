@@ -50,7 +50,9 @@ export const angelaTests = Object.fromEntries(
 export const componentSources = {
   boton: { css: 'components/button.css' },
   campos: { css: 'components/field.css', js: 'forms.js' },
-  seleccion: { css: 'components/choice.css' },
+  casilla: { css: 'components/choice.css' },
+  radio: { css: 'components/choice.css' },
+  interruptor: { css: 'components/switch.css' },
   dialogo: { css: 'components/dialog.css', js: 'overlays.js' },
   popover: { css: 'components/popover.css', js: 'overlays.js' },
   pestanas: { css: 'components/tabs.css', js: 'tabs.js' },
