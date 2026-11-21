@@ -2,7 +2,7 @@
  * Tipos de JSX para usar angela en React (19+) con TypeScript.
  *
  * Activa los atributos HTML nuevos que angela usa y que @types/react aún no declara,
- * y el elemento <angela-tabs>. Añádelo una vez en tu proyecto:
+ * y los elementos <angela-tabs> y <selectedcontent>. Añádelo una vez en tu proyecto:
  *
  *   // tsconfig.json → "compilerOptions": { "types": ["@angela-ui/angela/jsx"] }
  *   // o en cualquier .d.ts:  /// <reference types="@angela-ui/angela/jsx" />
@@ -50,6 +50,8 @@ declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'angela-tabs': DetailedHTMLProps<AngelaTabsAttributes, HTMLElement>;
+      /** Select personalizable (`appearance: base-select`): copia en el botón la opción elegida. */
+      selectedcontent: DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement>;
     }
   }
 }

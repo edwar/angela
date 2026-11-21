@@ -108,7 +108,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label="Framework">
         {
           frameworks.map((f, i) => (
-            <button type="button" role="tab" id={`fw-${f.id}`} aria-selected={i === 0 ? 'true' : 'false'} focusgroupstart={i === 0 ? '' : undefined}>
+            <button type="button" role="tab" id={`fw-${f.id}`} data-framework={f.ejemplos} aria-selected={i === 0 ? 'true' : 'false'} focusgroupstart={i === 0 ? '' : undefined}>
               {f.nombre}
             </button>
           ))

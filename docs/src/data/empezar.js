@@ -6,11 +6,14 @@
  * cambian aquí y en ningún sitio más. («angela» a secas, en npm, es otro paquete.)
  */
 import { themeInlineScript } from '@angela-ui/angela/js/theme';
+import { VERSION, VERSION_MENOR } from './version.js';
 
 /** Nombre del paquete de estilos y JS. */
 export const PKG = '@angela-ui/angela';
 /** Nombre del paquete de React. */
 export const PKG_REACT = '@angela-ui/react';
+/** El paquete en jsDelivr, con la versión mayor.menor que documenta el sitio. */
+const CDN = `https://cdn.jsdelivr.net/npm/${PKG}@${VERSION_MENOR}`;
 
 const color = `:root {
   --angela-brand-h: 160;   /* tono de marca, 0–360 */
@@ -28,13 +31,15 @@ const headHtml = `<meta name="color-scheme" content="light dark">
 /**
  * @typedef {{ titulo: string, texto?: string, archivo: string, lenguaje: string, codigo: string,
  *   tailwind?: { archivo: string, codigo: string, texto: string } }} Paso
- * @typedef {{ id: string, nombre: string, resumen: string, pasos: Paso[] }} Framework
+ * @typedef {{ id: string, ejemplos: string, nombre: string, resumen: string, pasos: Paso[] }} Framework
+ * `ejemplos`: la pestaña de los ejemplos de componentes que se elige con este framework.
  */
 
 /** @type {Framework[]} */
 export const frameworks = [
   {
     id: 'astro',
+    ejemplos: 'astro',
     nombre: 'Astro',
     resumen: 'Todo va en el layout: el CSS, el tema y el JS, una sola vez para todas las páginas.',
     pasos: [
@@ -87,6 +92,7 @@ import Layout from '../layouts/Layout.astro';
   },
   {
     id: 'next',
+    ejemplos: 'next',
     nombre: 'Next.js',
     resumen: 'App Router: el layout raíz carga el CSS, el tema y el JS; las páginas usan los componentes de React.',
     pasos: [
@@ -135,6 +141,7 @@ export default function Page() {
   },
   {
     id: 'react',
+    ejemplos: 'react',
     nombre: 'React + Vite',
     resumen: 'Una SPA: el tema va en el index.html (React no lo ejecuta antes de pintar) y el resto en main.tsx.',
     pasos: [
@@ -182,6 +189,7 @@ export default function App() {
   },
   {
     id: 'vue',
+    ejemplos: 'vue',
     nombre: 'Vue + Vite',
     resumen: 'El tema va en el index.html; los estilos y el JS, en main.ts. En las plantillas usas HTML con clases.',
     pasos: [
@@ -225,7 +233,64 @@ angela();`,
     ],
   },
   {
+    id: 'angular',
+    ejemplos: 'angular',
+    nombre: 'Angular',
+    resumen: 'Los estilos en angular.json, el tema en el index.html y el JS al arrancar en main.ts. En las plantillas usas HTML con clases.',
+    pasos: [
+      { titulo: 'Instala', archivo: 'Terminal', lenguaje: 'sh', codigo: `pnpm add ${PKG}` },
+      {
+        titulo: 'Los estilos, en angular.json',
+        texto: 'En projects → tu app → architect → build → options. angela va antes que tus estilos para que los tuyos ganen.',
+        archivo: 'angular.json',
+        lenguaje: 'json',
+        codigo: `"styles": [
+  "node_modules/${PKG}/dist/angela.css",
+  "src/styles.css"
+]`,
+      },
+      {
+        titulo: 'El tema, en el <head>',
+        archivo: 'src/index.html',
+        lenguaje: 'html',
+        codigo: `<head>
+  <meta charset="utf-8" />
+  ${headHtml.replace('\n', '\n  ')}
+</head>`,
+      },
+      {
+        titulo: 'El JS al arrancar',
+        texto: 'Una vez, después de arrancar la app. Escucha en el documento, así cubre también lo que Angular monte después (rutas, @if, diálogos).',
+        archivo: 'src/main.ts',
+        lenguaje: 'ts',
+        codigo: `import { bootstrapApplication } from '@angular/platform-browser';
+import { angela } from '${PKG}/js';
+import { appConfig } from './app/app.config';
+import { App } from './app/app';
+
+bootstrapApplication(App, appConfig)
+  .then(() => angela())
+  .catch((err) => console.error(err));`,
+      },
+      {
+        titulo: 'Usa HTML con clases',
+        texto: 'Donde uses <angela-tabs>, añade schemas: [CUSTOM_ELEMENTS_SCHEMA]. Un atributo que cambia se enlaza con [attr.…], p. ej. [attr.commandfor]="id". En el texto de una plantilla, «@» se escribe &#64;.',
+        archivo: 'src/app/app.ts',
+        lenguaje: 'ts',
+        codigo: `import { Component } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  template: \`<button class="button" type="button">Guardar</button>\`,
+})
+export class App {}`,
+      },
+      { titulo: 'Ponle tu color', archivo: 'src/styles.css', lenguaje: 'css', codigo: color },
+    ],
+  },
+  {
     id: 'html',
+    ejemplos: 'html',
     nombre: 'HTML + Vite',
     resumen: 'Sin framework: un index.html, un main.js y tu CSS.',
     pasos: [
@@ -261,6 +326,38 @@ angela();`,
           archivo: 'style.css',
           codigo: tailwind(),
         },
+      },
+      { titulo: 'Ponle tu color', archivo: 'style.css', lenguaje: 'css', codigo: color },
+    ],
+  },
+  {
+    id: 'cdn',
+    ejemplos: 'html',
+    nombre: 'HTML sin instalar',
+    resumen: 'Sin instalar nada ni bundler: el CSS y el JS se cargan desde jsDelivr. Para prototipos y webs estáticas.',
+    pasos: [
+      {
+        titulo: 'La página',
+        texto: `El CSS y el tema van en el <head>; el JS es un módulo. /+esm hace que jsDelivr resuelva los polyfills que angela carga solo en navegadores antiguos. @${VERSION_MENOR} recibe las correcciones; para fijar una versión exacta, usa la completa (@${VERSION}).`,
+        archivo: 'index.html',
+        lenguaje: 'html',
+        codigo: `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    ${headHtml.replace('\n', '\n    ')}
+    <link rel="stylesheet" href="${CDN}/dist/angela.min.css" />
+    <link rel="stylesheet" href="style.css" />
+    <script type="module">
+      import { angela } from '${CDN}/src/js/index.js/+esm';
+      angela();
+    </script>
+  </head>
+  <body>
+    <button class="button" type="button">Guardar</button>
+  </body>
+</html>`,
       },
       { titulo: 'Ponle tu color', archivo: 'style.css', lenguaje: 'css', codigo: color },
     ],

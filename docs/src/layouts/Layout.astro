@@ -5,6 +5,7 @@ import '@fontsource/barlow-condensed/latin-600.css';
 import '@fontsource/barlow-condensed/latin-700.css';
 import '../styles/docs.css';
 import { themeInlineScript } from '@angela-ui/angela/js/theme';
+import { VERSION_MENOR } from '../data/version.js';
 import { components } from '../data/components.js';
 import { icon } from '../data/icons.js';
 
@@ -71,7 +72,7 @@ const nav = [
           </svg>
           angela
         </a>
-        <span class="badge" data-variant="outline" data-tone="brand">v0.1</span>
+        <span class="badge" data-variant="outline" data-tone="brand">v{VERSION_MENOR}</span>
         <div class="site-header-actions">
           <button
             class="button"
@@ -139,9 +140,22 @@ const nav = [
       <p class="muted">angela · componentes sobre HTML nativo. Hecho con la plataforma web.</p>
     </footer>
 
+    <!-- Botón de copiar que el script pone en cada bloque de código. -->
+    <template id="copiar-codigo">
+      <button class="button codigo-copiar" type="button" data-variant="outline" data-tone="neutral" data-size="sm" data-icon-only>
+        <Fragment set:html={icon('copy')} />
+        <Fragment set:html={icon('tick')} />
+      </button>
+    </template>
+    <p class="visually-hidden" role="status" id="copiar-estado"></p>
+
     <script>
       import { angela } from '@angela-ui/angela/js';
+      import { botonesDeCopiar } from '../lib/copiar-codigo.js';
+      import { recordarFramework } from '../lib/framework-preferido.js';
       angela();
+      botonesDeCopiar();
+      recordarFramework();
     </script>
   </body>
 </html>

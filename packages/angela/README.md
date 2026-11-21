@@ -22,7 +22,17 @@ Con Tailwind v4 (los tokens pasan a ser utilidades: `bg-surface`, `text-muted`, 
 @import "@angela-ui/angela/tailwind.css";
 ```
 
-Sin bundler: copia `dist/angela.css` y enlázalo con `<link rel="stylesheet">`.
+Sin instalar nada (CDN), en el `<head>`:
+
+```html
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@angela-ui/angela@0.2/dist/angela.min.css">
+<script type="module">
+  import { angela } from 'https://cdn.jsdelivr.net/npm/@angela-ui/angela@0.2/src/js/index.js/+esm';
+  angela();
+</script>
+```
+
+`/+esm` hace que jsDelivr resuelva los polyfills que angela carga solo en navegadores antiguos. `@0.2` recibe las correcciones; para fijar una versión exacta, usa la completa (`@0.2.0`).
 
 ## Modo claro/oscuro
 
@@ -74,7 +84,7 @@ El CSS y el marcado son los mismos en todos: elementos nativos con `class` y `da
 | **HTML / Astro** | `@import "@angela-ui/angela/css"` o `<link>` | `<script type="module">import { angela } from '@angela-ui/angela/js'; angela();</script>` | — |
 | **React / Next.js** | `import '@angela-ui/angela/css'` en el layout raíz | `<Angela />` de [`@angela-ui/react`](../angela-react) | Usa `@angela-ui/react` (componentes tipados) o el marcado directo con `@angela-ui/angela/jsx`. |
 | **Vue** | `import '@angela-ui/angela/css'` en `main.ts` | `onMounted(() => angela())` | `compilerOptions.isCustomElement: (t) => t.startsWith('angela-')` |
-| **Angular** | `"styles": ["node_modules/angela/dist/angela.css"]` en `angular.json` | `afterNextRender(() => angela())` | `CUSTOM_ELEMENTS_SCHEMA` donde uses `<angela-tabs>`. Atributos dinámicos con `[attr.commandfor]`. |
+| **Angular** | `"styles": ["node_modules/@angela-ui/angela/dist/angela.css"]` en `angular.json` | `afterNextRender(() => angela())` | `CUSTOM_ELEMENTS_SCHEMA` donde uses `<angela-tabs>`. Atributos dinámicos con `[attr.commandfor]`. |
 | **Svelte** | `import '@angela-ui/angela/css'` | `onMount(() => angela())` | — |
 
 Reglas comunes:

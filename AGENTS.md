@@ -27,6 +27,8 @@ packages/angela-icons/    Iconos (paquete npm "@angela-ui/icons")
   src/*.tsx               Un archivo por grupo; 'use client' solo donde hay hooks o refs
 docs/                     Sitio de documentación (Astro)
   src/data/componentes/   Una página por componente (<slug>.js): ejemplos, API y accesibilidad. components.js solo las ordena
+  src/lib/codigo-frameworks.js  Pasa el HTML de cada ejemplo a Astro, React, Next.js, Vue y Angular (pestañas de los ejemplos)
+  src/lib/compatibilidad.js     Compatibilidad de cada componente: qué usa (tabla CARACTERISTICAS), desde qué versión (web-features) y cuántos usuarios (caniuse)
   src/styles/docs.css     Estilo «plano» del sitio (tema data-angela-theme="plano")
   src/data/imagenes.js    Índice de las imágenes de ejemplo (public/img): autor, origen y licencia
 ```
@@ -58,6 +60,8 @@ docs/                     Sitio de documentación (Astro)
 - Imágenes en ejemplos y pruebas: las de `/img/…` (página «Imágenes»), no servicios externos como placehold.co. Solo se añaden fotos CC0 o equivalente, con su entrada en `docs/src/data/imagenes.js` (autor, origen, licencia y texto alternativo que describa lo que se ve): se redistribuyen desde la web.
 - Iconos de `@angela-ui/icons`: se diseñan en el editor (`/iconos/editor`) dentro de la zona segura 2–22 de 24×24, con trazo libre (tipo `trazo`, puntos `[x, y, presión]` del lápiz de una tableta) o formas limpias (línea, rectángulo, círculo, elipse) para lo geométrico. La fuente es el JSON y el SVG lo genera `mano-alzada.js`: grosor 0.75→1.25 con puntas finas; la presión real se normaliza por icono y, sin lápiz, se usa la curva de la guía (semilla = nombre). El estilo es global: no se retoca a mano un SVG generado. El build no publica un icono que incumpla `reglas.js`. Nombre en inglés y kebab-case; etiquetas en español e inglés. Cada icono, su propio PR. Sin iconos copiados de otras librerías.
 - Los iconos de la interfaz del sitio (`icon()` de `docs/src/data/icons.js`) son de Lucide, con su licencia en `docs/src/data/LICENSE-LUCIDE`; no forman parte de `@angela-ui/icons`.
+- La sección «Compatibilidad» de cada componente se calcula al construir el sitio. Si un componente usa una característica nueva que no está en `CARACTERISTICAS` (`docs/src/lib/compatibilidad.js`), añádela con su id de web-features y su papel: `base` (sin ella no funciona), `mejora` (sin ella se ve lo nativo; con su nota) o `polyfill` (lo completa `angela()`).
+- Los ejemplos se escriben solo en HTML: el código de Astro, React, Next.js, Vue y Angular de cada pestaña lo genera `codigo-frameworks.js` (su test compila el JSX de todos los ejemplos). Si un ejemplo nuevo usa un atributo o elemento que React no tipa, decláralo en `packages/angela/src/jsx.d.ts`.
 - Cada componente se documenta en `docs/src/data/componentes/<slug>.js` (ejemplos + API + accesibilidad) y, si encaja, tiene su envoltorio en `@angela-ui/react`. El laboratorio crea la página de un componente nuevo y pone al día la de uno existente: los ejemplos por título (`<!-- Título -->` en la pestaña HTML), la API con lo que el CSS añade o quita (lo nuevo queda «Pendiente de describir») y las notas del diálogo. Cuando cambies un componente a mano, cambia también su página.
 - Antes de terminar: `pnpm test`, `pnpm check:contrast` y revisión con teclado y lector de pantalla.
 
@@ -76,7 +80,7 @@ Una regla nueva que se pueda comprobar con código va en `review.js` (la ven el 
 
 Los paquetes son `@angela-ui/angela` y `@angela-ui/react` (organización `angela-ui`, con 2FA obligatorio). Se publican desde GitHub Actions con Trusted Publishing (`.github/workflows/publicar.yml`): sin tokens y con procedencia verificada.
 
-1. Sube la versión en **los dos** `package.json` (la misma), por PR. Corrección: `0.1.1 → 0.1.2`; algo nuevo: `0.2.0`; prueba: `0.2.0-beta.1` (sale con la etiqueta `next`).
+1. Sube la versión en **los dos** `package.json` (la misma), por PR. Si cambia la mayor o la menor, cambia también la de los ejemplos de CDN del README de `angela` (`@0.2`); el sitio la lee del `package.json`. Corrección: `0.1.1 → 0.1.2`; algo nuevo: `0.2.0`; prueba: `0.2.0-beta.1` (sale con la etiqueta `next`).
 2. Al mezclar, crea un release en GitHub con la etiqueta `v` + versión (`v0.1.2`).
 3. El workflow comprueba que la etiqueta coincide con las versiones, pasa tests, contraste y build, y publica primero `@angela-ui/angela` y luego `@angela-ui/react`. Si una versión ya existe, la salta: relanzarlo es seguro.
 

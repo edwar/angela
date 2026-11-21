@@ -530,10 +530,34 @@ body {
   }
 }
 
+/* El código del ejemplo, en pestañas por framework. */
+.example-frameworks {
+  border-block-start: 1px solid var(--color-border);
+
+  & > .tablist {
+    margin: 0;
+    padding-inline: var(--space-3);
+  }
+}
+
+/* La ruta del archivo de cada framework sobre su código, como en «Empezar» pero sin caja propia. */
+.example-archivo {
+  margin: 0;
+
+  & figcaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-5);
+    border-block-end: 1px solid var(--color-border);
+    background-color: var(--color-surface);
+  }
+}
+
 .example-code {
   margin: 0;
   border: 0;
-  border-block-start: 1px solid var(--color-border);
   border-radius: 0;
   max-block-size: 24rem;
   font-size: var(--fs-sm);
@@ -541,6 +565,118 @@ body {
 
 .api-table code {
   white-space: nowrap;
+}
+
+/* Compatibilidad de un componente con los navegadores. */
+.compat {
+  & h3 {
+    margin-block: var(--space-6) var(--space-1);
+    font-size: var(--fs-md);
+  }
+
+  & h3 + .muted {
+    margin-block: 0 var(--space-3);
+  }
+}
+
+.compat-resumen {
+  max-inline-size: var(--measure);
+
+  & strong {
+    font-size: var(--fs-xl);
+  }
+}
+
+.compat-uso {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+
+  & .meter {
+    flex: 1;
+    min-inline-size: 4rem;
+    max-inline-size: 12rem;
+  }
+
+  /* En el móvil, solo la cifra: la barra no cabe junto a las tres columnas. */
+  @media (width < 40rem) {
+    & .meter {
+      display: none;
+    }
+  }
+}
+
+.compat-lista {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+
+  & li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-2);
+  }
+}
+
+.compat-nombre {
+  font-weight: var(--fw-medium);
+}
+
+.compat-dato {
+  flex-basis: 100%;
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+}
+
+.compat-detalle {
+  margin-block-start: var(--space-6);
+}
+
+.compat-fuente {
+  margin-block-start: var(--space-4);
+  max-inline-size: var(--measure);
+  font-size: var(--fs-sm);
+}
+
+/* Bloque de código con su botón de copiar (lo pone lib/copiar-codigo.js). */
+.codigo {
+  position: relative;
+  min-inline-size: 0;
+
+  /* Hueco para el botón: la primera línea no queda debajo. */
+  & > pre {
+    padding-inline-end: calc(var(--space-4) + var(--control-h-sm));
+  }
+}
+
+.codigo-copiar {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-end: var(--space-2);
+
+  /* Opaco: el código que pasa por debajo al desplazarlo en horizontal no se transparenta. */
+  &:not(:hover) {
+    background-color: var(--color-surface);
+  }
+
+  & > svg:last-child {
+    display: none;
+  }
+
+  /* Copiado: el icono cambia de forma (no solo de color) durante dos segundos. */
+  &[data-copiado] {
+    color: var(--color-success-text);
+
+    & > svg:first-child {
+      display: none;
+    }
+
+    & > svg:last-child {
+      display: block;
+    }
+  }
 }
 
 /* Rejilla de tarjetas */
