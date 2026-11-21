@@ -1,0 +1,97 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { DEMOS } from '../data/interacciones.js';
+import { soporteDe } from '../lib/compatibilidad.js';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const numero = new Intl.NumberFormat('es', { maximumFractionDigits: 1 });
+const estado = (b: false | 'low' | 'high') => (b === 'high' ? 'Baseline amplio' : b === 'low' ? 'Baseline reciente' : 'Aún no es Baseline');
+const tono = (b: false | 'low' | 'high') => (b === 'high' ? 'success' : b === 'low' ? 'info' : 'neutral');
+---
+
+<Layout
+  title="Interacciones"
+  description="Interacciones modernas casi sin JS: avisos con @starting-style, tarjetas con View Transitions, animaciones con el scroll, menús anclados y acordeones animados. Con su código y lo que se ve sin soporte."
+>
+  <section class="doc-section" aria-labelledby="interacciones-intro">
+    <h2 id="interacciones-intro">Lo que hoy hace la plataforma</h2>
+    <p class="interacciones-intro">
+      Cosas que hace unos años pedían una librería de animación o cientos de líneas de JS, y hoy son HTML y CSS, o un par
+      de líneas de JS. Todas son mejora progresiva: donde el navegador no llega, se ve lo nativo y nada se rompe. Cada
+      demo dice qué parte de los usuarios la ve entera.
+    </p>
+  </section>
+
+  {
+    DEMOS.map((d) => {
+      const usos = d.usa.map(soporteDe);
+      return (
+        <section class="doc-section" aria-labelledby={`demo-${d.id}`}>
+          <h2 id={`demo-${d.id}`}>{d.titulo}</h2>
+          <p class="interacciones-intro">{d.resumen}</p>
+
+          {d.css && <Fragment set:html={`<style>${d.css}</style>`} />}
+          <div class="example">
+            <p class="eyebrow example-label">Vista previa · colores por defecto de angela</p>
+            <div class="example-preview" data-angela-theme="angela" set:html={d.html} />
+
+            <div class="interacciones-usa">
+              <ul class="compat-lista" role="list">
+                {usos.map((u) => (
+                  <li>
+                    <span class="compat-nombre">{u.nombre}</span>
+                    <span class="badge" data-variant="outline" data-tone={tono(u.baseline)}>
+                      {estado(u.baseline)}
+                    </span>
+                    <span class="compat-dato">Lo ve el {numero.format(u.global)} % de los usuarios.</span>
+                  </li>
+                ))}
+              </ul>
+              <p class="muted interacciones-sin">
+                <strong>Sin soporte:</strong> {d.sinSoporte}
+                {d.enlace && (
+                  <>
+                    {' '}
+                    Componente: <a href={`${base}${d.enlace.href}`}>{d.enlace.texto}</a>.
+                  </>
+                )}
+              </p>
+            </div>
+
+            <angela-tabs class="tabs example-frameworks">
+              <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label={`Código de «${d.titulo}»`}>
+                {d.archivos.map((a, i) => (
+                  <button type="button" role="tab" id={`demo-${d.id}-${i}`} aria-selected={i === 0 ? 'true' : 'false'} focusgroupstart={i === 0 ? '' : undefined}>
+                    {a.nombre}
+                  </button>
+                ))}
+              </div>
+              {d.archivos.map((a, i) => (
+                <div role="tabpanel" aria-labelledby={`demo-${d.id}-${i}`} hidden={i === 0 ? undefined : 'until-found'}>
+                  <figure class="example-archivo">
+                    <figcaption>
+                      <span class="archivo-ruta">{a.archivo}</span>
+                      <span class="archivo-lenguaje">{a.lenguaje}</span>
+                    </figcaption>
+                    <pre class="example-code" tabindex="0" aria-label={`${a.archivo}: ${d.titulo}`}><code>{a.codigo.trim()}</code></pre>
+                  </figure>
+                </div>
+              ))}
+            </angela-tabs>
+          </div>
+        </section>
+      );
+    })
+  }
+</Layout>
+
+<script>
+  import { avisar } from '../demos/avisos/avisos.js';
+  import { expandir } from '../demos/expandir/expandir.js';
+
+  document.addEventListener('click', (event) => {
+    const boton = (event.target as Element).closest<HTMLElement>('[data-avisar]');
+    if (boton) avisar(boton.dataset.texto ?? '', { tono: boton.dataset.avisar as 'info' });
+  });
+  for (const lista of document.querySelectorAll<HTMLElement>('[data-expandir]')) expandir(lista);
+</script>

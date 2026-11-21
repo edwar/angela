@@ -1,0 +1,41 @@
+.revelar {
+  display: grid;
+  gap: var(--space-3);
+  max-block-size: 22rem;
+  margin: 0;
+  padding: var(--space-2);
+  overflow-y: auto;
+  list-style: none;
+
+  & p {
+    margin: var(--space-1) 0 0;
+  }
+
+  &:focus-visible {
+    outline: var(--focus-width) solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+/*
+ * Cada tarjeta aparece al entrar en la zona visible. La animación avanza con el scroll, no con
+ * el tiempo: view() es la posición del elemento dentro de su contenedor. Sin JS.
+ * Solo donde hay soporte y no se pide reducir el movimiento; si no, se ven quietas desde el principio.
+ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .revelar > li {
+      animation: revelar linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 90%;
+    }
+  }
+}
+
+@keyframes revelar {
+  from {
+    opacity: 0;
+    translate: 0 var(--space-6);
+    scale: 0.96;
+  }
+}
