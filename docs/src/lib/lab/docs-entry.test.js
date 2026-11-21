@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDocsEntry, mergeDocsEntry, readParameters, rowToken, serializeDocsEntry, splitExamples } from './docs-entry.js';
+import { buildDocsEntry, componentTitle, mergeDocsEntry, readParameters, rowToken, serializeDocsEntry, splitExamples } from './docs-entry.js';
 
 /** Importa el archivo generado como lo haría el sitio. */
 const importar = async (source) =>
@@ -31,6 +31,19 @@ const PAGINA = {
   ],
   a11y: ['Nota de siempre.'],
 };
+
+describe('componentTitle', () => {
+  it('primera letra en mayúscula y el resto en minúscula', () => {
+    expect(componentTitle('carousel')).toBe('Carousel');
+    expect(componentTitle('  select   Personalizable ')).toBe('Select personalizable');
+    expect(componentTitle('ÁRBOL DE NAVEGACIÓN')).toBe('Árbol de navegación');
+  });
+
+  it('respeta las siglas cortas y lo que lleva números', () => {
+    expect(componentTitle('tarjeta 3D')).toBe('Tarjeta 3D');
+    expect(componentTitle('botón CTA')).toBe('Botón CTA');
+  });
+});
 
 describe('splitExamples', () => {
   it('deshace los bloques «<!-- Título -->» que carga el laboratorio', () => {
