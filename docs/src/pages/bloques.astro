@@ -1,0 +1,51 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Example from '../components/Example.astro';
+import { BLOQUES } from '../data/bloques.js';
+import paletaCss from '../bloques/paleta.css?raw';
+import avisosCss from '../demos/avisos/avisos.css?raw';
+---
+
+<Layout
+  title="Bloques"
+  description="Pantallas enteras hechas con angela para copiar y adaptar: inicio de sesión, precios, ajustes en un diálogo, tabla con acciones, notificaciones y paleta de comandos. En HTML, Astro, React, Next.js, Vue y Angular."
+>
+  <section class="doc-section" aria-labelledby="bloques">
+    <h2 id="bloques">Pantallas para copiar</h2>
+    <p class="bloques-intro">
+      Cada bloque está hecho solo con los componentes y las utilidades de angela, sin CSS propio (salvo la paleta de
+      comandos). Elige tu framework, copia y adapta: el código es tuyo. Se ven con los colores de angela o con
+      <a href="/temas">tu tema del taller</a>.
+    </p>
+    <Fragment set:html={`<style>${paletaCss}${avisosCss}</style>`} />
+    {
+      BLOQUES.map((b, i) => (
+        <>
+          <Example title={b.titulo} note={b.nota} code={b.html} index={100 + i} />
+          {b.extra && (
+            <div class="bloques-extra">
+              <p class="bloques-extra-titulo">Y además, para este bloque:</p>
+              {[...b.extra, ...(b.uso ? [{ archivo: 'main.js', lenguaje: 'js', codigo: b.uso }] : [])].map((a) => (
+                <figure class="archivo">
+                  <figcaption>
+                    <span class="archivo-ruta">{a.archivo}</span>
+                    <span class="archivo-lenguaje">{a.lenguaje}</span>
+                  </figcaption>
+                  <pre tabindex="0" aria-label={`${a.archivo}: ${b.titulo}`}><code>{a.codigo.trim()}</code></pre>
+                </figure>
+              ))}
+            </div>
+          )}
+        </>
+      ))
+    }
+  </section>
+</Layout>
+
+<script>
+  import { paletaDeComandos } from '../bloques/paleta.js';
+  import { avisar } from '../demos/avisos/avisos.js';
+
+  const paleta = document.querySelector<HTMLDialogElement>('[data-paleta]');
+  if (paleta) paletaDeComandos(paleta, { alElegir: (comando) => avisar(`Has elegido «${comando}».`, { tono: 'success' }) });
+</script>

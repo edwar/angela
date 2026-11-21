@@ -983,6 +983,23 @@ body {
   font-size: var(--fs-sm);
 }
 
+/* Bloques: el CSS y el JS de un bloque, debajo de su ejemplo. */
+.bloques-intro {
+  max-inline-size: var(--measure);
+}
+
+.bloques-extra {
+  display: grid;
+  gap: var(--space-3);
+  margin-block: var(--space-3) var(--space-6);
+}
+
+.bloques-extra-titulo {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--fs-sm);
+}
+
 /* Compatibilidad de un componente con los navegadores. */
 .compat {
   & h3 {

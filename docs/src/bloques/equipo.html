@@ -1,0 +1,75 @@
+<section class="card" data-flush aria-labelledby="b-equipo-titulo">
+  <div class="card-header">
+    <h3 class="heading" data-size="lg" id="b-equipo-titulo">Equipo</h3>
+    <div class="cluster">
+      <input class="input" type="search" data-size="sm" placeholder="Buscar por nombre" aria-label="Buscar en el equipo" style="inline-size: 12rem">
+      <button class="button" type="button" data-size="sm">Invitar</button>
+    </div>
+  </div>
+  <div class="table-wrap" role="region" aria-labelledby="b-equipo-titulo" tabindex="0">
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Persona</th>
+          <th scope="col">Rol</th>
+          <th scope="col">Estado</th>
+          <th scope="col" data-numeric><span class="visually-hidden">Acciones</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Ana García<br><span class="text" data-size="sm" data-muted>ana@empresa.com</span></th>
+          <td><span class="badge" data-variant="outline" data-tone="neutral">Admin</span></td>
+          <td><span class="badge" data-tone="success" data-dot>Activa</span></td>
+          <td data-numeric>
+            <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" data-icon-only commandfor="b-equipo-ana" command="toggle-popover" aria-label="Acciones de Ana García"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+            <div class="popover" id="b-equipo-ana" popover>
+              <button class="popover-item" type="button" commandfor="b-equipo-ana" command="hide-popover">Cambiar rol</button>
+              <hr>
+              <button class="popover-item" type="button" data-tone="danger" commandfor="b-equipo-quitar" command="show-modal">Quitar del equipo</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">Luis Pérez<br><span class="text" data-size="sm" data-muted>luis@empresa.com</span></th>
+          <td><span class="badge" data-variant="outline" data-tone="neutral">Editor</span></td>
+          <td><span class="badge" data-tone="success" data-dot>Activo</span></td>
+          <td data-numeric>
+            <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" data-icon-only commandfor="b-equipo-luis" command="toggle-popover" aria-label="Acciones de Luis Pérez"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+            <div class="popover" id="b-equipo-luis" popover>
+              <button class="popover-item" type="button" commandfor="b-equipo-luis" command="hide-popover">Cambiar rol</button>
+              <hr>
+              <button class="popover-item" type="button" data-tone="danger" commandfor="b-equipo-quitar" command="show-modal">Quitar del equipo</button>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">Marta Ruiz<br><span class="text" data-size="sm" data-muted>marta@empresa.com</span></th>
+          <td><span class="badge" data-variant="outline" data-tone="neutral">Lectura</span></td>
+          <td><span class="badge" data-tone="warning" data-dot>Invitada</span></td>
+          <td data-numeric>
+            <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" data-icon-only commandfor="b-equipo-marta" command="toggle-popover" aria-label="Acciones de Marta Ruiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button>
+            <div class="popover" id="b-equipo-marta" popover>
+              <button class="popover-item" type="button" commandfor="b-equipo-marta" command="hide-popover">Cambiar rol</button>
+              <hr>
+              <button class="popover-item" type="button" data-tone="danger" commandfor="b-equipo-quitar" command="show-modal">Quitar del equipo</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<dialog class="dialog" id="b-equipo-quitar" data-size="sm" aria-labelledby="b-equipo-quitar-titulo" closedby="any">
+  <header class="dialog-header">
+    <h2 id="b-equipo-quitar-titulo">¿Quitar del equipo?</h2>
+    <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-icon-only commandfor="b-equipo-quitar" command="close" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </header>
+  <div class="dialog-body">
+    <p>Perderá el acceso a todos los proyectos. Puedes volver a invitarla cuando quieras.</p>
+  </div>
+  <footer class="dialog-footer">
+    <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="b-equipo-quitar" command="close" autofocus>Cancelar</button>
+    <button class="button" type="button" data-tone="danger" commandfor="b-equipo-quitar" command="close">Quitar</button>
+  </footer>
+</dialog>

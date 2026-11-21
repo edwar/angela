@@ -3,6 +3,7 @@ import { transformWithOxc } from 'vite';
 import { codigoPorFramework, htmlAAngular, htmlAAstro, htmlAJsx, nombreComponente } from './codigo-frameworks.js';
 
 const paginas = Object.values(import.meta.glob('../data/componentes/*.js', { eager: true, import: 'default' }));
+const { BLOQUES } = await import('../data/bloques.js');
 
 describe('htmlAJsx', () => {
   it('pasa los atributos a sus nombres de React', () => {
@@ -78,7 +79,10 @@ describe('nombreComponente', () => {
 });
 
 describe('todos los ejemplos del sitio', () => {
-  const ejemplos = paginas.flatMap((p) => p.examples.map((ex) => [`${p.slug} · ${ex.title}`, ex]));
+  const ejemplos = [
+    ...paginas.flatMap((p) => p.examples.map((ex) => [`${p.slug} · ${ex.title}`, ex])),
+    ...BLOQUES.map((b) => [`bloque · ${b.titulo}`, { title: b.titulo, code: b.html }]),
+  ];
 
   it.each(ejemplos)('%s: el JSX de React y Next.js compila', async (_, ex) => {
     for (const fw of codigoPorFramework(ex.code, ex.title).filter((f) => ['react', 'next'].includes(f.id))) {

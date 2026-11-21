@@ -1,0 +1,15 @@
+<button class="button" type="button" data-variant="outline" data-tone="neutral" commandfor="b-cmd" command="show-modal">Buscar un comando <kbd>Ctrl K</kbd></button>
+<dialog class="dialog paleta" id="b-cmd" aria-label="Paleta de comandos" closedby="any" data-paleta>
+  <div class="dialog-body stack" style="--stack-gap: var(--space-2)">
+    <input class="input" type="text" role="combobox" aria-expanded="true" aria-controls="b-cmd-lista" aria-autocomplete="list" aria-label="Busca un comando" placeholder="Escribe para filtrar…" autocomplete="off" spellcheck="false" autofocus>
+    <ul class="paleta-lista" id="b-cmd-lista" role="listbox" aria-label="Comandos">
+      <li class="popover-item" role="option" id="b-cmd-1" aria-selected="false" data-comando="Nuevo proyecto">Nuevo proyecto<span class="popover-hint" aria-hidden="true">N</span></li>
+      <li class="popover-item" role="option" id="b-cmd-2" aria-selected="false" data-comando="Invitar a alguien">Invitar a alguien<span class="popover-hint" aria-hidden="true">I</span></li>
+      <li class="popover-item" role="option" id="b-cmd-3" aria-selected="false" data-comando="Ir a facturación">Ir a facturación<span class="popover-hint" aria-hidden="true">G F</span></li>
+      <li class="popover-item" role="option" id="b-cmd-4" aria-selected="false" data-comando="Ir a ajustes">Ir a ajustes<span class="popover-hint" aria-hidden="true">G A</span></li>
+      <li class="popover-item" role="option" id="b-cmd-5" aria-selected="false" data-comando="Cambiar a modo oscuro">Cambiar a modo oscuro<span class="popover-hint" aria-hidden="true">D</span></li>
+      <li class="popover-item" role="option" id="b-cmd-6" aria-selected="false" data-comando="Ver atajos de teclado">Ver atajos de teclado<span class="popover-hint" aria-hidden="true">?</span></li>
+    </ul>
+    <p class="text" data-size="sm" data-muted data-vacio hidden>Ningún comando coincide.</p>
+  </div>
+</dialog>

@@ -1,0 +1,25 @@
+<article class="card stack" style="max-inline-size: 26rem; margin-inline: auto; --stack-gap: var(--space-5)">
+  <div class="stack" style="--stack-gap: var(--space-1)">
+    <h3 class="heading" data-size="xl">Inicia sesión</h3>
+    <p class="text" data-muted>Usa el correo de tu trabajo.</p>
+  </div>
+  <form class="stack" action="#" method="post" aria-label="Iniciar sesión">
+    <div class="field">
+      <label for="b-login-correo">Correo</label>
+      <input class="input" id="b-login-correo" name="email" type="email" required autocomplete="email" autocapitalize="none" spellcheck="false" data-error="b-login-correo-error">
+      <p class="error" id="b-login-correo-error">Escribe un correo válido, por ejemplo ana@empresa.com.</p>
+    </div>
+    <div class="field">
+      <label for="b-login-clave">Contraseña</label>
+      <input class="input" id="b-login-clave" name="password" type="password" required autocomplete="current-password" data-error="b-login-clave-error">
+      <p class="error" id="b-login-clave-error">Escribe tu contraseña.</p>
+      <a class="text" data-size="sm" href="#">¿La olvidaste?</a>
+    </div>
+    <div class="choice">
+      <input type="checkbox" id="b-login-recordar" name="recordar">
+      <label for="b-login-recordar">Mantener la sesión en este dispositivo</label>
+    </div>
+    <button class="button" type="submit" data-block>Entrar</button>
+  </form>
+  <p class="text" data-size="sm" data-align="center">¿No tienes cuenta? <a href="#">Crea una gratis</a></p>
+</article>
