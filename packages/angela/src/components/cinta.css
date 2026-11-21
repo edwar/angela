@@ -1,0 +1,101 @@
+@layer angela.components {
+  /* Valores por defecto (especificidad 0): data-tone, --marquee-duration y --marquee-gap los cambian. */
+  :where(.marquee) {
+    --_marquee-duration: 20s;
+    --_marquee-gap: var(--space-8);
+    --tone-solid: var(--color-brand-solid);
+    --tone-on-solid: var(--color-brand-on-solid);
+  }
+
+  .marquee {
+    --_marquee-dir: 1;
+    position: relative;
+    overflow: hidden;
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--tone-solid);
+    color: var(--tone-on-solid);
+
+    &:dir(rtl) {
+      --_marquee-dir: -1;
+    }
+  }
+
+  /* Sin movimiento (por defecto y con prefers-reduced-motion): el texto entero, en varias líneas. */
+  .marquee-track {
+    display: flex;
+    flex-wrap: wrap;
+
+    & > * {
+      flex: none;
+      box-sizing: border-box;
+      max-inline-size: 100%;
+      padding-inline-end: var(--marquee-gap, var(--_marquee-gap));
+      font-size: var(--fs-3xl);
+      font-weight: var(--fw-bold);
+      line-height: var(--lh-tight);
+    }
+
+    & > [aria-hidden="true"] {
+      display: none;
+    }
+  }
+
+  .marquee > .marquee-pause {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .marquee {
+      padding-inline: 0;
+    }
+
+    .marquee-track {
+      flex-wrap: nowrap;
+      inline-size: max-content;
+      animation: angela-marquee var(--marquee-duration, var(--_marquee-duration)) linear infinite;
+
+      & > * {
+        max-inline-size: none;
+        white-space: nowrap;
+      }
+
+      & > [aria-hidden="true"] {
+        display: block;
+      }
+    }
+
+    /* WCAG 2.2.2: lo que se mueve solo más de 5 s se tiene que poder pausar. */
+    .marquee-track:hover,
+    .marquee:has(.marquee-pause > input:checked) .marquee-track {
+      animation-play-state: paused;
+    }
+
+    .marquee > .marquee-pause {
+      position: absolute;
+      inset-block: 0;
+      inset-inline-end: 0;
+      display: flex;
+      align-items: center;
+      padding-inline: var(--space-3);
+      background-color: var(--tone-solid);
+      font-size: var(--fs-sm);
+    }
+
+    /* El interruptor, con los colores de la cinta: el estado lo marca la posición del círculo. */
+    .marquee .marquee-pause > input[type="checkbox"]:is([role="switch"], [switch]) {
+      --_track: var(--tone-on-solid);
+      --_thumb: var(--tone-solid);
+      margin: 0;
+
+      &:focus-visible {
+        outline-color: var(--tone-on-solid);
+      }
+    }
+  }
+
+  @keyframes angela-marquee {
+    to {
+      translate: calc(-50% * var(--_marquee-dir)) 0;
+    }
+  }
+}
