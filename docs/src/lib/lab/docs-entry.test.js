@@ -144,3 +144,10 @@ describe('serializeDocsEntry', () => {
     expect(entry.api[0]).toEqual(['.faq', 'Clase del componente.']);
   });
 });
+
+describe('readParameters y los tonos', () => {
+  it('las --tone-* no son parámetros del componente: las pone data-tone', () => {
+    const css = ':where(.aviso) { --tone-solid: var(--color-info-solid); --tone-text: var(--color-info-text); --aviso-gap: 1rem; }';
+    expect(readParameters(css).map(([n]) => n)).toEqual(['--aviso-gap']);
+  });
+});

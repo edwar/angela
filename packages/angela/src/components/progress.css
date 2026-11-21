@@ -1,0 +1,13 @@
+/*
+ * Progreso y medidor nativos, teñidos con accent-color.
+ *
+ * <progress class="progress" max="100" value="64">64 %</progress>   una tarea en curso
+ * <meter class="meter" min="0" max="10" value="7.2">7,2</meter>       una medida en un rango
+ */
+@layer angela.components {
+  :where(.progress, .meter) {
+    inline-size: 100%;
+    block-size: 0.5rem;
+    accent-color: var(--color-brand-solid);
+  }
+}
