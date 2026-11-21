@@ -21,7 +21,6 @@ describe('sourcesFor', () => {
   it('resuelve los del núcleo por el mapa y los aportados por convención', () => {
     expect(sourcesFor('campo-de-texto')).toEqual({ css: 'components/field.css', js: 'forms.js' });
     expect(sourcesFor('foco-de-luz')).toEqual({ css: 'components/spotlight.css', js: 'spotlight.js' });
-    expect(sourcesFor('rejilla')).toEqual({ css: 'components/cards.css' });
     expect(sourcesFor('tarjeta-giratoria')).toEqual({ css: 'components/flip-card.css' });
     // Un aportado sin entrada en el mapa se resuelve por convención (components/<slug>.css).
     expect(sourcesFor('cinta')).toEqual({ css: 'components/cinta.css' });

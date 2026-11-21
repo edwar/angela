@@ -53,6 +53,33 @@
     gap: var(--cluster-gap, var(--space-2));
   }
 
+  /*
+   * Rejilla de tarjetas: las columnas se acomodan solas según --cards-min. Con Tarjetas 3D
+   * dentro pone un punto de fuga compartido: todas giran hacia el mismo sitio.
+   */
+  :where(.cards) {
+    --cards-min: 16rem;
+    --cards-gap: var(--space-6);
+    --cards-perspective: 900px;
+
+    /* Contrato con .card-3d: la perspectiva la pone la rejilla, la tarjeta no la repite. */
+    --card-3d-perspective: none;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--cards-min)), 1fr));
+    gap: var(--cards-gap);
+    perspective: var(--cards-perspective);
+  }
+
+  .cards :where(img) {
+    inline-size: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+  }
+
   .container {
     box-sizing: border-box;
     inline-size: 100%;

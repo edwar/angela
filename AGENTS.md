@@ -12,7 +12,7 @@ packages/angela/          La librería (paquete npm "@angela-ui/angela")
   src/tokens/scale.css    Tipografía, espacio, radios, sombras, movimiento
   src/base.css            Estilos de documento sin clases (:where, especificidad 0)
   src/components/*.css    Un archivo por componente, en @layer angela.components
-  src/utilities.css       .visually-hidden, .skip-link, .stack, .cluster…
+  src/utilities.css       .visually-hidden, .skip-link y la maquetación: .stack, .cluster, .cards, .container
   src/tailwind.css        Puente opcional con Tailwind v4
   src/js/                 Mejoras opcionales (sin dependencias, seguras en SSR)
   src/jsx.d.ts            Tipos de JSX para React (commandfor, command, switch, focusgroup, evento tabchange)

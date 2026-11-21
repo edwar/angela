@@ -64,8 +64,6 @@ export const componentSources = {
   tarjeta: { css: 'components/layout.css' },
   tabla: { css: 'components/layout.css' },
   tipografia: { css: 'components/typography.css' },
-  // Llegó del laboratorio como «cards»; la página se llama Rejilla pero el archivo y la clase no cambian.
-  rejilla: { css: 'components/cards.css' },
   // Páginas con nombre en español; el archivo y las clases conservan su nombre (son la API).
   carrusel: { css: 'components/carousel.css' },
   selector: { css: 'components/select-personalizable.css' },
