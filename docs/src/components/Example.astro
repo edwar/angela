@@ -30,7 +30,7 @@ const id = `ej-${index}`;
   <p class="eyebrow example-label">Vista previa · colores por defecto de angela</p>
   <div class="example-preview" data-angela-theme="angela" set:html={code} />
   <!-- data-framework: elegir uno cambia todos los ejemplos (lib/framework-preferido.js). -->
-  <angela-tabs class="tabs example-frameworks">
+  <div class="tabs example-frameworks">
     <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label={`Código${title ? ` de «${title}»` : ''} por framework`}>
       {
         mostrados.map((fw, i) => (
@@ -65,5 +65,5 @@ const id = `ej-${index}`;
         </div>
       ))
     }
-  </angela-tabs>
+  </div>
 </section>

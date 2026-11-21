@@ -2,7 +2,7 @@
  * Tipos de JSX para usar angela en React (19+) con TypeScript.
  *
  * Activa los atributos HTML nuevos que angela usa y que @types/react aún no declara,
- * y los elementos <angela-tabs> y <selectedcontent>. Añádelo una vez en tu proyecto:
+ * el elemento <selectedcontent> y el evento tabchange. Añádelo una vez en tu proyecto:
  *
  *   // tsconfig.json → "compilerOptions": { "types": ["@angela-ui/angela/jsx"] }
  *   // o en cualquier .d.ts:  /// <reference types="@angela-ui/angela/jsx" />
@@ -42,14 +42,8 @@ declare module 'react' {
     focusgroupstart?: '' | undefined;
   }
 
-  interface AngelaTabsAttributes extends HTMLAttributes<HTMLElement> {
-    /** Se emite al cambiar de pestaña. En React 19 el nombre va en minúsculas: `ontabchange`. */
-    ontabchange?: ((event: AngelaTabChangeEvent) => void) | undefined;
-  }
-
   namespace JSX {
     interface IntrinsicElements {
-      'angela-tabs': DetailedHTMLProps<AngelaTabsAttributes, HTMLElement>;
       /** Select personalizable (`appearance: base-select`): copia en el botón la opción elegida. */
       selectedcontent: DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElement>;
     }
@@ -57,7 +51,8 @@ declare module 'react' {
 }
 
 declare global {
-  // Burbujea: también se puede escuchar en document o window.
+  // Lo emite el .tabs al cambiar de pestaña. Burbujea: también se puede escuchar en document o window.
+  // React no conecta eventos propios en elementos nativos: escúchalo con addEventListener.
   interface GlobalEventHandlersEventMap {
     tabchange: AngelaTabChangeEvent;
   }

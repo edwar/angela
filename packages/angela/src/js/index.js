@@ -6,14 +6,14 @@
  */
 import { loadPolyfills } from './polyfills.js';
 import { enhanceForms } from './forms.js';
-import { defineTabs } from './tabs.js';
+import { enhanceTabs } from './tabs.js';
 import { enhanceDialogs, enhancePopovers } from './overlays.js';
 import { initThemeToggle } from './theme.js';
 import { enhanceSpotlight } from './spotlight.js';
 
 export * from './theme.js';
 export { enhanceForms } from './forms.js';
-export { defineTabs } from './tabs.js';
+export { enhanceTabs, selectTab } from './tabs.js';
 export { enhanceDialogs, enhancePopovers } from './overlays.js';
 export { loadPolyfills } from './polyfills.js';
 export { enhanceSpotlight } from './spotlight.js';
@@ -27,9 +27,9 @@ export function angela({ root = globalThis.document, polyfills = true } = {}) {
   // Seguro en el servidor: sin DOM no hay nada que mejorar.
   if (typeof window === 'undefined' || !root) return () => {};
   if (polyfills) loadPolyfills();
-  defineTabs();
   const cleanups = [
     enhanceForms(root),
+    enhanceTabs(root),
     enhanceDialogs(root),
     enhancePopovers(root),
     initThemeToggle(root),

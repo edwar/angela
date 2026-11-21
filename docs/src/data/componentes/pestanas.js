@@ -6,12 +6,12 @@
 export default {
   slug: "pestanas",
   title: "Pestañas",
-  summary: "Pestañas accesibles con focusgroup nativo y un elemento personalizado mínimo.",
+  summary: "Pestañas accesibles con focusgroup nativo y HTML con clases; el JS solo completa el teclado y el estado.",
   examples: [
     {
       title: "Pestañas",
       note: "Usa las flechas para moverte (la selección sigue al foco), Inicio y Fin. Si no caben, la fila se desplaza con un desvanecido en los bordes. El contenido oculto se encuentra con Ctrl+F donde hay soporte.",
-      code: `<angela-tabs class="tabs">
+      code: `<div class="tabs">
   <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label="Detalles del pedido">
     <button type="button" role="tab" id="t-resumen" aria-selected="true" focusgroupstart>Resumen</button>
     <button type="button" role="tab" id="t-envio" aria-selected="false">Envío</button>
@@ -30,11 +30,11 @@ export default {
   <div role="tabpanel" aria-labelledby="t-historial" hidden="until-found">
     <p>Creado el 17/11 · Pagado el 18/11 · Enviado el 18/11.</p>
   </div>
-</angela-tabs>`,
+</div>`,
     },
   ],
   api: [
-    ["<angela-tabs>", "Contenedor. Emite el evento tabchange con { tab, panel }."],
+    [".tabs", "Contenedor (un <div>). Emite el evento tabchange con { tab, panel }. Para cambiar de pestaña desde fuera: selectTab(boton) de @angela-ui/angela/js."],
     [".tablist[focusgroup=\"tablist nomemory\"]", "Fila de pestañas, con role=\"tablist\". Necesita aria-label o aria-labelledby."],
     ["role=\"tab\"", "En cada <button>. focusgroup ya infiere estos roles; escribirlos hace que validadores como axe los vean."],
     ["aria-selected", "En cada <button>: true en la seleccionada (renderízalo en el HTML inicial)."],

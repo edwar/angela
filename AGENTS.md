@@ -15,7 +15,7 @@ packages/angela/          La librería (paquete npm "@angela-ui/angela")
   src/utilities.css       .visually-hidden, .skip-link, .stack, .cluster…
   src/tailwind.css        Puente opcional con Tailwind v4
   src/js/                 Mejoras opcionales (sin dependencias, seguras en SSR)
-  src/jsx.d.ts            Tipos de JSX para React (commandfor, command, switch, <angela-tabs>)
+  src/jsx.d.ts            Tipos de JSX para React (commandfor, command, switch, focusgroup, evento tabchange)
   src/css.d.ts            Tipos de los imports de CSS (import '@angela-ui/angela/css')
   scripts/                build, build-palette, check-contrast
 packages/angela-react/    Componentes de React 19 sobre angela (paquete npm "@angela-ui/react")
@@ -49,6 +49,7 @@ docs/                     Sitio de documentación (Astro)
 ## Reglas
 
 - **Nativo primero.** Antes de escribir JS, comprueba si HTML/CSS lo resuelven (`<dialog>`, `popover`, `command`/`commandfor`, `<details name>`, `:user-invalid`, `focusgroup`, anchor positioning).
+- **Sin elementos propios.** Nada de `<angela-…>` ni `customElements.define`: un componente es HTML nativo con clase y `data-*` (`<div class="tabs">`), y su JS, una función `enhanceX(root)`. Lo comprueba `review.js` (regla `elemento-propio`).
 - Todo el CSS va en capas `angela.*`. Valores por defecto en `:where()` para que `data-*` y el CSS del usuario ganen.
 - Variantes con atributos (`data-variant`, `data-tone`, `data-size`), no clases BEM.
 - Solo tokens; nada de valores de color sueltos. Nombres de tokens que no choquen con Tailwind (`--fs-*`, `--lh-*`, `--fw-*`, `--elevation-*`, `--font-body`).
@@ -59,7 +60,7 @@ docs/                     Sitio de documentación (Astro)
 - `@angela-ui/react`: envoltorios finos que generan el mismo marcado que la documentación, sin estado propio salvo el imprescindible.
   - Un módulo sin `'use client'` no importa uno con `'use client'` (lo comprueba `boundaries.test.ts`).
   - Nada de `cloneElement`: un elemento que llega desde un Server Component puede ser una referencia diferida. Los disparadores son objetos de props.
-  - El estado que gestiona el DOM nativo (`<angela-tabs>`, `<dialog>`) se pinta solo al principio; los cambios van por la API del elemento.
+  - El estado que gestiona el DOM (pestañas con `enhanceTabs`, `<dialog>`) se pinta solo al principio; los cambios van por su API (`selectTab`, `showModal`).
   - `autoFocus` necesita el atributo real (`autofocusRef`): React lo omite en el cliente.
 - El sitio de documentación tiene su propio tema, «plano» (`data-angela-theme="plano"` en `<html>`, definido en `docs/src/styles/docs.css`). La librería sigue con sus valores por defecto: los ejemplos de componentes y el playground de la guía llevan `data-angela-theme="angela"` para mostrarla tal como la recibe quien la instala. Si cambias las entradas del tema, verifica: `pnpm --filter @angela-ui/angela check:contrast --brand 78 0.11 --neutral 262 0.06 --info 215 0.12 --warning 50 0.14 --danger 18 0.18`.
 - Imágenes en ejemplos y pruebas: las de `/img/…` (página «Imágenes»), no servicios externos como placehold.co. Solo se añaden fotos CC0 o equivalente, con su entrada en `docs/src/data/imagenes.js` (autor, origen, licencia y texto alternativo que describa lo que se ve): se redistribuyen desde la web.
@@ -74,7 +75,7 @@ docs/                     Sitio de documentación (Astro)
 ## Soporte de navegadores
 
 **Baseline “ampliamente disponible”.** Lo más nuevo se usa como mejora progresiva cuyo fallback es el control o comportamiento nativo (sin polyfills pesados):
-invokers y popover → polyfill condicional (`loadPolyfills`); anchor positioning → hoja inferior (`@supports`); focusgroup → teclado en `<angela-tabs>`; `closedby` → `enhanceDialogs`; `accent-color`, `field-sizing`, `interpolate-size`, animaciones de salida → sin fallback (se ve el nativo / transición instantánea).
+invokers y popover → polyfill condicional (`loadPolyfills`); anchor positioning → hoja inferior (`@supports`); focusgroup → teclado en `enhanceTabs`; `closedby` → `enhanceDialogs`; `accent-color`, `field-sizing`, `interpolate-size`, animaciones de salida → sin fallback (se ve el nativo / transición instantánea).
 
 ## Revisión de PR
 

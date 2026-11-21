@@ -1,6 +1,6 @@
 {
   "name": "@angela-ui/react",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Componentes de React 19 sobre angela: envoltorios finos de HTML nativo, compatibles con Server Components.",
   "type": "module",
   "license": "MIT",

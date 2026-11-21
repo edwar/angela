@@ -74,7 +74,7 @@ export const CARACTERISTICAS = [
   { id: 'popover', nombre: 'popover', papel: 'polyfill', html: /\spopover[\s>=]/, nota: 'angela() carga un polyfill donde falta.' },
   { id: 'invoker-commands', nombre: 'commandfor y command', papel: 'polyfill', html: /\scommandfor=/, nota: 'angela() carga un polyfill donde falta.' },
   { id: 'dialog-closedby', nombre: 'closedby en <dialog>', papel: 'polyfill', html: /\sclosedby=/, nota: 'angela() cierra el diálogo al pulsar fuera.' },
-  { id: 'focusgroup', nombre: 'focusgroup', papel: 'polyfill', html: /\sfocusgroup=/, nota: 'Sin él, <angela-tabs> pone las flechas del teclado.' },
+  { id: 'focusgroup', nombre: 'focusgroup', papel: 'polyfill', html: /\sfocusgroup=/, nota: 'Sin él, enhanceTabs pone las flechas del teclado.' },
 
   // Mejoras progresivas: si faltan, se ve lo nativo o sin animación.
   { id: 'customizable-select', nombre: 'Select personalizable (base-select)', papel: 'mejora', css: /base-select|::picker\(/, nota: 'Sin él, el select nativo.' },

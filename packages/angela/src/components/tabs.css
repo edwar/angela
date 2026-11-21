@@ -1,14 +1,14 @@
 /*
- * Pestañas. El comportamiento lo pone <angela-tabs> (src/js/tabs.js); el marcado es nativo:
+ * Pestañas. El comportamiento lo pone enhanceTabs() (src/js/tabs.js); el marcado es nativo:
  *
- * <angela-tabs class="tabs">
+ * <div class="tabs">
  *   <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label="Detalles del producto">
  *     <button type="button" role="tab" id="t-1" aria-selected="true" focusgroupstart>Resumen</button>
  *     <button type="button" role="tab" id="t-2" aria-selected="false">Especificaciones</button>
  *   </div>
  *   <div role="tabpanel" aria-labelledby="t-1" tabindex="0">…</div>
  *   <div role="tabpanel" aria-labelledby="t-2" hidden="until-found">…</div>
- * </angela-tabs>
+ * </div>
  *
  * role="tablist"/"tab" coinciden con los que infiere focusgroup; se escriben para que los vean
  * los validadores (axe) y los navegadores sin focusgroup antes de que cargue el JS.
