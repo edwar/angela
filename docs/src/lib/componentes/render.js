@@ -12,7 +12,7 @@ const tiene = (v) => Boolean(v) && !(Array.isArray(v) && !v.length);
 const cumple = (cond, props) => cond.every((n) => (n.startsWith('!') ? !tiene(props[n.slice(1)]) : tiene(props[n])));
 
 /** El valor de un atributo, o undefined si no se escribe. */
-function valorAtributo(v, props, base) {
+function valorAtributo(v, props, base, indice) {
   if (typeof v === 'string') return v;
   switch (v.tipo) {
     case 'prop': {
@@ -29,6 +29,8 @@ function valorAtributo(v, props, base) {
       return props[v.nombre] === v.valor ? v.siVerdadero : v.siFalso;
     case 'id':
       return base + v.sufijo;
+    case 'idItem':
+      return `${base}${v.sufijo}-${indice ?? 0}`;
     case 'idSi':
       return cumple(v.cond, props) ? base + v.sufijo : undefined;
     case 'ids':
@@ -55,7 +57,7 @@ function valorAtributo(v, props, base) {
  * @param {string} base  el id de esta instancia
  */
 export function renderHtml(componente, props, slots = {}, base = 'ej') {
-  const pintar = (nodos, actual) =>
+  const pintar = (nodos, actual, indice) =>
     nodos
       .map((n) => {
         switch (n.tipo) {
@@ -66,11 +68,11 @@ export function renderHtml(componente, props, slots = {}, base = 'ej') {
           case 'slot':
             return slots[n.nombre] ?? '';
           case 'si':
-            return cumple(n.cond, props) ? pintar(n.hijos, actual) : '';
+            return cumple(n.cond, props) ? pintar(n.hijos, actual, indice) : '';
           case 'segun':
-            return pintar(n.casos[props[n.prop]] ?? n.otro, actual);
+            return pintar(n.casos[props[n.prop]] ?? n.otro, actual, indice);
           case 'cada':
-            return (props[n.lista] ?? []).map((x) => pintar(n.hijos, x)).join('');
+            return (props[n.lista] ?? []).map((x, i) => pintar(n.hijos, x, i)).join('');
           case 'item':
             return esc(actual ?? '');
           case 'unir':
@@ -80,12 +82,12 @@ export function renderHtml(componente, props, slots = {}, base = 'ej') {
           case 'el': {
             const atributos = Object.entries(n.atributos)
               .filter(([k]) => !k.startsWith('@'))
-              .map(([k, v]) => [k, valorAtributo(v, props, base)])
+              .map(([k, v]) => [k, valorAtributo(v, props, base, indice)])
               .filter(([, v]) => v !== undefined)
               .map(([k, v]) => (v === true ? ` ${k}` : ` ${k}="${esc(v)}"`))
               .join('');
             if (VACIOS.has(n.etiqueta)) return `<${n.etiqueta}${atributos}>`;
-            return `<${n.etiqueta}${atributos}>${pintar(n.hijos, actual)}</${n.etiqueta}>`;
+            return `<${n.etiqueta}${atributos}>${pintar(n.hijos, actual, indice)}</${n.etiqueta}>`;
           }
           default:
             return '';
