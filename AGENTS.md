@@ -28,7 +28,7 @@ packages/angela-icons/    Iconos (paquete npm "@angela-ui/icons")
 docs/                     Sitio de documentación (Astro)
   src/data/componentes/   Una página por componente (<slug>.js): ejemplos, API y accesibilidad. components.js solo las ordena
   src/lib/codigo-frameworks.js  Pasa el HTML de cada ejemplo a Astro, React, Next.js, Vue y Angular (pestañas de los ejemplos)
-  src/lib/playground/           «Pruébalo»: props de cada componente (definiciones.js) → controles, vista previa y código
+  src/lib/playground/           «Pruébalo»: props de cada componente (definiciones.js) → controles, vista previa (iframe /pruebalo-marco: ancho, RTL, movimiento, esquema) y código
   src/lib/componentes/          Componentes reutilizables por framework (TS o JS) desde un árbol neutro (ir.js, emisores.js)
   src/bloques/                  Bloques (/bloques): pantallas enteras en HTML, solo con angela; los frameworks salen del conversor
   src/demos/<id>/               Demos de «Interacciones» (/interacciones): su HTML, CSS y JS son lo que se ejecuta y lo que se muestra

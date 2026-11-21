@@ -1,11 +1,19 @@
 /**
- * El «Pruébalo» en el navegador: lee los controles, pinta la vista previa y pone al día el
- * componente y el uso de cada framework, en TypeScript o JavaScript (elección que se recuerda).
+ * El «Pruébalo» en el navegador: lee los controles, pinta la vista previa en su marco (un iframe
+ * con angela, /pruebalo-marco) y pone al día el componente y el uso de cada framework, en
+ * TypeScript o JavaScript (elección que se recuerda).
+ *
+ * La configuración (props, color, ancho, dirección, movimiento y esquema) va en el enlace:
+ * #pruebalo:variant=outline&tone=danger… Al abrirlo, el «Pruébalo» empieza así.
  */
-import { DEFINICIONES, htmlDe } from './definiciones.js';
+import { DEFINICIONES, htmlDe, valoresPorDefecto } from './definiciones.js';
 import { codigoPlayground, codigoTema } from './codigo.js';
 
 const CLAVE_LENGUAJE = 'angela-docs:lenguaje';
+const PREFIJO = '#pruebalo:';
+const MARCA = { h: 262, c: 0.17 };
+const VISTA = { ancho: '', dir: 'ltr', movimiento: 'normal', esquema: '' };
+
 const leerLenguaje = () => {
   try {
     return localStorage.getItem(CLAVE_LENGUAJE) === 'js' ? 'js' : 'ts';
@@ -26,12 +34,15 @@ export function iniciarPlaygrounds(root = document) {
     const def = DEFINICIONES.find((d) => d.slug === raiz.dataset.playground);
     if (!def) continue;
     const form = raiz.querySelector('form');
-    const vista = raiz.querySelector('.pruebalo-vista');
-    const lienzo = raiz.querySelector('.pruebalo-lienzo');
+    const marco = raiz.querySelector('.pruebalo-marco');
     const tema = raiz.querySelector('.pruebalo-tema');
+    const estado = raiz.querySelector('[data-pg-estado]');
     const radiosLenguaje = [...raiz.querySelectorAll('input[name="pg-lenguaje"]')];
+    const iniciales = valoresPorDefecto(def);
     let lenguaje = leerLenguaje();
     for (const r of radiosLenguaje) r.checked = r.value === lenguaje;
+
+    /* ---------- Controles ↔ valores ---------- */
 
     const leer = () => {
       const datos = new FormData(form);
@@ -50,6 +61,57 @@ export function iniciarPlaygrounds(root = document) {
         }),
       );
     };
+    const leerVista = () => {
+      const datos = new FormData(form);
+      return Object.fromEntries(Object.keys(VISTA).map((k) => [k, String(datos.get(k) ?? VISTA[k])]));
+    };
+    const marcaElegida = () => {
+      const datos = new FormData(form);
+      return { h: Number(datos.get('marca-h')), c: Number(datos.get('marca-c')) };
+    };
+
+    /** Pone un valor en su control (para abrir un enlace). */
+    const poner = (nombre, valor) => {
+      const campo = form.elements.namedItem(nombre);
+      if (!campo) return;
+      const c = def.controles.find((x) => x.nombre === nombre);
+      if (campo instanceof RadioNodeList) {
+        for (const r of campo) r.checked = r.value === valor;
+      } else if (campo.type === 'checkbox') campo.checked = valor === '1';
+      else campo.value = c?.tipo === 'lista' ? valor.split('|').join(` ${c.separador} `) : valor;
+    };
+
+    /* ---------- Enlace ---------- */
+
+    const aEnlace = () => {
+      const p = new URLSearchParams();
+      const valores = leer();
+      for (const c of def.controles) {
+        const v = valores[c.nombre];
+        if (JSON.stringify(v) === JSON.stringify(iniciales[c.nombre])) continue;
+        p.set(c.nombre, c.tipo === 'booleano' ? (v ? '1' : '0') : Array.isArray(v) ? v.join('|') : String(v));
+      }
+      const vista = leerVista();
+      for (const [k, v] of Object.entries(vista)) if (v !== VISTA[k]) p.set(k, v);
+      const marca = marcaElegida();
+      if (marca.h !== MARCA.h || marca.c !== MARCA.c) p.set('marca', `${marca.h},${marca.c}`);
+      return `${location.origin}${location.pathname}${PREFIJO}${p}`;
+    };
+
+    const desdeEnlace = () => {
+      if (!location.hash.startsWith(PREFIJO)) return false;
+      const p = new URLSearchParams(location.hash.slice(PREFIJO.length));
+      for (const [k, v] of p) {
+        if (k === 'marca') {
+          const [h, c] = v.split(',');
+          poner('marca-h', h);
+          poner('marca-c', c);
+        } else poner(k, v);
+      }
+      return true;
+    };
+
+    /* ---------- Pintar ---------- */
 
     const pintarCodigo = (valores) => {
       for (const fw of codigoPlayground(def, valores, lenguaje)) {
@@ -71,36 +133,63 @@ export function iniciarPlaygrounds(root = document) {
     const pintar = () => {
       const valores = leer();
       const html = htmlDe(def, valores);
-      // Solo se repinta si cambia: así un diálogo abierto no se cierra al mover el color.
       if (html !== anterior) {
-        lienzo.innerHTML = html;
         anterior = html;
         pintarCodigo(valores);
       }
 
-      const datos = new FormData(form);
-      const h = Number(datos.get('marca-h'));
-      const c = Number(datos.get('marca-c'));
-      const css = codigoTema({ h, c });
-      // Solo si se mueve el color: si no, la vista usa el tema guardado del taller (o el de angela).
-      for (const [k, v] of [
-        ['--angela-brand-h', h],
-        ['--angela-brand-c', c],
-      ]) {
-        if (css) vista.style.setProperty(k, String(v));
-        else vista.style.removeProperty(k);
-      }
+      const marca = marcaElegida();
+      const css = codigoTema(marca);
       tema.hidden = !css;
       if (css) tema.querySelector('code').textContent = css;
 
-      const esquema = String(datos.get('esquema') ?? '');
-      if (esquema) vista.dataset.scheme = esquema;
-      else delete vista.dataset.scheme;
+      const vista = leerVista();
+      ajustarAncho(vista.ancho);
+      // Solo si se mueve el color: si no, el marco usa el tema guardado del taller (o el de angela).
+      marco.contentWindow?.pruebalo?.pintar({ html, dir: vista.dir, esquema: vista.esquema, movimiento: vista.movimiento, marca: css ? marca : null, centrar: def.centrar });
 
       for (const salida of form.querySelectorAll('output[data-salida]')) {
-        salida.textContent = String(datos.get(salida.dataset.salida) ?? '');
+        salida.textContent = String(new FormData(form).get(salida.dataset.salida) ?? '');
       }
     };
+
+    /* ---------- El marco ---------- */
+
+    /**
+     * Móvil o tablet: el marco mide ese ancho por dentro (las media queries lo ven) y, si no cabe en
+     * la columna, se dibuja a escala con zoom, como un simulador de dispositivos.
+     */
+    const caja = raiz.querySelector('.pruebalo-marco-caja');
+    const escala = raiz.querySelector('[data-pg-escala]');
+    const NOMBRES = { 375: 'Móvil', 768: 'Tablet' };
+    let anchoActual = '';
+    const ajustarAncho = (ancho = anchoActual) => {
+      anchoActual = ancho;
+      if (!ancho) {
+        marco.style.inlineSize = '';
+        marco.style.zoom = '';
+        escala.hidden = true;
+        return;
+      }
+      const disponible = caja.clientWidth;
+      // + 2: el borde discontinuo que marca los lados del «dispositivo».
+      const factor = Math.min(1, disponible / (Number(ancho) + 2));
+      marco.style.inlineSize = `${ancho}px`;
+      marco.style.zoom = factor < 1 ? String(factor) : '';
+      escala.hidden = false;
+      escala.textContent = `${NOMBRES[ancho] ?? 'Ancho'} · ${ancho} px${factor < 1 ? ` · al ${Math.round(factor * 100)} %` : ''}`;
+    };
+    new ResizeObserver(() => ajustarAncho()).observe(caja);
+
+    const altoMinimo = Number(marco.dataset.altoMinimo) || 0;
+    window.addEventListener('message', (e) => {
+      if (e.origin !== location.origin || e.source !== marco.contentWindow) return;
+      if (e.data?.pruebalo === 'listo') pintar();
+      // El iframe crece con el contenido (y deja sitio a los diálogos, que necesitan altura).
+      if (e.data?.pruebalo === 'alto') marco.style.blockSize = `${Math.max(e.data.alto, altoMinimo, 160)}px`;
+    });
+    // Si el marco ya había cargado antes de este script.
+    if (marco.contentWindow?.pruebalo) pintar();
 
     form.addEventListener('input', pintar);
     form.addEventListener('change', pintar);
@@ -114,7 +203,24 @@ export function iniciarPlaygrounds(root = document) {
         pintarCodigo(leer());
       });
     }
-    // Si se recordaba JavaScript, el código del servidor (TypeScript) se cambia al cargar.
-    if (lenguaje !== 'ts') pintarCodigo(leer());
+
+    raiz.querySelector('[data-pg-enlace]')?.addEventListener('click', async () => {
+      const enlace = aEnlace();
+      history.replaceState(null, '', enlace);
+      try {
+        await navigator.clipboard.writeText(enlace);
+        estado.textContent = 'Enlace copiado: quien lo abra verá esta misma configuración.';
+      } catch {
+        estado.textContent = `No se pudo copiar. El enlace está en la barra de direcciones.`;
+      }
+    });
+
+    if (desdeEnlace()) {
+      raiz.scrollIntoView();
+      anterior = '';
+    }
+    // El código del servidor es TypeScript con los valores iniciales: se pone al día si hace falta.
+    if (lenguaje !== 'ts' || location.hash.startsWith(PREFIJO)) pintarCodigo(leer());
+    pintar();
   }
 }

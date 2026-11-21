@@ -27,18 +27,45 @@ const valorControl = (v: unknown, separador?: string) => (Array.isArray(v) ? v.j
     <section class="doc-section pruebalo" aria-labelledby="pruebalo" data-playground={slug}>
       <h2 id="pruebalo">Pruébalo</h2>
       <p class="pruebalo-intro">
-        Juega con las props, el color de marca y el esquema. Abajo tienes el componente <code>{nombre}</code> listo para copiar
+        Juega con las props y el color de marca, y mira el resultado en móvil, en RTL, en oscuro o con «reducir
+        movimiento». Abajo tienes el componente <code>{nombre}</code> listo para copiar
         en tu proyecto: recibe estas mismas props, en TypeScript o JavaScript, y es tuyo para cambiarlo. Debajo, cómo usarlo con
         lo que has elegido.
       </p>
 
       <div class="example pruebalo-caja">
-        <div class="pruebalo-cuerpo">
-          <div class="pruebalo-vista" data-angela-theme="angela" aria-live="off">
-            <div class="pruebalo-lienzo" data-centrar={def.centrar ? '' : undefined} set:html={htmlDe(def, valores)} />
+        <form class="pruebalo-cuerpo" aria-label={`Pruébalo: ${nombre}`}>
+          <div class="pruebalo-vista">
+            <div class="pruebalo-barra" role="group" aria-label="Cómo se ve la vista previa">
+              {[
+                ['ancho', 'Ancho', [['', 'Libre'], ['375', 'Móvil'], ['768', 'Tablet']]],
+                ['dir', 'Dirección', [['ltr', 'LTR'], ['rtl', 'RTL']]],
+                ['movimiento', 'Movimiento', [['normal', 'Normal'], ['reducido', 'Reducido']]],
+                ['esquema', 'Esquema', [['', 'Sistema'], ['light', 'Claro'], ['dark', 'Oscuro']]],
+              ].map(([nombreGrupo, etiqueta, opciones]) => (
+                <fieldset class="pruebalo-barra-grupo">
+                  <legend class="visually-hidden">{etiqueta as string}</legend>
+                  {(opciones as string[][]).map(([v, n], i) => (
+                    <label class="pruebalo-opcion" title={`${etiqueta}: ${n}`}>
+                      <input type="radio" name={nombreGrupo as string} value={v} checked={i === 0} />
+                      <span>{n}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              ))}
+            </div>
+            <!-- La vista previa es una página propia: el ancho activa las media queries de verdad. -->
+            <p class="pruebalo-escala hint" data-pg-escala hidden></p>
+            <div class="pruebalo-marco-caja">
+              <iframe class="pruebalo-marco" src={`${base}/pruebalo-marco`} title={`Vista previa de ${nombre}`} data-alto-minimo={def.altoMinimo ?? 0}></iframe>
+            </div>
+            <!-- Sin JS: la vista previa con los valores iniciales. -->
+            <noscript>
+              <div class="pruebalo-lienzo" data-angela-theme="angela" set:html={htmlDe(def, valores)} />
+            </noscript>
           </div>
 
-          <form class="pruebalo-controles" aria-label={`Props de ${nombre}`}>
+          <div class="pruebalo-controles">
             {def.controles.map((c) => (
               <>
                 {c.tipo === 'opciones' && (
@@ -50,7 +77,7 @@ const valorControl = (v: unknown, separador?: string) => (Array.isArray(v) ? v.j
                       {c.valores!.map((v) => (
                         <label class="pruebalo-opcion">
                           <input type="radio" name={c.nombre} value={v} checked={v === valores[c.nombre]} />
-                          <span>{v}</span>
+                          <span>{v || 'ninguno'}</span>
                         </label>
                       ))}
                     </div>
@@ -107,27 +134,17 @@ const valorControl = (v: unknown, separador?: string) => (Array.isArray(v) ? v.j
               </p>
             </fieldset>
 
-            <fieldset class="fieldset pruebalo-opciones">
-              <legend>Esquema</legend>
-              <div class="cluster">
-                {[
-                  ['', 'Sistema'],
-                  ['light', 'Claro'],
-                  ['dark', 'Oscuro'],
-                ].map(([v, n]) => (
-                  <label class="pruebalo-opcion">
-                    <input type="radio" name="esquema" value={v} checked={v === ''} />
-                    <span>{n}</span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            <button class="button" type="reset" data-variant="ghost" data-tone="neutral" data-size="sm">
-              Restablecer
-            </button>
-          </form>
-        </div>
+            <div class="cluster">
+              <button class="button" type="button" data-variant="outline" data-tone="neutral" data-size="sm" data-pg-enlace>
+                Copiar enlace a esta configuración
+              </button>
+              <button class="button" type="reset" data-variant="ghost" data-tone="neutral" data-size="sm">
+                Restablecer
+              </button>
+            </div>
+            <p class="hint" role="status" data-pg-estado></p>
+          </div>
+        </form>
 
         <div class="pruebalo-lenguaje" role="radiogroup" aria-label="Lenguaje del código">
           {[

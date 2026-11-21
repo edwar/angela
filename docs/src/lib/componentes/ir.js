@@ -8,7 +8,7 @@
  *   lit('texto')                          texto fijo
  *   texto('prop')                         el valor de una prop de texto
  *   slot('children' | 'footer'…)          contenido que pone quien lo usa
- *   si('prop' | ['a', 'b'], hijos)        solo si la prop (o todas) tiene valor
+ *   si('prop' | ['a', '!b'], hijos)       solo si la prop (o todas) tiene valor; «!b», si no lo tiene
  *   segun('prop', { valor: hijos }, otro) una rama por valor
  *   cada('lista', hijos)                  repite hijos por cada elemento (item())
  *   item()                                el elemento actual dentro de cada()
@@ -20,7 +20,8 @@
  *   prop('tone', 'brand')                  el valor de la prop; si es el segundo, no se escribe
  *   bandera('block')                       data-x="" si la prop es true
  *   booleano('disabled')                   atributo booleano nativo
- *   segunProp('dismissible', 'any', 'closerequest')
+ *   segunProp('dismissible', 'any', 'closerequest')   sin el tercero, no se escribe si es false
+ *   siIgual('kind', 'radio', 'radio', 'checkbox')     según el valor de una prop
  *   id('-title')                           un id único por instancia (+ sufijo)
  *   idSi('error', '-error')                ese id, solo si la prop tiene valor
  *   ids([['hint', '-hint'], [['invalid', 'error'], '-error']])   varios ids separados por espacio
@@ -43,6 +44,8 @@ export const prop = (nombre, omitir) => ({ tipo: 'prop', nombre, omitir });
 export const bandera = (nombre) => ({ tipo: 'bandera', nombre });
 export const booleano = (nombre) => ({ tipo: 'booleano', nombre });
 export const segunProp = (nombre, siVerdadero, siFalso) => ({ tipo: 'segunProp', nombre, siVerdadero, siFalso });
+/** Un valor si la prop es igual a `valor` y otro (o nada) si no: type = kind === 'radio' ? 'radio' : 'checkbox'. */
+export const siIgual = (nombre, valor, siVerdadero, siFalso) => ({ tipo: 'siIgual', nombre, valor, siVerdadero, siFalso });
 export const id = (sufijo = '') => ({ tipo: 'id', sufijo });
 export const idSi = (cond, sufijo) => ({ tipo: 'idSi', cond: [cond].flat(), sufijo });
 export const ids = (lista) => ({ tipo: 'ids', lista: lista.map(([cond, sufijo]) => ({ cond: [cond].flat(), sufijo })) });

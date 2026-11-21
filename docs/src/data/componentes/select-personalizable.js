@@ -10,7 +10,7 @@ export default {
   examples: [
     {
       title: "Ejemplo",
-      code: `<div class="stack" data-angela-theme style="--angela-brand-h: 78; --angela-brand-c: 0.11; --angela-neutral-h: 262; --angela-neutral-c: 0.06; --angela-info-h: 215; --angela-warning-h: 50; --angela-danger-h: 18">
+      code: `<div class="stack">
   <div class="field">
     <label for="s-pais">País</label>
     <select class="input" id="s-pais" name="pais" autocomplete="country">
