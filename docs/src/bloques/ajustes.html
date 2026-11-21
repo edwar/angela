@@ -1,0 +1,49 @@
+<button class="button" type="button" data-variant="outline" data-tone="neutral" commandfor="b-ajustes" command="show-modal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Ajustes</button>
+<dialog class="dialog" id="b-ajustes" aria-labelledby="b-ajustes-titulo" closedby="any">
+  <form class="dialog-form" method="dialog">
+    <header class="dialog-header">
+      <h2 id="b-ajustes-titulo">Ajustes</h2>
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-icon-only commandfor="b-ajustes" command="close" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    </header>
+    <div class="dialog-body stack">
+      <div class="field">
+        <label for="b-ajustes-nombre">Nombre visible</label>
+        <input class="input" id="b-ajustes-nombre" name="nombre" value="Ana García" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="b-ajustes-idioma">Idioma</label>
+        <select class="input" id="b-ajustes-idioma" name="idioma">
+          <option value="es" selected>Español</option>
+          <option value="en">English</option>
+          <option value="pt">Português</option>
+        </select>
+      </div>
+      <fieldset class="fieldset">
+        <legend>Avisarme por</legend>
+        <div class="choice">
+          <input type="checkbox" role="switch" switch id="b-ajustes-correo" name="avisos-correo" checked>
+          <label for="b-ajustes-correo">Correo</label>
+        </div>
+        <div class="choice">
+          <input type="checkbox" role="switch" switch id="b-ajustes-movil" name="avisos-movil">
+          <label for="b-ajustes-movil">Notificaciones en el móvil</label>
+        </div>
+      </fieldset>
+      <fieldset class="fieldset">
+        <legend>Densidad</legend>
+        <div class="choice">
+          <input type="radio" id="b-ajustes-comoda" name="densidad" value="comoda" checked>
+          <label for="b-ajustes-comoda">Cómoda</label>
+        </div>
+        <div class="choice">
+          <input type="radio" id="b-ajustes-compacta" name="densidad" value="compacta">
+          <label for="b-ajustes-compacta">Compacta</label>
+        </div>
+      </fieldset>
+    </div>
+    <footer class="dialog-footer">
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="b-ajustes" command="close">Cancelar</button>
+      <button class="button" type="submit">Guardar</button>
+    </footer>
+  </form>
+</dialog>

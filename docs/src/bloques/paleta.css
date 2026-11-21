@@ -1,0 +1,27 @@
+/* La paleta: un diálogo arriba, como en los editores, con la lista bajo el buscador. */
+.paleta {
+  margin-block-start: 12vh;
+
+  & .dialog-body {
+    padding: var(--space-3);
+  }
+}
+
+.paleta-lista {
+  display: grid;
+  max-block-size: 18rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+
+  /* La opción activa (la que elige Enter): fondo y borde inicial, no solo color. */
+  & > [aria-selected="true"] {
+    background-color: var(--color-surface-hover);
+    box-shadow: inset 3px 0 0 var(--color-focus);
+  }
+
+  & > [hidden] {
+    display: none;
+  }
+}

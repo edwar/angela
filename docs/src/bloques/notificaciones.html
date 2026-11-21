@@ -1,0 +1,21 @@
+<button class="button" type="button" data-variant="outline" data-tone="neutral" commandfor="b-notis" command="toggle-popover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg> Notificaciones <span class="badge" data-tone="danger" data-variant="solid">2 <span class="visually-hidden">sin leer</span></span></button>
+<div class="popover" id="b-notis" popover data-padding="lg" role="group" aria-labelledby="b-notis-titulo">
+  <div class="cluster" style="justify-content: space-between">
+    <h3 class="heading" data-size="md" id="b-notis-titulo">Notificaciones</h3>
+    <button class="button" type="button" data-variant="ghost" data-size="sm">Marcar como leídas</button>
+  </div>
+  <ul class="stack" role="list" style="--stack-gap: var(--space-4); margin: var(--space-4) 0 0; padding: 0; list-style: none">
+    <li class="stack" style="--stack-gap: var(--space-1)">
+      <p class="text" data-size="sm"><strong>Ana García</strong> comentó en «Rediseño de la web».</p>
+      <p class="cluster text" data-size="xs" data-muted style="--cluster-gap: var(--space-2)">Hace 5 min <span class="badge" data-tone="info" data-dot>Sin leer</span></p>
+    </li>
+    <li class="stack" style="--stack-gap: var(--space-1)">
+      <p class="text" data-size="sm"><strong>Luis Pérez</strong> te asignó «Revisar textos».</p>
+      <p class="cluster text" data-size="xs" data-muted style="--cluster-gap: var(--space-2)">Hace 1 h <span class="badge" data-tone="info" data-dot>Sin leer</span></p>
+    </li>
+    <li class="stack" style="--stack-gap: var(--space-1)">
+      <p class="text" data-size="sm"><strong>Sistema</strong> Tu factura de noviembre ya está disponible.</p>
+      <p class="cluster text" data-size="xs" data-muted style="--cluster-gap: var(--space-2)">Ayer </p>
+    </li>
+  </ul>
+</div>
