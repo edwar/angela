@@ -1,11 +1,11 @@
 /**
- * Spotlight
+ * Foco de luz
  * Generado desde el laboratorio al proponer el componente. Edítalo con libertad:
  * añade ejemplos, afina la tabla de API y completa las notas de accesibilidad.
  */
 export default {
-  slug: "spotlight",
-  title: "Spotlight",
+  slug: "foco-de-luz",
+  title: "Foco de luz",
   summary: "Un punto de luz que sigue al puntero y revela el contenido por partes, sin mostrarlo todo de golpe. Funciona con solo CSS para el degradado y un JS mínimo que pasa la posición del puntero.",
   examples: [
     {

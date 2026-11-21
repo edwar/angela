@@ -7,14 +7,7 @@
  * pone al día la de uno que ya existe, así que nadie tiene que tocar este índice.
  */
 
-/** Orden de los componentes del núcleo en el menú; los aportados van después, por título. */
-const ORDEN = ['boton', 'campos', 'casilla', 'radio', 'interruptor', 'dialogo', 'popover', 'pestanas', 'desplegable', 'acordeon', 'aviso', 'etiqueta', 'progreso', 'tarjeta', 'tabla', 'tipografia'];
-
-const posicion = (slug) => {
-  const i = ORDEN.indexOf(slug);
-  return i === -1 ? ORDEN.length : i;
-};
-
 export const components = Object.values(import.meta.glob('./componentes/*.js', { eager: true, import: 'default' }))
   .filter((entry) => entry?.slug && entry?.title)
-  .sort((a, b) => posicion(a.slug) - posicion(b.slug) || a.title.localeCompare(b.title, 'es'));
+  // Un solo orden, alfabético en español: los que llegan del laboratorio entran solos en su sitio.
+  .sort((a, b) => a.title.localeCompare(b.title, 'es'));

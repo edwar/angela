@@ -49,7 +49,7 @@ export const angelaTests = Object.fromEntries(
 /** Qué archivo de CSS y qué módulo de JS define cada componente documentado. */
 export const componentSources = {
   boton: { css: 'components/button.css' },
-  campos: { css: 'components/field.css', js: 'forms.js' },
+  'campo-de-texto': { css: 'components/field.css', js: 'forms.js' },
   casilla: { css: 'components/choice.css' },
   radio: { css: 'components/choice.css' },
   interruptor: { css: 'components/switch.css' },
@@ -66,6 +66,12 @@ export const componentSources = {
   tipografia: { css: 'components/typography.css' },
   // Llegó del laboratorio como «cards»; la página se llama Rejilla pero el archivo y la clase no cambian.
   rejilla: { css: 'components/cards.css' },
+  // Páginas con nombre en español; el archivo y las clases conservan su nombre (son la API).
+  carrusel: { css: 'components/carousel.css' },
+  selector: { css: 'components/select-personalizable.css' },
+  'foco-de-luz': { css: 'components/spotlight.css', js: 'spotlight.js' },
+  'tarjeta-3d': { css: 'components/card-3d.css' },
+  'tarjeta-giratoria': { css: 'components/flip-card.css' },
 };
 
 /**

@@ -63,6 +63,12 @@ describe('touchedComponents', () => {
     ]);
   });
 
+  it('una página con nombre distinto de su CSS (carrusel → carousel.css) se encuentra por el mapa', () => {
+    const mapa = { carrusel: { css: 'components/carousel.css' }, 'foco-de-luz': { css: 'components/spotlight.css', js: 'spotlight.js' } };
+    expect(touchedComponents(['packages/angela/src/components/carousel.css'], mapa)).toEqual([{ slugs: ['carrusel'], css: 'carousel', js: null }]);
+    expect(touchedComponents(['packages/angela/src/js/spotlight.js'], mapa)).toEqual([{ slugs: ['foco-de-luz'], css: 'spotlight', js: 'spotlight' }]);
+  });
+
   it('ignora tests, index.js y lo que no es de componentes', () => {
     const paths = ['packages/angela/src/js/index.js', 'packages/angela/src/js/galeria.test.js', 'docs/src/pages/index.astro'];
     expect(touchedComponents(paths, SOURCES)).toEqual([]);
