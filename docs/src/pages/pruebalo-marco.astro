@@ -1,0 +1,73 @@
+---
+/**
+ * Marco de la vista previa del «Pruébalo»: solo angela (CSS y JS), sin el tema ni el estilo del
+ * sitio. Lo pinta la página del componente desde fuera (lib/playground/marco.js).
+ */
+import '@angela-ui/angela/source.css';
+import { themeInlineScript } from '@angela-ui/angela/js/theme';
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="robots" content="noindex" />
+    <title>Vista previa</title>
+    <script is:inline set:html={themeInlineScript} />
+    <!-- El tema del taller, si lo hay, como en el resto del sitio. -->
+    <script is:inline>
+      try {
+        const t = JSON.parse(localStorage.getItem('angela-docs:tema') ?? 'null');
+        if (t && t.css) {
+          const s = document.createElement('style');
+          s.textContent = t.css;
+          document.head.append(s);
+        }
+      } catch {}
+    </script>
+    <style>
+      body {
+        margin: 0;
+      }
+
+      /* En pnpm dev, Astro añade su barra de herramientas a cada página: aquí taparía la vista previa. */
+      astro-dev-toolbar {
+        display: none !important;
+      }
+
+      #lienzo {
+        box-sizing: border-box;
+        min-block-size: 100dvh;
+        padding: var(--space-8) var(--space-5);
+        background-color: var(--color-canvas);
+        color: var(--color-text);
+        display: grid;
+        align-content: center;
+      }
+
+      #contenido {
+        inline-size: min(100%, 40rem);
+        justify-self: center;
+        min-inline-size: 0;
+      }
+
+      #lienzo[data-centrar] #contenido {
+        display: flex;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="lienzo" data-angela-theme="angela">
+      <div id="contenido"></div>
+    </div>
+    <script>
+      import { angela } from '@angela-ui/angela/js';
+      import { marco } from '../lib/playground/marco.js';
+      angela();
+      marco();
+    </script>
+  </body>
+</html>

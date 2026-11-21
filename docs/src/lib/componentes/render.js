@@ -7,7 +7,9 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 const VACIOS = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'source', 'track', 'wbr']);
 
 /** ¿Tienen valor todas las props de la condición? */
-const cumple = (cond, props) => cond.every((n) => Boolean(props[n]) && !(Array.isArray(props[n]) && !props[n].length));
+const tiene = (v) => Boolean(v) && !(Array.isArray(v) && !v.length);
+/** ¿Se cumplen todas? «!hint» es «hint sin valor». */
+const cumple = (cond, props) => cond.every((n) => (n.startsWith('!') ? !tiene(props[n.slice(1)]) : tiene(props[n])));
 
 /** El valor de un atributo, o undefined si no se escribe. */
 function valorAtributo(v, props, base) {
@@ -23,6 +25,8 @@ function valorAtributo(v, props, base) {
       return props[v.nombre] ? true : undefined;
     case 'segunProp':
       return props[v.nombre] ? v.siVerdadero : v.siFalso;
+    case 'siIgual':
+      return props[v.nombre] === v.valor ? v.siVerdadero : v.siFalso;
     case 'id':
       return base + v.sufijo;
     case 'idSi':

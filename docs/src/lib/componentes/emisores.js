@@ -21,7 +21,7 @@ const sangrar = (texto, n) =>
 const escHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 function tipoTs(p) {
-  if (p.tipo === 'opciones') return p.valores.map(cadena).join(' | ');
+  if (p.tipo === 'opciones') return p.valores.filter(Boolean).map(cadena).join(' | ');
   if (p.tipo === 'booleano') return 'boolean';
   if (p.tipo === 'numero') return 'number';
   if (p.tipo === 'lista') return 'string[]';
@@ -39,7 +39,7 @@ const enLinea = (n) => ['lit', 'texto', 'slot', 'item', 'unir'].includes(n.tipo)
  */
 function expresion(v, { acc, idBase = 'id', nulo = 'undefined', concatenar = false }) {
   const idCon = (suf) => (!suf ? idBase : concatenar ? `${idBase} + ${cadena(suf)}` : `\`\${${idBase}}${suf}\``);
-  const cond = (lista) => lista.map(acc).join(' && ');
+  const cond = (lista) => lista.map((n) => (n.startsWith('!') ? `!${acc(n.slice(1))}` : acc(n))).join(' && ');
   switch (v.tipo) {
     case 'prop':
       // Un texto vacío es «sin valor»: no se escribe el atributo (name="" no sirve de nada).
@@ -49,7 +49,9 @@ function expresion(v, { acc, idBase = 'id', nulo = 'undefined', concatenar = fal
     case 'booleano':
       return acc(v.nombre);
     case 'segunProp':
-      return `${acc(v.nombre)} ? ${cadena(v.siVerdadero)} : ${cadena(v.siFalso)}`;
+      return `${acc(v.nombre)} ? ${cadena(v.siVerdadero)} : ${v.siFalso === undefined ? nulo : cadena(v.siFalso)}`;
+    case 'siIgual':
+      return `${acc(v.nombre)} === ${literal(v.valor)} ? ${cadena(v.siVerdadero)} : ${v.siFalso === undefined ? nulo : cadena(v.siFalso)}`;
     case 'id':
       return idCon(v.sufijo);
     case 'idSi':
@@ -100,6 +102,8 @@ function emitirReact(c, ts, next = false) {
           });
           return ` style={estilo({ ${pares.join(', ')} })}`;
         }
+        // Sin onChange, un checked de React es un campo controlado que no cambia: defaultChecked.
+        if (v.tipo === 'booleano' && nombre === 'checked') return ` defaultChecked={${v.nombre}}`;
         if (v.tipo === 'booleano' && BOOLEANOS_REACT.has(nombre)) return ` ${nombre}={${v.nombre}}`;
         if (v.tipo === 'booleano') return ` ${nombre}={${v.nombre} ? '' : undefined}`;
         return ` ${nombre}={${expresion(v, { acc })}}`;
@@ -363,7 +367,7 @@ function emitirAngular(c) {
           out.push(pre + n.html);
           break;
         case 'si':
-          out.push(`${pre}@if (${n.cond.map(acc).join(' && ')}) {`, ...nodos(n.hijos, nivel + 2), `${pre}}`);
+          out.push(`${pre}@if (${n.cond.map((x) => (x.startsWith('!') ? `!${acc(x.slice(1))}` : acc(x))).join(' && ')}) {`, ...nodos(n.hijos, nivel + 2), `${pre}}`);
           break;
         case 'segun':
           out.push(`${pre}@switch (${acc(n.prop)}) {`);
@@ -392,6 +396,7 @@ function emitirAngular(c) {
     const doc = p.descripcion ? `  /** ${p.descripcion} */\n` : '';
     if (p.tipo === 'booleano') return `${doc}  readonly ${p.nombre} = input(${literal(p.defecto ?? false)}, { transform: booleanAttribute });`;
     if (p.tipo === 'numero') return `${doc}  readonly ${p.nombre} = input(${literal(p.defecto ?? 0)}, { transform: numberAttribute });`;
+    if (p.tipo === 'opciones' && !p.defecto) return `${doc}  readonly ${p.nombre} = input<${tipoTs(p)} | undefined>(undefined);`;
     return `${doc}  readonly ${p.nombre} = input<${tipoTs(p)}>(${p.defecto === undefined ? "''" : literal(p.defecto)});`;
   });
   const usa = ['Component', 'input', r.eventos.size && 'output', calculados.length && 'computed', c.props.some((p) => p.tipo === 'booleano') && 'booleanAttribute', c.props.some((p) => p.tipo === 'numero') && 'numberAttribute'].filter(Boolean);

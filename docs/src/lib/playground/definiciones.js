@@ -9,10 +9,19 @@
  *
  * Los nombres de las props son los de @angela-ui/react (variant, tone, size, block…).
  */
-import { bandera, booleano, cada, crudo, el, estilo, evento, id, idSi, ids, item, lit, prop, segun, segunProp, si, slot, texto, unir } from '../componentes/ir.js';
+import { bandera, booleano, cada, crudo, el, estilo, evento, id, idSi, ids, item, lit, prop, segun, segunProp, si, siIgual, slot, texto, unir } from '../componentes/ir.js';
 import { renderHtml } from '../componentes/render.js';
 
 export const TONOS = ['brand', 'neutral', 'success', 'warning', 'danger', 'info'];
+
+/** Los iconos de @angela-ui/icons (los SVG que genera su build), decorativos dentro de un botón. */
+const SVG_ICONOS = Object.fromEntries(
+  Object.entries(import.meta.glob('../../../../packages/angela-icons/dist/svg/*.svg', { query: '?raw', import: 'default', eager: true })).map(([ruta, svg]) => [
+    ruta.split('/').pop().replace(/\.svg$/, ''),
+    String(svg).replace(/^<svg /, '<svg aria-hidden="true" ').replace(/ xmlns="[^"]*"/, ''),
+  ]),
+);
+const ICONOS_BOTON = ['', ...Object.keys(SVG_ICONOS)];
 const TAMANOS = ['sm', 'md', 'lg'];
 
 /** Texto para HTML (el contenido de los slots del ejemplo). */
@@ -32,7 +41,7 @@ const ICONOS = {
  * @typedef {{ nombre: string, etiqueta: string, tipo: 'opciones' | 'booleano' | 'texto' | 'numero' | 'lista',
  *   valores?: string[], defecto?: unknown, inicial?: unknown, min?: number, max?: number, ayuda?: string,
  *   descripcion?: string, slot?: string, demo?: boolean, separador?: string }} Control
- * @typedef {{ slug: string, centrar?: boolean, controles: Control[],
+ * @typedef {{ slug: string, centrar?: boolean, altoMinimo?: number, controles: Control[],
  *   componente: { nombre: string, slots?: Record<string, string>, eventos?: Record<string, string>, raiz: object[] },
  *   slots: (v: Record<string, unknown>) => Record<string, string> }} Definicion
  */
@@ -44,6 +53,7 @@ export const DEFINICIONES = [
     centrar: true,
     controles: [
       { nombre: 'children', etiqueta: 'Texto', tipo: 'texto', slot: 'children', inicial: 'Guardar' },
+      { nombre: 'icono', etiqueta: 'Ícono (de @angela-ui/icons)', tipo: 'opciones', valores: ICONOS_BOTON, inicial: '', demo: true, ayuda: 'Va en el contenido, delante del texto, con aria-hidden: el nombre lo da el texto.' },
       { nombre: 'variant', etiqueta: 'Variante', tipo: 'opciones', valores: ['solid', 'soft', 'outline', 'ghost'], defecto: 'solid', descripcion: 'solid para la acción principal (una por vista).' },
       { nombre: 'tone', etiqueta: 'Tono', tipo: 'opciones', valores: TONOS, defecto: 'brand' },
       { nombre: 'size', etiqueta: 'Tamaño', tipo: 'opciones', valores: TAMANOS, defecto: 'md' },
@@ -69,7 +79,7 @@ export const DEFINICIONES = [
         ),
       ],
     },
-    slots: (v) => ({ children: esc(v.children) }),
+    slots: (v) => ({ children: `${v.icono && SVG_ICONOS[v.icono] ? `${SVG_ICONOS[v.icono]} ` : ''}${esc(v.children)}` }),
   },
 
   {
@@ -179,6 +189,8 @@ export const DEFINICIONES = [
   {
     slug: 'dialogo',
     centrar: true,
+    // El diálogo se abre dentro del marco: necesita altura.
+    altoMinimo: 460,
     controles: [
       { nombre: 'trigger', etiqueta: 'Botón que lo abre', tipo: 'texto', inicial: 'Eliminar proyecto' },
       { nombre: 'title', etiqueta: 'Título', tipo: 'texto', inicial: '¿Eliminar el proyecto?', descripcion: 'Título visible; también nombra el diálogo.' },
@@ -269,6 +281,120 @@ export const DEFINICIONES = [
     slots: (v) => ({
       children: Array.from({ length: Math.max(2, Math.min(10, Number(v.elementos) || 5)) }, (_, i) => `<article class="card">Producto ${i + 1}</article>`).join('\n'),
     }),
+  },
+
+  {
+    slug: 'seleccion',
+    controles: [
+      { nombre: 'label', etiqueta: 'Etiqueta', tipo: 'texto', inicial: 'Recibir el resumen semanal' },
+      { nombre: 'hint', etiqueta: 'Ayuda', tipo: 'texto', inicial: 'Cada lunes, con lo más importante.' },
+      { nombre: 'name', etiqueta: 'Nombre del campo', tipo: 'texto', inicial: 'resumen' },
+      { nombre: 'kind', etiqueta: 'Tipo', tipo: 'opciones', valores: ['checkbox', 'radio', 'switch'], defecto: 'checkbox', ayuda: 'switch: una casilla con aspecto de interruptor, para activar algo al momento.', descripcion: 'checkbox · radio · switch (casilla con role="switch").' },
+      { nombre: 'checked', etiqueta: 'Marcada', tipo: 'booleano', defecto: false },
+      { nombre: 'disabled', etiqueta: 'Deshabilitada', tipo: 'booleano', defecto: false },
+    ],
+    componente: {
+      nombre: 'Choice',
+      raiz: [
+        el('div', { class: 'choice' }, [
+          el('input', {
+            type: siIgual('kind', 'radio', 'radio', 'checkbox'),
+            // role="switch" se anuncia como activado/desactivado; el atributo switch lo hace nativo en Safari.
+            role: siIgual('kind', 'switch', 'switch'),
+            switch: siIgual('kind', 'switch', ''),
+            id: id(),
+            name: prop('name'),
+            checked: booleano('checked'),
+            disabled: booleano('disabled'),
+            'aria-describedby': idSi('hint', '-hint'),
+          }),
+          si('!hint', [el('label', { for: id() }, [texto('label')])]),
+          si('hint', [el('div', {}, [el('label', { for: id() }, [texto('label')]), el('p', { class: 'hint', id: id('-hint') }, [texto('hint')])])]),
+        ]),
+      ],
+    },
+    slots: () => ({}),
+  },
+
+  {
+    slug: 'popover',
+    centrar: true,
+    altoMinimo: 300,
+    controles: [
+      { nombre: 'trigger', etiqueta: 'Botón', tipo: 'texto', inicial: 'Acciones' },
+      { nombre: 'items', etiqueta: 'Acciones (separadas por |)', tipo: 'lista', separador: '|', inicial: ['Renombrar', 'Duplicar', 'Mover a…'], defecto: [] },
+      { nombre: 'danger', etiqueta: 'Acción peligrosa', tipo: 'texto', inicial: 'Eliminar', descripcion: 'La última, separada y en rojo (con texto: el color no va solo).' },
+    ],
+    componente: {
+      nombre: 'Popover',
+      raiz: [
+        el('button', { type: 'button', class: 'button', 'data-variant': 'outline', 'data-tone': 'neutral', commandfor: id(), command: 'toggle-popover' }, [texto('trigger')]),
+        el('div', { class: 'popover', id: id(), popover: '' }, [
+          cada('items', [el('button', { type: 'button', class: 'popover-item', commandfor: id(), command: 'hide-popover' }, [item()])]),
+          si('danger', [el('hr'), el('button', { type: 'button', class: 'popover-item', 'data-tone': 'danger', commandfor: id(), command: 'hide-popover' }, [texto('danger')])]),
+        ]),
+      ],
+    },
+    slots: () => ({}),
+  },
+
+  {
+    slug: 'tipografia',
+    controles: [
+      { nombre: 'children', etiqueta: 'Texto', tipo: 'texto', slot: 'children', inicial: 'El color comunica, no decora.' },
+      { nombre: 'size', etiqueta: 'Tamaño', tipo: 'opciones', valores: ['xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', '4xl'], defecto: 'md' },
+      { nombre: 'weight', etiqueta: 'Peso', tipo: 'opciones', valores: ['regular', 'medium', 'bold'], defecto: 'regular' },
+      { nombre: 'tone', etiqueta: 'Tono', tipo: 'opciones', valores: ['', ...TONOS], inicial: '', descripcion: 'Color de estado (texto ≥ 4.5:1).' },
+      { nombre: 'align', etiqueta: 'Alineación', tipo: 'opciones', valores: ['start', 'center', 'end'], defecto: 'start', ayuda: 'Lógica: en RTL, start es la derecha.' },
+      { nombre: 'muted', etiqueta: 'Secundario', tipo: 'booleano', defecto: false },
+      { nombre: 'numeric', etiqueta: 'Cifras tabulares', tipo: 'booleano', defecto: false },
+    ],
+    componente: {
+      nombre: 'Text',
+      slots: { children: 'El texto.' },
+      raiz: [
+        el(
+          'p',
+          {
+            class: 'text',
+            'data-size': prop('size', 'md'),
+            'data-weight': prop('weight', 'regular'),
+            'data-tone': prop('tone'),
+            'data-align': prop('align', 'start'),
+            'data-muted': bandera('muted'),
+            'data-numeric': bandera('numeric'),
+          },
+          [slot()],
+        ),
+      ],
+    },
+    slots: (v) => ({ children: esc(v.children) }),
+  },
+
+  {
+    slug: 'select-personalizable',
+    altoMinimo: 320,
+    controles: [
+      { nombre: 'label', etiqueta: 'Etiqueta', tipo: 'texto', inicial: 'País' },
+      { nombre: 'name', etiqueta: 'Nombre del campo', tipo: 'texto', inicial: 'pais' },
+      { nombre: 'placeholder', etiqueta: 'Primera opción vacía', tipo: 'texto', inicial: 'Elige un país' },
+      { nombre: 'items', etiqueta: 'Opciones (separadas por |)', tipo: 'lista', separador: '|', inicial: ['Argentina', 'Colombia', 'España', 'México'], defecto: [] },
+      { nombre: 'required', etiqueta: 'Obligatorio', tipo: 'booleano', defecto: false },
+      { nombre: 'disabled', etiqueta: 'Deshabilitado', tipo: 'booleano', defecto: false },
+    ],
+    componente: {
+      nombre: 'Select',
+      raiz: [
+        el('div', { class: 'field' }, [
+          el('label', { for: id() }, [texto('label')]),
+          el('select', { class: 'input', id: id(), name: prop('name'), required: booleano('required'), disabled: booleano('disabled') }, [
+            si('placeholder', [el('option', { value: '' }, [texto('placeholder')])]),
+            cada('items', [el('option', {}, [item()])]),
+          ]),
+        ]),
+      ],
+    },
+    slots: () => ({}),
   },
 ];
 
