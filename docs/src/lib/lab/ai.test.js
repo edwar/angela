@@ -110,6 +110,25 @@ describe('llamadas al modelo', () => {
     expect(calls[0].body.system).toContain('a partir de la petición');
     expect(calls[0].body.messages[0].content).toContain('<peticion>\nhaz algo\n</peticion>');
   });
+
+  it('el asistente recibe y devuelve el test; si no trae uno, se queda el del editor', async () => {
+    const conTest = { ...files, test: "import { it } from 'vitest';" };
+    let calls = fakeModel({ resumen: 'r', cambios: [], advertencias: [], ...files, test: "import { it, expect } from 'vitest';" });
+    let p = await proposeChange({ ...config, instruction: 'añade el test', component: null, files: conTest });
+    expect(calls[0].body.system).toContain('"test": string');
+    expect(calls[0].body.messages[0].content).toContain("<archivo_test>\nimport { it } from 'vitest';\n</archivo_test>");
+    expect(p.test).toBe("import { it, expect } from 'vitest';");
+
+    calls = fakeModel({ resumen: 'r', cambios: [], advertencias: [], ...files });
+    p = await proposeChange({ ...config, instruction: 'cambia el color', component: null, files: conTest });
+    expect(p.test).toBe(conTest.test);
+  });
+
+  it('la revisión con IA no recibe el test (no lo revisa ni lo cambia)', async () => {
+    const calls = fakeModel(respuesta());
+    await reviewWithAi({ ...config, component: null, files: { ...files, test: 'x' } });
+    expect(calls[0].body.messages[0].content).not.toContain('<archivo_test>');
+  });
 });
 
 describe('Groq y los planes gratuitos', () => {

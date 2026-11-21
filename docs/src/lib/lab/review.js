@@ -248,6 +248,26 @@ const JS_RULES = [
     },
   },
   {
+    id: 'test',
+    level: 'error',
+    check(js, { test = '' }) {
+      if (!stripJs(js).trim() || jsSinEfecto(js)) return null;
+      if (!stripJs(test).trim()) {
+        return 'Escribe el test del JS en la pestaña «Test» (Vitest con happy-dom; la plantilla te guía): se sube con el pull request y, sin él, la revisión del PR falla.';
+      }
+      if (!/from\s*['"]vitest['"]/.test(stripJs(test)) || !/\b(it|test)\s*\(/.test(stripJs(test))) {
+        return 'El test tiene que importar de "vitest" y tener al menos un it(…) con sus expect(…).';
+      }
+      if (!/from\s*['"]\.\/[\w-]+\.js['"]/.test(stripJs(test))) {
+        return "El test tiene que importar el módulo con import { … } from './componente.js' (al proponer se cambia por el nombre real).";
+      }
+      // Sin esta línea, Vitest ejecuta el test sin DOM (en Node) y document no existe.
+      return /\b(document|window)\b/.test(stripJs(test)) && !/@vitest-environment\s+happy-dom/.test(test)
+        ? 'Empieza el test con la línea // @vitest-environment happy-dom: sin ella, la revisión del PR lo ejecuta sin DOM y document no existe.'
+        : null;
+    },
+  },
+  {
     id: 'limpieza',
     level: 'warn',
     check(js) {
@@ -279,10 +299,10 @@ const JS_RULES = [
 
 /**
  * Revisa un componente.
- * @param {{ html: string, css: string, js: string }} files
+ * @param {{ html: string, css: string, js: string, test?: string }} files
  * @returns {{ level: 'error' | 'warn', id: string, text: string }[]}
  */
-export function reviewComponent({ html, css, js }) {
+export function reviewComponent({ html, css, js, test = '' }) {
   const hallazgos = [];
   for (const rule of CSS_RULES) {
     const text = rule.check(css, { html, js });
@@ -293,7 +313,7 @@ export function reviewComponent({ html, css, js }) {
     if (text) hallazgos.push({ level: rule.level, id: rule.id, text });
   }
   for (const rule of JS_RULES) {
-    const text = rule.check(js, { html, css });
+    const text = rule.check(js, { html, css, test });
     if (text) hallazgos.push({ level: rule.level, id: rule.id, text });
   }
   // Primero lo que hay que corregir.

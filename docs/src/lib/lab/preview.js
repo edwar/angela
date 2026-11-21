@@ -23,6 +23,12 @@ const jsSources = import.meta.glob(['../../../../packages/angela/src/js/*.js', '
   import: 'default',
   eager: true,
 });
+// Los tests de cada módulo: el laboratorio los abre en su pestaña «Test» para ponerlos al día.
+const testSources = import.meta.glob('../../../../packages/angela/src/js/*.test.js', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+});
 
 /** Normaliza las claves del glob a rutas relativas a src/ (p. ej. "components/button.css"). */
 function bySrcPath(sources) {
@@ -34,6 +40,10 @@ function bySrcPath(sources) {
 export const angelaCss = bySrcPath(cssSources);
 export const angelaJs = Object.fromEntries(
   Object.entries(bySrcPath(jsSources)).map(([key, value]) => [key.replace(/^js\//, ''), value]),
+);
+/** Tests de los módulos, por el nombre de su módulo (p. ej. "tabs.js" → el contenido de tabs.test.js). */
+export const angelaTests = Object.fromEntries(
+  Object.entries(bySrcPath(testSources)).map(([key, value]) => [key.replace(/^js\//, '').replace(/\.test\.js$/, '.js'), value]),
 );
 
 /** Qué archivo de CSS y qué módulo de JS define cada componente documentado. */

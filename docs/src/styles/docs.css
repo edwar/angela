@@ -2196,6 +2196,10 @@ body {
   &[data-lang="js"] {
     color: var(--color-warning-text);
   }
+
+  &[data-lang="test"] {
+    color: var(--color-success-text);
+  }
 }
 
 .lab-ide-editor {

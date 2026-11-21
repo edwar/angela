@@ -153,6 +153,44 @@ describe('proposeComponent', () => {
     expect(written(calls, '/js/index.js')).toBeUndefined();
   });
 
+  it('sube el test con el nombre real del módulo y lo cuenta en el PR', async () => {
+    const calls = fakeGitHub();
+    const js = `export function enhanceGaleria(root = globalThis.document) { const f = () => {}; root.addEventListener('click', f); return () => root.removeEventListener('click', f); }`;
+    const test = "import { it, expect } from 'vitest';\nimport { enhanceGaleria } from './componente.js';\nit('a', () => expect(1).toBe(1));";
+    await proposeComponent(input(js, { files: { html: '<div class="galeria"></div>', css: '.galeria{}', js, test } }));
+
+    const subido = written(calls, '/js/galeria.test.js');
+    expect(subido.body.message).toBe('test(galeria): pruebas del módulo');
+    expect(unb64(subido.body.content)).toContain("from './galeria.js'");
+    expect(unb64(subido.body.content)).not.toContain('componente.js');
+    expect(prBody(calls).body).toContain('Con su test, `packages/angela/src/js/galeria.test.js`');
+    expect(prBody(calls).body).not.toContain('- [ ] Test del módulo JS.');
+  });
+
+  it('sin test (la plantilla comentada), no sube nada y lo deja como tarea', async () => {
+    const calls = fakeGitHub();
+    const js = `export function enhanceGaleria(root = globalThis.document) { const f = () => {}; root.addEventListener('click', f); return () => root.removeEventListener('click', f); }`;
+    await proposeComponent(input(js, { files: { html: '', css: '.galeria{}', js, test: '// import { it } from "vitest";' } }));
+    expect(written(calls, '/js/galeria.test.js')).toBeUndefined();
+    expect(prBody(calls).body).toContain('- [ ] Test del módulo JS.');
+  });
+
+  it('con el CSS y el JS iguales pero un test nuevo, abre un PR solo del test', async () => {
+    const js = `export function enhanceGaleria(root = globalThis.document) { const f = () => {}; root.addEventListener('click', f); return () => root.removeEventListener('click', f); }`;
+    const calls = fakeGitHub({
+      existing: {
+        'packages/angela/src/components/galeria.css': '.galeria{}\n',
+        'packages/angela/src/js/galeria.js': `${js}\n`,
+      },
+    });
+    const test = "import { it } from 'vitest';\nimport { enhanceGaleria } from './componente.js';\nit('a', () => {});";
+    await proposeComponent(input(js, { docs: null, files: { html: '', css: '.galeria{}', js, test } }));
+    expect(writes(calls).map((c) => c.path.split('/contents/')[1])).toEqual(['packages/angela/src/js/galeria.test.js']);
+    const pr = prBody(calls);
+    expect(pr.title).toBe('test(galeria): pruebas de «Galería»');
+    expect(pr.body).toContain('cambia su test');
+  });
+
   it('sin JS, no toca @angela-ui/angela/js', async () => {
     const calls = fakeGitHub();
     await proposeComponent(input('// nada\n'));

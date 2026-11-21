@@ -103,3 +103,34 @@ describe('elemento-propio', () => {
     }
   });
 });
+
+describe('test', () => {
+  const JS = "export function enhanceX(root = globalThis.document) { if (typeof window === 'undefined' || !root) return () => {}; const f = () => {}; root.addEventListener('click', f); return () => root.removeEventListener('click', f); }";
+  const hallazgo = (test) => reviewComponent({ html: '', css: '', js: JS, test }).find((h) => h.id === 'test');
+  it('un JS con efecto sin test es un error (la revisión del PR fallaría)', () => {
+    expect(hallazgo('')?.level).toBe('error');
+    // La plantilla comentada no cuenta como test.
+    expect(hallazgo('// Test del módulo\n// import …')?.text).toContain('pestaña «Test»');
+  });
+  it('el test importa de vitest, tiene un it y el módulo', () => {
+    expect(hallazgo("it('a', () => {});")?.text).toContain('vitest');
+    expect(hallazgo("import { it } from 'vitest';\nit('a', () => {});")?.text).toContain('./componente.js');
+    expect(hallazgo("import { it, expect } from 'vitest';\nimport { enhanceX } from './componente.js';\nit('a', () => expect(1).toBe(1));")).toBeUndefined();
+  });
+  it('si usa el DOM, necesita el entorno happy-dom', () => {
+    const base = "import { it, expect } from 'vitest';\nimport { enhanceX } from './componente.js';\nit('a', () => expect(enhanceX(document)).toBeTruthy());";
+    expect(hallazgo(base)?.text).toContain('happy-dom');
+    // Se escribe partido: Vitest busca esa marca en el texto de este archivo.
+    expect(hallazgo(`// @vitest-${'environment'} happy-dom\n${base}`)).toBeUndefined();
+  });
+  it('sin JS, o con un JS sin efecto, no pide test', () => {
+    expect(reviewComponent({ html: '', css: '', js: '', test: '' }).find((h) => h.id === 'test')).toBeUndefined();
+    expect(reviewComponent({ html: '', css: '', js: '// nada', test: '' }).find((h) => h.id === 'test')).toBeUndefined();
+  });
+  it('los módulos de angela pasan con su test', () => {
+    for (const name of ['forms.js', 'overlays.js', 'tabs.js', 'theme.js', 'spotlight.js']) {
+      const test = readFileSync(new URL(`../../../../packages/angela/src/js/${name.replace('.js', '.test.js')}`, import.meta.url), 'utf8');
+      expect(reviewComponent({ html: '', css: '', js: modulo(name), test }).find((h) => h.id === 'test'), name).toBeUndefined();
+    }
+  });
+});

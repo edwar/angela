@@ -129,6 +129,17 @@ export async function verifyToken(token, { signal } = {}) {
 
 const cssPath = (id) => `${COMPONENTS_DIR}/${id}.css`;
 const jsPath = (file) => `${JS_DIR}/${file}`;
+const testPath = (file) => jsPath(file).replace(/\.js$/, '.test.js');
+
+/**
+ * El test del laboratorio importa de './componente.js': en el repositorio, el módulo tiene su
+ * nombre real (p. ej. './galeria.js').
+ * @param {string} test
+ * @param {string} file  Nombre del módulo en src/js (p. ej. "galeria.js").
+ */
+export function testForRepo(test, file) {
+  return `${test.replace(/(from\s*|import\s*\(\s*)(['"])\.\/componente\.js\2/g, `$1$2./${file}$2`).trimEnd()}\n`;
+}
 const docsPath = (id) => `${DOCS_DIR}/${id}.js`;
 
 /**
@@ -136,7 +147,7 @@ const docsPath = (id) => `${DOCS_DIR}/${id}.js`;
  * ayuda, y sin esta comprobación se subía al repositorio un módulo vacío.
  */
 const hasCode = (js) =>
-  js
+  (js ?? '')
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/\/\/[^\n]*/g, '')
     .trim().length > 0;
@@ -169,14 +180,16 @@ function jsLines(js) {
   if (!js) return { intro: '', todo: '' };
   const ruta = `\`${jsPath(js.file)}\``;
   const llamada = `\`${js.fn}(root)\` en \`angela()\``;
+  const conTest = js.test ? ` Con su test, \`${testPath(js.file)}\`.` : '';
+  const todoTest = js.test ? '' : `- [ ] Test del módulo JS.`;
   switch (js.registro) {
     case 'added':
       return {
-        intro: `Incluye el módulo ${ruta}, registrado en \`${JS_ENTRY}\`: ${llamada}.`,
-        todo: `- [ ] Test del módulo JS.`,
+        intro: `Incluye el módulo ${ruta}, registrado en \`${JS_ENTRY}\`: ${llamada}.${conTest}`,
+        todo: todoTest,
       };
     case 'present':
-      return { intro: `Modifica el módulo ${ruta} (ya estaba registrado en \`${JS_ENTRY}\`).`, todo: `- [ ] Test del módulo JS.` };
+      return { intro: `Modifica el módulo ${ruta} (ya estaba registrado en \`${JS_ENTRY}\`).${conTest}`, todo: todoTest };
     case 'unknown':
       return {
         intro: `Incluye el módulo ${ruta}.`,
@@ -188,6 +201,15 @@ function jsLines(js) {
         todo: `- [ ] Convertirlo en \`export function enhance…(root = globalThis.document)\` que devuelva su limpieza, registrarlo en \`${JS_ENTRY}\` y añadir su test.`,
       };
   }
+}
+
+/** «cambia el JavaScript», «cambian el JavaScript, su test y la documentación»… */
+function queCambia({ js, test, docs }) {
+  const partes = [js && 'el JavaScript', test && 'su test', docs && 'la documentación'].filter(Boolean);
+  if (partes.length === 0) return 'no cambia nada';
+  if (docs && partes.length === 1) return 'cambia solo la documentación';
+  const lista = partes.length === 1 ? partes[0] : `${partes.slice(0, -1).join(', ')} y ${partes.at(-1)}`;
+  return `${partes.length === 1 ? 'cambia' : 'cambian'} ${lista}`;
 }
 
 /** Lo que cambió en la página de documentación, para quien revisa. */
@@ -220,7 +242,7 @@ function prBody({ partes, id, nuevo, sinCss = false, resumen, html, hallazgos, d
       : nuevo
         ? `Añade \`${cssPath(id)}\` y su \`@import\` en \`${ENTRY}\`.`
         : sinCss
-          ? `El CSS no cambia (\`${cssPath(id)}\`): ${sinCss.js ? (sinCss.docs ? 'cambian el JavaScript y la documentación' : 'cambia el JavaScript') : 'cambia solo la documentación'}.`
+          ? `El CSS no cambia (\`${cssPath(id)}\`): ${queCambia(sinCss)}.`
           : `Modifica \`${cssPath(id)}\`.`,
     conjunto ? `\nEl marcado de ejemplo de abajo los usa juntos: así se espera que se usen.` : '',
     modulo.intro,
@@ -321,7 +343,7 @@ export async function proposeComponent({
   const nuevo = parts.every((p) => !p.existe);
   // Con el CSS igual aún puede haber algo que proponer: la página de documentación (otros
   // ejemplos o notas) o el JS. Solo si tampoco cambian no hay nada que hacer.
-  const soloDocs = { docs: false, js: false };
+  const soloDocs = { docs: false, js: false, test: false };
   if (parts.every((p) => p.igual)) {
     const enMain = async (path) => {
       const file = await call(`/repos/${REPO.owner}/${REPO.name}/contents/${path}?ref=${REPO.branch}`, { ...opts, allow404: true });
@@ -330,7 +352,9 @@ export async function proposeComponent({
     soloDocs.docs = Boolean(docs?.actualiza) && !(await mismaPagina(await enMain(docsPath(docs.slug)), docs));
     const conJs = hasCode(files.js) && !jsSinEfecto(files.js);
     soloDocs.js = conJs && (await enMain(jsPath(jsFile || `${id}.js`))) !== `${files.js.trimEnd()}\n`;
-    if (!soloDocs.docs && !soloDocs.js) {
+    const archivoJs = jsFile || `${id}.js`;
+    soloDocs.test = conJs && hasCode(files.test) && (await enMain(testPath(archivoJs))) !== testForRepo(files.test, archivoJs);
+    if (!soloDocs.docs && !soloDocs.js && !soloDocs.test) {
       throw new GitHubError(
         parts.length > 1
           ? 'Los componentes son idénticos a los que ya están en el repositorio, también su documentación: no hay nada que proponer.'
@@ -386,9 +410,11 @@ export async function proposeComponent({
   const quienes = conjunto ? `los componentes ${parts.map((p) => p.id).join(' y ')}` : `el componente ${name}`;
   const titulo = nuevo
     ? `feat(${id}): añade ${quienes}`
-    : sinCss && !soloDocs.js
-      ? `docs(${id}): pone al día la documentación de ${conjunto ? quienes.replace('los componentes ', '') : `«${name}»`}`
-      : `fix(${id}): mejora ${quienes}`;
+    : sinCss && !soloDocs.js && soloDocs.test && !soloDocs.docs
+      ? `test(${id}): pruebas de ${conjunto ? quienes.replace('los componentes ', '') : `«${name}»`}`
+      : sinCss && !soloDocs.js
+        ? `docs(${id}): pone al día la documentación de ${conjunto ? quienes.replace('los componentes ', '') : `«${name}»`}`
+        : `fix(${id}): mejora ${quienes}`;
 
   for (const part of parts) {
     if (part.igual) continue;
@@ -430,12 +456,14 @@ export async function proposeComponent({
   // El JS se sube y se registra en @angela-ui/angela/js: si no, angela() no lo ejecuta nunca.
   // Un JS sin efecto (una plantilla que quedó en la pestaña) no se sube: solo añadiría peso.
   let js = null;
-  if (hasCode(files.js) && !jsSinEfecto(files.js) && !(sinCss && !soloDocs.js)) {
+  const subeJs = hasCode(files.js) && !jsSinEfecto(files.js) && !(sinCss && !soloDocs.js);
+  const subeTest = hasCode(files.js) && !jsSinEfecto(files.js) && hasCode(files.test) && !(sinCss && !soloDocs.test);
+  if (subeJs) {
     const file = jsFile || `${id}.js`;
     paso('Subiendo el JavaScript…');
     await put(jsPath(file), `${files.js.trimEnd()}\n`, `feat(${id}): módulo JavaScript del componente`);
     const fn = findEntryFunction(files.js);
-    js = { file, fn, registro: fn ? null : 'sin-funcion' };
+    js = { file, fn, registro: fn ? null : 'sin-funcion', test: hasCode(files.test) };
     if (fn) {
       paso('Registrando el JavaScript en @angela-ui/angela/js…');
       const entrada = await call(`/repos/${head.owner}/${head.name}/contents/${JS_ENTRY}?ref=${branch}`, opts);
@@ -443,6 +471,13 @@ export async function proposeComponent({
       js.registro = registro.status;
       if (registro.status === 'added') await put(JS_ENTRY, registro.code, `chore(${id}): activa el módulo en angela()`);
     }
+  }
+
+  // El test de la pestaña «Test»: la revisión del PR exige uno para cada módulo JS.
+  if (subeTest) {
+    const file = jsFile || `${id}.js`;
+    paso('Subiendo el test…');
+    await put(testPath(file), testForRepo(files.test, file), `test(${id}): pruebas del módulo`);
   }
 
   paso('Abriendo el pull request…');
