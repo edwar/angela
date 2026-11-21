@@ -135,7 +135,7 @@ const tabs = [
     <section class="lab-pane" aria-labelledby="lab-editor-title">
       <h3 class="visually-hidden" id="lab-editor-title">Editor</h3>
       <div class="lab-ide">
-        <angela-tabs class="tabs lab-ide-tabs" id="lab-tabs">
+        <div class="tabs lab-ide-tabs" id="lab-tabs">
           <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label="Archivos">
             {
               tabs.map((t, i) => (
@@ -153,7 +153,7 @@ const tabs = [
               </div>
             ))
           }
-        </angela-tabs>
+        </div>
         <div class="lab-ide-status">
           <span id="lab-ide-cursor">Lín. 1, col. 1</span>
           <span>Espacios: 2</span>

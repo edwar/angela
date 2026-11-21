@@ -104,7 +104,7 @@ const [open, setOpen] = useState(false);
 
 - **`trigger` es un objeto de props, no un elemento.** Un elemento que llega desde un Server Component puede ser una referencia diferida, y clonarlo rompe el prerender. Para un botón totalmente propio, da un `id` al diálogo y usa `commandfor="ese-id" command="show-modal"` en tu botón.
 - **El `id` va en el `Field`**, no en el control (si lo pones en el control, avisa en desarrollo y usa el del `Field`).
-- **Pestañas:** el estado inicial se pinta en el servidor y después lo gestiona `<angela-tabs>`. Con `value`, el cambio se aplica sobre el elemento, sin volver a pintar.
+- **Pestañas:** el estado inicial se pinta en el servidor y después lo gestiona `enhanceTabs` en el DOM. Con `value`, el cambio se aplica con `selectTab`, sin volver a pintar.
 - **`autoFocus`** funciona dentro de diálogos: los componentes escriben el atributo real, que React omite en el cliente.
 
-Los tipos de `@angela-ui/angela/jsx` (`commandfor`, `command`, `switch`, `focusgroup`, `<angela-tabs>`) se cargan solos al importar `@angela-ui/react`.
+Los tipos de `@angela-ui/angela/jsx` (`commandfor`, `command`, `switch`, `focusgroup`, el evento `tabchange`) se cargan solos al importar `@angela-ui/react`.

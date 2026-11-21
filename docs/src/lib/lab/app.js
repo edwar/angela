@@ -18,6 +18,7 @@ import {
 } from './preview.js';
 import { aiKey, drafts, githubToken, settings, toComponentId } from './storage.js';
 import { getRenderedScheme } from '@angela-ui/angela/js/theme';
+import { selectTab } from '@angela-ui/angela/js/tabs';
 import { createCodeEditor } from './editor.js';
 import { reviewComponent } from './review.js';
 import { buildDocsEntry, componentTitle, mergeDocsEntry, serializeDocsEntry } from './docs-entry.js';
@@ -930,7 +931,7 @@ export function startLab() {
     el.imagenes.close();
     // Siempre en el HTML: se cambia a su pestaña si estaba en otra.
     const pestana = el.tabs.querySelector('[role="tab"][data-file="html"]');
-    if (activeFile() !== 'html') el.tabs.select(pestana);
+    if (activeFile() !== 'html') selectTab(pestana);
     editors.html.insert(`<img src="${src}" alt="${alt}" width="${ancho}" height="${alto}">`);
     editors.html.focus();
     setStatus(`Imagen insertada: ${boton.dataset.alt}.`);

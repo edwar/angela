@@ -1,6 +1,6 @@
 {
   "name": "@angela-ui/angela",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Componentes accesibles sobre HTML nativo, con modo claro/oscuro y paleta adaptable.",
   "type": "module",
   "license": "MIT",

@@ -3,10 +3,12 @@
  * «Empezar»), cambian todas las pestañas con data-framework de la página y la elección se guarda
  * para las siguientes páginas.
  *
- * Las pestañas que se cambian por arrastre van con { silent: true }: no emiten tabchange y no
+ * Las pestañas que se cambian por arrastre van con selectTab(…, { silent: true }): no emiten tabchange y no
  * hay bucle. Para que la página no salte, la pestaña pulsada se queda donde estaba aunque cambie
  * la altura de los ejemplos de arriba.
  */
+
+import { selectTab } from '@angela-ui/angela/js/tabs';
 
 const CLAVE = 'angela-docs:framework';
 
@@ -28,11 +30,11 @@ const guardar = (id) => {
 
 /** Elige `id` en todas las pestañas que lo tienen, menos en `salvo`. */
 function elegir(id, salvo = null) {
-  for (const tabs of document.querySelectorAll('angela-tabs')) {
-    if (tabs === salvo || typeof tabs.select !== 'function') continue;
+  for (const tabs of document.querySelectorAll('.tabs')) {
+    if (tabs === salvo) continue;
     const boton = tabs.querySelector(`:scope > .tablist > button[data-framework~="${CSS.escape(id)}"]`);
     if (!boton) continue;
-    if (boton.getAttribute('aria-selected') !== 'true') tabs.select(boton, { silent: true });
+    if (boton.getAttribute('aria-selected') !== 'true') selectTab(boton, { silent: true });
     centrar(boton);
   }
 }
@@ -53,7 +55,8 @@ export function recordarFramework() {
   if (typeof window === 'undefined') return () => {};
 
   const inicial = leer();
-  if (inicial) customElements.whenDefined('angela-tabs').then(() => elegir(inicial));
+  // angela() ya preparó las pestañas (se llama antes en el layout).
+  if (inicial) elegir(inicial);
 
   const onTabchange = (event) => {
     const tab = event.detail?.tab;

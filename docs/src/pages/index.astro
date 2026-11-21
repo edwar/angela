@@ -104,7 +104,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       cosa.
     </p>
 
-    <angela-tabs class="tabs empezar-tabs">
+    <div class="tabs empezar-tabs">
       <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label="Framework">
         {
           frameworks.map((f, i) => (
@@ -151,7 +151,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
           </div>
         ))
       }
-    </angela-tabs>
+    </div>
 
     <div class="callout" data-tone="info">
       <Fragment set:html={icon('info')} />

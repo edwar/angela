@@ -39,7 +39,7 @@ describe('htmlAJsx', () => {
     );
   });
 
-  it('hidden="until-found" queda en hidden: <angela-tabs> lo pone al conectarse', () => {
+  it('hidden="until-found" queda en hidden: enhanceTabs lo pone al preparar', () => {
     expect(htmlAJsx('<div role="tabpanel" hidden="until-found">a</div>')).toBe('<div role="tabpanel" hidden>a</div>');
   });
 
@@ -59,7 +59,8 @@ describe('Astro, Angular y Vue', () => {
 
   it('Angular pide CUSTOM_ELEMENTS_SCHEMA solo si hay elementos con guion', () => {
     const angular = (html) => codigoPorFramework(html, 'Tabs').find((f) => f.id === 'angular').codigo;
-    expect(angular('<angela-tabs class="tabs"></angela-tabs>')).toContain('schemas: [CUSTOM_ELEMENTS_SCHEMA]');
+    expect(angular('<mi-elemento></mi-elemento>')).toContain('schemas: [CUSTOM_ELEMENTS_SCHEMA]');
+    expect(angular('<div class="tabs"></div>')).not.toContain('CUSTOM_ELEMENTS_SCHEMA');
     expect(angular('<p>a</p>')).not.toContain('CUSTOM_ELEMENTS_SCHEMA');
     // La comilla invertida se escapa para la plantilla de TypeScript; las llaves ya van como entidad.
     expect(angular('<p>`a` ${b}</p>')).toContain('<p>\\`a\\` $&#123;b&#125;</p>');

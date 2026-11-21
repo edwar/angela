@@ -69,7 +69,6 @@ describe('regla ssr: valor por defecto evaluado antes de la guarda', () => {
   });
 
   it('ningún módulo de angela usa el patrón', () => {
-    // Solo este aviso: tabs.js se protege con typeof customElements, que la otra comprobación no reconoce.
     for (const name of ['index.js', 'forms.js', 'overlays.js', 'tabs.js', 'theme.js', 'spotlight.js']) {
       expect(ssr(modulo(name))?.text ?? '', name).not.toContain('valor por defecto');
     }
@@ -84,5 +83,23 @@ describe('sin-efecto', () => {
   it('no dice nada sin JS o con un JS que trabaja', () => {
     expect(sinEfecto('')).toBeUndefined();
     expect(sinEfecto("export function enhanceX(root = globalThis.document) { if (typeof window === 'undefined') return () => {}; const f = () => {}; root.addEventListener('click', f); return () => root.removeEventListener('click', f); }")).toBeUndefined();
+  });
+});
+
+describe('elemento-propio', () => {
+  const hallazgo = (files) => reviewComponent({ html: '', css: '', js: '', ...files }).find((h) => h.id === 'elemento-propio');
+  it('rechaza etiquetas propias en el HTML', () => {
+    expect(hallazgo({ html: '<angela-calendar class="calendar"></angela-calendar>' })?.level).toBe('error');
+  });
+  it('rechaza customElements.define en el JS', () => {
+    expect(hallazgo({ js: "export function defineX() { customElements.define('x-y', class extends HTMLElement {}); }" })?.level).toBe('error');
+  });
+  it('no confunde los nombres con guion de SVG, atributos ni comentarios', () => {
+    expect(hallazgo({ html: '<!-- <mi-cosa> --><div class="tabs" data-tone="info" aria-label="a"><svg><font-face></font-face></svg></div>' })).toBeUndefined();
+  });
+  it('ningún módulo de angela define elementos propios', () => {
+    for (const name of ['index.js', 'forms.js', 'overlays.js', 'tabs.js', 'theme.js', 'spotlight.js']) {
+      expect(reviewComponent({ html: '', css: '', js: modulo(name) }).find((h) => h.id === 'elemento-propio'), name).toBeUndefined();
+    }
   });
 });

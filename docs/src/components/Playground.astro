@@ -158,7 +158,7 @@ const valorControl = (v: unknown, separador?: string) => (Array.isArray(v) ? v.j
           ))}
         </div>
 
-        <angela-tabs class="tabs example-frameworks">
+        <div class="tabs example-frameworks">
           <div class="tablist" role="tablist" focusgroup="tablist nomemory" aria-label={`Código de ${nombre} por framework`}>
             {codigo.map((fw, i) => (
               <button type="button" role="tab" id={`pg-tab-${fw.id}`} data-framework={fw.id} aria-selected={i === 0 ? 'true' : 'false'} focusgroupstart={i === 0 ? '' : undefined}>
@@ -189,7 +189,7 @@ const valorControl = (v: unknown, separador?: string) => (Array.isArray(v) ? v.j
               )}
             </div>
           ))}
-        </angela-tabs>
+        </div>
 
         <figure class="example-archivo pruebalo-tema" hidden>
           <figcaption>

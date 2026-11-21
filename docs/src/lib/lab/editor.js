@@ -61,7 +61,7 @@ function languageSupport(language, vocabulary) {
       return { from: word.from, options, validFor: /^[\w-]*$/ };
     };
     return [
-      html({ extraTags: { 'angela-tabs': { attrs: {} } }, extraGlobalAttributes: ANGELA_ATTRIBUTES }),
+      html({ extraGlobalAttributes: ANGELA_ATTRIBUTES }),
       htmlLanguage.data.of({ autocomplete: classSource }),
       emmet('html'),
     ];

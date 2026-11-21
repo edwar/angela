@@ -187,6 +187,18 @@ const HTML_RULES = [
       return marcas > 1 ? 'Hay varios data-slot: solo se usa el primero. Deja uno por componente.' : null;
     },
   },
+  {
+    id: 'elemento-propio',
+    level: 'error',
+    check(html) {
+      // Los nombres con guion de SVG y MathML son elementos nativos, no propios.
+      const nativos = new Set(['annotation-xml', 'color-profile', 'font-face', 'font-face-src', 'font-face-uri', 'font-face-format', 'font-face-name', 'missing-glyph']);
+      const propio = [...stripHtml(html).matchAll(/<([a-z][\w]*-[\w-]*)/gi)].map((m) => m[1].toLowerCase()).find((t) => !nativos.has(t));
+      return propio
+        ? `<${propio}> es un elemento propio: angela no los usa. Escribe el componente con HTML nativo, una clase y data-* (por ejemplo, <div class="tabs">), y que el JS lo active desde la raíz.`
+        : null;
+    },
+  },
 ];
 
 const JS_RULES = [
@@ -227,6 +239,15 @@ const JS_RULES = [
     },
   },
   {
+    id: 'elemento-propio',
+    level: 'error',
+    check(js) {
+      return /customElements\s*\.\s*define|extends\s+HTMLElement/.test(stripJs(js))
+        ? 'No definas elementos propios (customElements.define): angela es HTML nativo con clases. Exporta enhanceNombre(root) que escuche en la raíz y use un MutationObserver para lo que se monte después.'
+        : null;
+    },
+  },
+  {
     id: 'limpieza',
     level: 'warn',
     check(js) {
@@ -242,8 +263,8 @@ const JS_RULES = [
     level: 'error',
     check(js) {
       const limpio = stripJs(js);
-      // Un MutationObserver o un custom element ya alcanzan a lo que se monte después.
-      if (/MutationObserver|customElements\.define|extends\s+HTMLElement/.test(limpio)) return null;
+      // Un MutationObserver ya alcanza a lo que se monte después.
+      if (/MutationObserver/.test(limpio)) return null;
       if (!/querySelector(All)?\s*\(|getElementBy|getElementsBy/.test(limpio)) return null;
       // Escuchar en la raíz es delegar; en cualquier otra cosa, es escuchar elemento a elemento.
       const raices = new Set(['root', 'document', 'window', 'globalThis', 'self', 'this']);

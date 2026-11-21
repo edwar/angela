@@ -274,7 +274,7 @@ bootstrapApplication(App, appConfig)
       },
       {
         titulo: 'Usa HTML con clases',
-        texto: 'Donde uses <angela-tabs>, añade schemas: [CUSTOM_ELEMENTS_SCHEMA]. Un atributo que cambia se enlaza con [attr.…], p. ej. [attr.commandfor]="id". En el texto de una plantilla, «@» se escribe &#64;.',
+        texto: 'El marcado es HTML nativo: no hace falta CUSTOM_ELEMENTS_SCHEMA. Un atributo que cambia se enlaza con [attr.…], p. ej. [attr.commandfor]="id". En el texto de una plantilla, «@» se escribe &#64;.',
         archivo: 'src/app/app.ts',
         lenguaje: 'ts',
         codigo: `import { Component } from '@angular/core';

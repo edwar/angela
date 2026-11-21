@@ -5,8 +5,8 @@
  * archivo que lo envuelve y lo que cada sintaxis obliga a escribir distinto:
  * - React / Next.js: JSX (className, htmlFor, style como objeto, defaultValue…).
  * - Astro: las llaves del texto son expresiones; se escapan.
- * - Angular: «@» abre un bloque (@if…) y las llaves son ICU; se escapan. Los elementos con
- *   guion (<angela-tabs>) necesitan CUSTOM_ELEMENTS_SCHEMA.
+ * - Angular: «@» abre un bloque (@if…) y las llaves son ICU; se escapan. Si un ejemplo usa un
+ *   elemento con guion (un custom element ajeno; angela no define ninguno), CUSTOM_ELEMENTS_SCHEMA.
  * - Vue: la plantilla es HTML tal cual.
  */
 
@@ -199,7 +199,7 @@ function atributosJsx(n) {
     if (elemento === 'option' && nombre === 'selected') continue;
     if (['input', 'textarea', 'select'].includes(elemento) && nombre === 'value') nombre = 'defaultValue';
     if (elemento === 'input' && nombre === 'checked') nombre = 'defaultChecked';
-    // React escribe hidden="until-found" como hidden=""; <angela-tabs> lo pone al conectarse.
+    // React escribe hidden="until-found" como hidden=""; enhanceTabs lo pone al preparar.
     if (nombre === 'hidden') {
       lista.push(' hidden');
       continue;
