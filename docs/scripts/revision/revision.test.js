@@ -21,6 +21,8 @@ const JS_OK = `export function enhanceGaleria(root = globalThis.document) {
   root.addEventListener('click', on);
   return () => root.removeEventListener('click', on);
 }`;
+// La marca del entorno va partida: Vitest la busca en el texto de este archivo.
+const TEST_OK = `// @vitest-${'environment'} happy-dom\n` + "import { it, expect } from 'vitest';\nimport { enhanceGaleria } from './galeria.js';\nit('activa', () => expect(typeof enhanceGaleria(document)).toBe('function'));\n";
 const DOC = (extra = {}) => ({
   slug: 'galeria',
   title: 'Galería',
@@ -72,9 +74,16 @@ describe('reviewUnit', () => {
     reviewUnit({ slugs: ['galeria'], css: 'galeria', js: head[JS] ? 'galeria' : null }, ctx({ head }, { base: {}, head: { galeria: doc } }));
 
   it('un componente nuevo completo no tiene errores', () => {
-    const r = nuevo({ [CSS]: CSS_OK, [JS]: JS_OK, [CSS_ENTRY]: ENTRY_OK, [JS_ENTRY]: INDEX_OK, [JS.replace('.js', '.test.js')]: 'test' });
+    const r = nuevo({ [CSS]: CSS_OK, [JS]: JS_OK, [CSS_ENTRY]: ENTRY_OK, [JS_ENTRY]: INDEX_OK, [JS.replace('.js', '.test.js')]: TEST_OK });
     expect(r.nuevo).toBe(true);
     expect(r.findings.filter((f) => f.level === 'error')).toEqual([]);
+  });
+
+  it('sin archivo de test, avisa solo test-js (no también la regla «test» del laboratorio)', () => {
+    const r = nuevo({ [CSS]: CSS_OK, [JS]: JS_OK, [CSS_ENTRY]: ENTRY_OK, [JS_ENTRY]: INDEX_OK });
+    const ids = r.findings.map((f) => f.id);
+    expect(ids).toContain('test-js');
+    expect(ids).not.toContain('test');
   });
 
   it('el caso del spotlight: sin @import, sin accesibilidad, JS sin registrar y sin test', () => {

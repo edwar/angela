@@ -100,7 +100,7 @@ const examplesHtml = (entries) =>
  * @param {{
  *   read: (side: 'base' | 'head', path: string) => string | null,
  *   docs: { base: Record<string, any>, head: Record<string, any> },
- *   reviewComponent: (files: { html: string, css: string, js: string }) => { level: string, id: string, text: string }[],
+ *   reviewComponent: (files: { html: string, css: string, js: string, test: string }) => { level: string, id: string, text: string }[],
  *   findEntryFunction: (js: string) => string | null,
  * }} ctx
  */
@@ -112,6 +112,7 @@ export function reviewUnit(unit, { read, docs, reviewComponent, findEntryFunctio
   const side = (s) => ({
     css: cssPath ? read(s, cssPath) : null,
     js: jsPath ? read(s, jsPath) : null,
+    test: jsPath ? read(s, jsPath.replace(/\.js$/, '.test.js')) : null,
     docs: unit.slugs.map((slug) => docs[s][slug]).filter(Boolean),
   });
   const base = side('base');
@@ -129,11 +130,13 @@ export function reviewUnit(unit, { read, docs, reviewComponent, findEntryFunctio
   }
 
   // --- Reglas del laboratorio: solo lo que el PR introduce. ---
-  const files = (s) => ({ html: examplesHtml(s.docs), css: s.css ?? '', js: s.js ?? '' });
+  const files = (s) => ({ html: examplesHtml(s.docs), css: s.css ?? '', js: s.js ?? '', test: s.test ?? '' });
   const key = (h) => `${h.id}\n${h.text}`;
   const antes = new Set(nuevo ? [] : reviewComponent(files(base)).map(key));
   const previos = [];
   for (const h of reviewComponent(files(head))) {
+    // Sin archivo de test ya avisa la regla test-js (más abajo), con la ruta exacta.
+    if (h.id === 'test' && head.test == null) continue;
     if (antes.has(key(h))) previos.push(h);
     else findings.push(h);
   }

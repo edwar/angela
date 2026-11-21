@@ -9,6 +9,7 @@ import { components } from '../../data/components.js';
 import {
   angelaCss,
   angelaJs,
+  angelaTests,
   angelaVocabulary,
   bundleAngelaCss,
   buildPreviewDocument,
@@ -25,9 +26,9 @@ import { buildDocsEntry, componentTitle, mergeDocsEntry, serializeDocsEntry } fr
 import { guessFormat } from './ai.js';
 import { diffStats, lineDiff, withContext } from './diff.js';
 
-const FILES = ['html', 'css', 'js'];
-const TAB_FILES = { html: 'HTML', css: 'CSS', js: 'JavaScript' };
-const LANGUAGE_NAMES = { html: 'HTML', css: 'CSS', js: 'JavaScript' };
+const FILES = ['html', 'css', 'js', 'test'];
+const TAB_FILES = { html: 'HTML', css: 'CSS', js: 'JavaScript', test: 'Test' };
+const LANGUAGE_NAMES = { html: 'HTML', css: 'CSS', js: 'JavaScript', test: 'JavaScript (Vitest)' };
 
 const STARTER = {
   html: `<article class="nota" data-tone="info">
@@ -63,6 +64,30 @@ const STARTER = {
 //   root.addEventListener('click', onClick);
 //   return () => root.removeEventListener('click', onClick);
 // }
+`,
+  test: `// @vitest-environment happy-dom
+//
+// Test del módulo de la pestaña JavaScript: Vitest en un DOM simulado (happy-dom).
+// Se sube con el pull request y lo ejecuta la revisión del PR: un componente con JS no pasa
+// sin su test. Importa desde './componente.js': al proponer, se cambia por el nombre real.
+//
+// import { afterEach, describe, expect, it } from 'vitest';
+// import { enhanceNota } from './componente.js';
+//
+// let limpiar;
+// afterEach(() => {
+//   limpiar?.();
+//   document.body.innerHTML = '';
+// });
+//
+// describe('nota', () => {
+//   it('marca la nota al pulsarla', () => {
+//     document.body.innerHTML = '<article class="nota"></article>';
+//     limpiar = enhanceNota(document);
+//     document.querySelector('.nota').click();
+//     expect(document.querySelector('.nota').hasAttribute('data-activa')).toBe(true);
+//   });
+// });
 `,
 };
 
@@ -210,6 +235,7 @@ export function startLab() {
       html: component.examples.map((ex) => `<!-- ${ex.title} -->\n${ex.code}`).join('\n\n'),
       css: angelaCss[src.css] ?? '',
       js: src.js ? (angelaJs[src.js] ?? '') : STARTER.js,
+      test: src.js ? (angelaTests[src.js] ?? STARTER.test) : STARTER.test,
     };
   }
 
@@ -287,7 +313,7 @@ export function startLab() {
     FILES.map((f) => [
       f,
       createCodeEditor(el.code[f], {
-        language: f,
+        language: f === 'test' ? 'js' : f,
         value: '',
         label: el.code[f].dataset.label,
         describedBy: 'lab-code-hint',
@@ -323,6 +349,7 @@ export function startLab() {
     const src = sources();
     if (file === 'css') return src.css?.split('/').pop() ?? 'componente.css';
     if (file === 'js') return src.js ?? 'componente.js';
+    if (file === 'test') return (src.js ?? 'componente.js').replace(/\.js$/, '.test.js');
     return `${state.slug || 'componente'}.html`;
   }
 
@@ -644,7 +671,8 @@ export function startLab() {
 
   function showProposal(proposal) {
     el.aiReviewOk.hidden = true;
-    state.proposal = { html: proposal.html, css: proposal.css, js: proposal.js };
+    // Si la IA no trae test (o no lo cambia), se queda el del editor.
+    state.proposal = { html: proposal.html, css: proposal.css, js: proposal.js, test: proposal.test ?? state.files.test };
     el.proposalSummary.textContent = proposal.resumen;
     el.proposalChanges.replaceChildren(
       ...proposal.cambios.map((text) => Object.assign(document.createElement('li'), { textContent: text })),
@@ -654,7 +682,7 @@ export function startLab() {
     el.proposalWarningList.replaceChildren(
       ...warnings.map((text) => Object.assign(document.createElement('li'), { textContent: text })),
     );
-    for (const f of FILES) el.proposalCode[f].textContent = proposal[f];
+    for (const f of FILES) el.proposalCode[f].textContent = state.proposal[f];
     el.proposal.hidden = false;
     setTrying(true);
     el.proposal.scrollIntoView({ block: 'nearest' });
@@ -765,7 +793,8 @@ export function startLab() {
   function showReviewChanges(result) {
     discardProposal({ silent: true });
     el.aiReviewOk.hidden = true;
-    state.proposal = { ...result.archivos };
+    // La revisión con IA no toca el test: se conserva el del editor.
+    state.proposal = { ...state.files, ...result.archivos };
 
     const n = result.problemas.length;
     el.aiReviewChangesTitle.textContent = n
@@ -826,7 +855,7 @@ export function startLab() {
     el.aiReviewWarningList.replaceChildren(...warnings.map(li));
 
     el.aiReviewDiff.replaceChildren(
-      ...FILES.filter((f) => result.archivos[f] !== state.files[f]).map((f) => diffBlock(f, state.files[f], result.archivos[f])),
+      ...FILES.filter((f) => state.proposal[f] !== state.files[f]).map((f) => diffBlock(f, state.files[f], state.proposal[f])),
     );
 
     el.aiReviewChanges.hidden = false;
