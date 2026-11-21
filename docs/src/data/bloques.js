@@ -5,6 +5,7 @@
  */
 import login from '../bloques/login.html?raw';
 import precios from '../bloques/precios.html?raw';
+import catalogo from '../bloques/catalogo.html?raw';
 import ajustes from '../bloques/ajustes.html?raw';
 import equipo from '../bloques/equipo.html?raw';
 import notificaciones from '../bloques/notificaciones.html?raw';
@@ -30,6 +31,12 @@ export const BLOQUES = [
     titulo: 'Precios',
     nota: 'Rejilla de planes que se adapta al ancho (.cards). El recomendado lleva sombra, etiqueta y el único botón sólido de la vista.',
     html: precios,
+  },
+  {
+    id: 'catalogo',
+    titulo: 'Catálogo de productos',
+    nota: 'Rejilla (.cards) de Tarjetas 3D: las columnas se acomodan solas y todas giran hacia el mismo punto de fuga. Cada botón se describe con el nombre de su producto (aria-describedby): el lector anuncia «Añadir al carrito, Portátil», y la foto es decorativa porque el nombre ya está escrito.',
+    html: catalogo,
   },
   {
     id: 'ajustes',

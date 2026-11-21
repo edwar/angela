@@ -1,6 +1,6 @@
 /* @componente cards
- * Rejilla de tarjetas con un punto de fuga compartido: todas giran hacia el mismo
- * punto, como si fueran una sola escena.
+ * Rejilla (página «Rejilla»): tarjetas que se acomodan solas en columnas, con un punto de
+ * fuga compartido: todas giran hacia el mismo punto, como si fueran una sola escena.
  * Parámetros: --cards-min · --cards-gap · --cards-perspective
  */
 @layer angela.components {
