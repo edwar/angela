@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Example from '../components/Example.astro';
 import { icon } from '../data/icons.js';
 import { roles } from '@angela-ui/angela/palette';
 
@@ -24,6 +25,44 @@ const typeScale = [
   ['--fs-sm', 'Controles y texto secundario'],
   ['--fs-xs', 'Etiquetas y metadatos'],
 ];
+// Primitivas de maquetación (utilities.css): colocan lo que lleven dentro, sin aspecto propio.
+const maquetacion = [
+  {
+    title: 'Pila',
+    note: '.stack apila en columna con un espacio uniforme: --stack-gap (var(--space-4) por defecto).',
+    code: `<div class="stack" style="--stack-gap: var(--space-2)">
+  <div class="card">Primero</div>
+  <div class="card">Segundo</div>
+  <div class="card">Tercero</div>
+</div>`,
+  },
+  {
+    title: 'Grupo en fila',
+    note: '.cluster pone en fila y pasa a la siguiente cuando no cabe, centrado en vertical: --cluster-gap (var(--space-2) por defecto).',
+    code: `<div class="cluster">
+  <button class="button" type="button">Guardar</button>
+  <button class="button" type="button" data-variant="outline" data-tone="neutral">Vista previa</button>
+  <span class="badge" data-tone="success" data-dot>Guardado</span>
+</div>`,
+  },
+  {
+    title: 'Rejilla',
+    note: '.cards reparte en columnas que se acomodan solas: --cards-min es el ancho mínimo antes de pasar a otra fila. Con Tarjetas 3D dentro, todas giran hacia el mismo punto de fuga (míralo en el bloque «Catálogo de productos»).',
+    code: `<section class="cards" style="--cards-min: 10rem; --cards-gap: var(--space-3)">
+  <article class="card"><p class="text" data-weight="bold">Ventas</p><p class="text" data-size="xl" data-numeric>12.480 €</p></article>
+  <article class="card"><p class="text" data-weight="bold">Pedidos</p><p class="text" data-size="xl" data-numeric>318</p></article>
+  <article class="card"><p class="text" data-weight="bold">Clientes</p><p class="text" data-size="xl" data-numeric>42</p></article>
+  <article class="card"><p class="text" data-weight="bold">Devoluciones</p><p class="text" data-size="xl" data-numeric>3</p></article>
+</section>`,
+  },
+];
+const maquetacionApi = [
+  ['.stack', 'Columna con espacio uniforme entre hijos.', '--stack-gap'],
+  ['.cluster', 'Fila que se parte en varias líneas si no cabe, centrada en vertical.', '--cluster-gap'],
+  ['.cards', 'Rejilla de columnas automáticas (a 320 px, una sola). Recorta las imágenes de dentro a 16/9 y da a las Tarjetas 3D un punto de fuga común.', '--cards-min, --cards-gap, --cards-perspective'],
+  ['.container', 'Ancho máximo centrado con margen lateral, para el contenido de una página.', '--container-size'],
+];
+
 const spaceScale = ['--space-1', '--space-2', '--space-3', '--space-4', '--space-5', '--space-6', '--space-8', '--space-12', '--space-16'];
 
 const controls = [
@@ -222,6 +261,45 @@ const previewHtml = `
           </div>
         ))
       }
+    </div>
+  </section>
+
+  <section class="doc-section" aria-labelledby="maquetacion">
+    <h2 id="maquetacion">Maquetación</h2>
+    <p>
+      Cuatro primitivas colocan lo que lleven dentro, sin darle aspecto: con ellas están hechos los bloques. Se ajustan
+      con una variable; el espacio, siempre con los tokens de <a href="#espaciado">espaciado</a>. El orden visual es el del
+      marcado, así que el recorrido con teclado nunca se desordena.
+    </p>
+    {maquetacion.map((ex, i) => <Example title={ex.title} note={ex.note} code={ex.code} index={i} />)}
+    <div class="card" data-flush>
+      <div class="table-wrap" role="region" aria-labelledby="maquetacion-cap" tabindex="0">
+        <table class="table api-table">
+          <caption id="maquetacion-cap" class="visually-hidden">Primitivas de maquetación</caption>
+          <thead>
+            <tr>
+              <th scope="col">Clase</th>
+              <th scope="col">Uso</th>
+              <th scope="col">Variables</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              maquetacionApi.map(([clase, uso, variables]) => (
+                <tr>
+                  <th scope="row">
+                    <code>{clase}</code>
+                  </th>
+                  <td>{uso}</td>
+                  <td>
+                    <code>{variables}</code>
+                  </td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 
