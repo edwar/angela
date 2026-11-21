@@ -4,7 +4,7 @@
  * y completa las notas de accesibilidad.
  */
 export default {
-  slug: 'card-3d',
+  slug: 'tarjeta-3d',
   title: 'Tarjeta 3D',
   summary: 'Tarjeta que se inclina al pasar el ratón o al llegar con el teclado.',
   examples: [

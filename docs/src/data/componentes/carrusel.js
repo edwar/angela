@@ -1,11 +1,11 @@
 /**
- * Carousel
+ * Carrusel
  * Página de documentación del componente. La genera y la actualiza el laboratorio al
  * proponer cambios; también se puede editar a mano.
  */
 export default {
-  slug: "carousel",
-  title: "Carousel",
+  slug: "carrusel",
+  title: "Carrusel",
   summary: "Fila de elementos que se desplaza en horizontal con scroll nativo y ajuste a cada elemento (scroll-snap), sin JS. En el móvil se asoma el siguiente para indicar que hay más; el ancho de cada elemento y la separación se cambian con --carousel-item y --carousel-gap.",
   examples: [
     {

@@ -4,7 +4,7 @@
  * añade ejemplos, afina la tabla de API y completa las notas de accesibilidad.
  */
 export default {
-  slug: "flip-card",
+  slug: "tarjeta-giratoria",
   title: "Tarjeta giratoria",
   summary: "Tarjeta con dos caras que da la vuelta al pasar el ratón o al recibir el foco, para mostrar información extra en el reverso. El eje se elige con data-flip=\"vertical\" (horizontal por defecto) y la duración con --flip-duration.",
   examples: [

@@ -1,11 +1,11 @@
 /**
- * Select personalizable
+ * Selector
  * Página de documentación del componente. La genera y la actualiza el laboratorio al
  * proponer cambios; también se puede editar a mano.
  */
 export default {
-  slug: "select-personalizable",
-  title: "Select personalizable",
+  slug: "selector",
+  title: "Selector",
   summary: "La lista del select nativo toma el estilo de angela con appearance: base-select, sin JS. Se añade la variante de opciones con descripción. Donde no hay soporte, en táctil o en alto contraste se queda el select nativo.",
   examples: [
     {

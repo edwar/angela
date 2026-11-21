@@ -1,11 +1,11 @@
 /**
- * Campos de texto
+ * Campo de texto
  * Página de documentación del componente. La genera y la actualiza el laboratorio al
  * proponer cambios; también se puede editar a mano.
  */
 export default {
-  slug: "campos",
-  title: "Campos de texto",
+  slug: "campo-de-texto",
+  title: "Campo de texto",
   summary: "Input, select y textarea nativos con etiqueta, ayuda y error accesible.",
   examples: [
     {

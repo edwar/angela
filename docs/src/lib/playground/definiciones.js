@@ -140,7 +140,7 @@ export const DEFINICIONES = [
   },
 
   {
-    slug: 'campos',
+    slug: 'campo-de-texto',
     controles: [
       { nombre: 'label', etiqueta: 'Etiqueta', tipo: 'texto', inicial: 'Correo', descripcion: 'Etiqueta visible (nunca la sustituyas por un placeholder).' },
       { nombre: 'name', etiqueta: 'Nombre del campo', tipo: 'texto', inicial: 'email' },
@@ -310,7 +310,7 @@ export const DEFINICIONES = [
   },
 
   {
-    slug: 'carousel',
+    slug: 'carrusel',
     controles: [
       { nombre: 'label', etiqueta: 'Nombre de la región', tipo: 'texto', inicial: 'Productos destacados', descripcion: 'Lo anuncia el lector de pantalla al llegar.' },
       { nombre: 'itemWidth', etiqueta: 'Ancho de cada uno', tipo: 'opciones', valores: ['min(80%, 18rem)', '60%', '45%', '30%'], defecto: 'min(80%, 18rem)', ayuda: '--carousel-item' },
@@ -457,7 +457,7 @@ export const DEFINICIONES = [
   },
 
   {
-    slug: 'select-personalizable',
+    slug: 'selector',
     altoMinimo: 320,
     controles: [
       { nombre: 'label', etiqueta: 'Etiqueta', tipo: 'texto', inicial: 'País' },
