@@ -9,7 +9,7 @@
  *
  * Los nombres de las props son los de @angela-ui/react (variant, tone, size, block…).
  */
-import { bandera, booleano, cada, crudo, el, estilo, evento, id, idSi, ids, item, lit, prop, segun, segunProp, si, siIgual, slot, texto, unir } from '../componentes/ir.js';
+import { bandera, booleano, cada, crudo, el, estilo, evento, id, idSi, ids, item, lit, prop, segun, segunProp, si, slot, texto, unir } from '../componentes/ir.js';
 import { renderHtml } from '../componentes/render.js';
 
 export const TONOS = ['brand', 'neutral', 'success', 'warning', 'danger', 'info'];
@@ -283,25 +283,51 @@ export const DEFINICIONES = [
     }),
   },
 
-  {
-    slug: 'seleccion',
+  // Casilla, Radio e Interruptor comparten marcado (.choice); cambian el input y los textos.
+  ...[
+    {
+      slug: 'casilla',
+      nombre: 'Checkbox',
+      label: 'Recibir el resumen semanal',
+      hint: 'Cada lunes, con lo más importante.',
+      name: 'resumen',
+      input: { type: 'checkbox' },
+      marcada: 'Marcada',
+    },
+    {
+      slug: 'radio',
+      nombre: 'Radio',
+      label: 'Plan anual',
+      hint: 'Ahorras dos meses.',
+      name: 'plan',
+      input: { type: 'radio', value: 'anual' },
+      marcada: 'Elegida',
+    },
+    {
+      slug: 'interruptor',
+      nombre: 'Switch',
+      label: 'Perfil público',
+      hint: 'Cualquiera con el enlace ve tu perfil.',
+      name: 'perfil',
+      // role="switch" se anuncia como activado/desactivado; el atributo switch lo hace nativo en Safari.
+      input: { type: 'checkbox', role: 'switch', switch: '' },
+      marcada: 'Activado',
+    },
+  ].map((c) => ({
+    slug: c.slug,
     controles: [
-      { nombre: 'label', etiqueta: 'Etiqueta', tipo: 'texto', inicial: 'Recibir el resumen semanal' },
-      { nombre: 'hint', etiqueta: 'Ayuda', tipo: 'texto', inicial: 'Cada lunes, con lo más importante.' },
-      { nombre: 'name', etiqueta: 'Nombre del campo', tipo: 'texto', inicial: 'resumen' },
-      { nombre: 'kind', etiqueta: 'Tipo', tipo: 'opciones', valores: ['checkbox', 'radio', 'switch'], defecto: 'checkbox', ayuda: 'switch: una casilla con aspecto de interruptor, para activar algo al momento.', descripcion: 'checkbox · radio · switch (casilla con role="switch").' },
-      { nombre: 'checked', etiqueta: 'Marcada', tipo: 'booleano', defecto: false },
-      { nombre: 'disabled', etiqueta: 'Deshabilitada', tipo: 'booleano', defecto: false },
+      { nombre: 'label', etiqueta: 'Etiqueta', tipo: 'texto', inicial: c.label },
+      { nombre: 'hint', etiqueta: 'Ayuda', tipo: 'texto', inicial: c.hint },
+      { nombre: 'name', etiqueta: 'Nombre del campo', tipo: 'texto', inicial: c.name },
+      { nombre: 'checked', etiqueta: c.marcada, tipo: 'booleano', defecto: false },
+      { nombre: 'disabled', etiqueta: 'Deshabilitado', tipo: 'booleano', defecto: false },
     ],
     componente: {
-      nombre: 'Choice',
+      nombre: c.nombre,
       raiz: [
         el('div', { class: 'choice' }, [
           el('input', {
-            type: siIgual('kind', 'radio', 'radio', 'checkbox'),
-            // role="switch" se anuncia como activado/desactivado; el atributo switch lo hace nativo en Safari.
-            role: siIgual('kind', 'switch', 'switch'),
-            switch: siIgual('kind', 'switch', ''),
+            ...c.input,
             id: id(),
             name: prop('name'),
             checked: booleano('checked'),
@@ -314,7 +340,7 @@ export const DEFINICIONES = [
       ],
     },
     slots: () => ({}),
-  },
+  })),
 
   {
     slug: 'popover',

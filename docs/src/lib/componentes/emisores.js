@@ -505,10 +505,19 @@ function emitirAstro(c, ts) {
 
 /* ---------- JavaScript sin framework ---------- */
 
+// Palabras que no pueden ser nombre de función (Switch → switch).
+const RESERVADAS = new Set(['break', 'case', 'catch', 'class', 'const', 'continue', 'debugger', 'default', 'delete', 'do', 'else', 'enum', 'export', 'extends', 'false', 'finally', 'for', 'function', 'if', 'import', 'in', 'instanceof', 'new', 'null', 'return', 'super', 'switch', 'this', 'throw', 'true', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield', 'let', 'static', 'implements', 'interface', 'package', 'private', 'protected', 'public', 'await']);
+
+/** Nombre de la función que crea el componente: boton(), card()… y crearSwitch() si chocaría con el lenguaje. */
+export function nombreFuncion(nombre) {
+  const funcion = camel(nombre);
+  return RESERVADAS.has(funcion) ? `crear${nombre}` : funcion;
+}
+
 function emitirVanilla(c, ts) {
   const r = rasgos(c);
   const acc = (n) => n;
-  const funcion = camel(c.nombre);
+  const funcion = nombreFuncion(c.nombre);
   const atributos = (n) =>
     Object.entries(n.atributos)
       .map(([k, v]) => {
@@ -732,7 +741,7 @@ function usoAstro(c, props, slots) {
 
 function usoVanilla(c, props, slots, ts) {
   const r = rasgos(c);
-  const funcion = camel(c.nombre);
+  const funcion = nombreFuncion(c.nombre);
   const pares = [
     ...elegidas(c, props).map((p) => `${p.nombre}: ${literal(props[p.nombre])}`),
     ...[...r.slots].filter((s) => slots[s]).map((s) => {

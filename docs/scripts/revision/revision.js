@@ -118,15 +118,25 @@ export function reviewUnit(unit, { read, docs, reviewComponent, findEntryFunctio
   const base = side('base');
   const head = side('head');
   const title = head.docs[0]?.title ?? base.docs[0]?.title ?? unit.slugs[0];
+  // Un CSS con varias páginas (layout.css → Tarjeta y Tabla): cada fila de la tabla, con su título.
+  const titulos = Object.fromEntries(unit.slugs.map((slug) => [slug, docs.head[slug]?.title ?? docs.base[slug]?.title ?? title]));
   const nuevo = base.css == null && base.docs.length === 0;
 
   /** @type {{ level: 'error' | 'warn', id: string, text: string }[]} */
   const findings = [];
   const add = (level, id, text) => findings.push({ level, id, text });
 
-  if (cssPath && head.css == null) {
+  // Una página que se quita sin CSS propio (p. ej. al dividirla en otras): solo hay que cuidar los enlaces.
+  if (head.css == null && base.css == null && head.docs.length === 0 && base.docs.length > 0) {
+    const paginas = unit.slugs.map((slug) => `\`${DOCS_DIR}${slug}.js\``).join(', ');
+    add('warn', 'elimina', `Se elimina la página ${paginas}: comprueba que nada enlace a ella o añade una redirección en \`docs/astro.config.mjs\`.`);
+    return { title, titulos, slugs: unit.slugs, nuevo: false, eliminado: true, findings, previos: [] };
+  }
+
+  // Solo se elimina lo que existía.
+  if (cssPath && head.css == null && base.css != null) {
     add('warn', 'elimina', `Se elimina \`${cssPath}\`: comprueba que ningún otro componente ni la documentación lo usen.`);
-    return { title, slugs: unit.slugs, nuevo, eliminado: true, findings, previos: [] };
+    return { title, titulos, slugs: unit.slugs, nuevo, eliminado: true, findings, previos: [] };
   }
 
   // --- Reglas del laboratorio: solo lo que el PR introduce. ---
@@ -205,7 +215,7 @@ export function reviewUnit(unit, { read, docs, reviewComponent, findEntryFunctio
   }
 
   findings.sort((a, b) => (a.level === b.level ? 0 : a.level === 'error' ? -1 : 1));
-  return { title, slugs: unit.slugs, nuevo, eliminado: false, findings, previos };
+  return { title, titulos, slugs: unit.slugs, nuevo, eliminado: false, findings, previos };
 }
 
 /**
@@ -290,7 +300,7 @@ export function renderComment({ checks, components, manualChecks, productionUrl,
     for (const c of visibles) {
       for (const slug of c.slugs) {
         const prod = c.nuevo ? '—' : `[ver](${productionUrl}/componentes/${slug})`;
-        out.push(`| ${c.title} | [ver](${PREVIEW}/componentes/${slug}) | ${prod} |`);
+        out.push(`| ${c.titulos?.[slug] ?? c.title} | [ver](${PREVIEW}/componentes/${slug}) | ${prod} |`);
       }
     }
     out.push('', 'Antes de mezclar:', '', ...manualChecks.map((m) => `- [ ] ${m}`));

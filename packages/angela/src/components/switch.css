@@ -1,0 +1,99 @@
+/*
+ * Interruptor: un checkbox nativo con role="switch" (se anuncia como activado/desactivado) y el
+ * atributo switch (nativo en Safari). Va en una fila .choice (choice.css), como la casilla.
+ *
+ * <div class="choice">
+ *   <input type="checkbox" role="switch" switch id="avisos" name="avisos">
+ *   <label for="avisos">Recibir avisos</label>
+ * </div>
+ */
+@layer angela.components {
+  /* Colores por defecto con especificidad 0: el CSS de quien lo use los cambia sin pelear. */
+  :where(input[type="checkbox"]:is([role="switch"], [switch])) {
+    --_track: var(--color-border-strong);
+    --_thumb: var(--color-brand-on-solid);
+  }
+
+  input[type="checkbox"]:is([role="switch"], [switch]) {
+    appearance: none;
+    position: relative;
+    box-sizing: border-box;
+    flex: none;
+    inline-size: 2.25rem;
+    block-size: 1.25rem;
+    margin: 0.05em 0 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background-color: var(--_track);
+    cursor: pointer;
+    transition: background-color var(--duration-fast) var(--ease-standard);
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset-block: 2px;
+      inset-inline-start: 2px;
+      aspect-ratio: 1;
+      border-radius: var(--radius-full);
+      background-color: var(--_thumb);
+    }
+
+    &:checked {
+      --_track: var(--color-brand-solid);
+
+      &::before {
+        translate: 1rem 0;
+      }
+
+      &:dir(rtl)::before {
+        translate: -1rem 0;
+      }
+    }
+
+    /* appearance: none quita el foco nativo del control: el anillo se pone a mano. */
+    &:focus-visible {
+      outline: var(--focus-width) solid var(--color-focus);
+      outline-offset: var(--focus-offset);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      &::before {
+        transition: translate var(--duration-fast) var(--ease-standard);
+      }
+    }
+  }
+
+  @media (forced-colors: active) {
+    input[type="checkbox"]:is([role="switch"], [switch]) {
+      forced-color-adjust: none;
+      border: 1px solid CanvasText;
+      background-color: Canvas;
+
+      &::before {
+        background-color: CanvasText;
+      }
+
+      &:checked {
+        background-color: Highlight;
+        border-color: Highlight;
+
+        &::before {
+          background-color: HighlightText;
+        }
+      }
+
+      &:disabled {
+        border-color: GrayText;
+
+        &::before {
+          background-color: GrayText;
+        }
+      }
+    }
+  }
+}
