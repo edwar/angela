@@ -20,7 +20,7 @@ import { aiKey, drafts, githubToken, settings, toComponentId } from './storage.j
 import { getRenderedScheme } from '@angela-ui/angela/js/theme';
 import { createCodeEditor } from './editor.js';
 import { reviewComponent } from './review.js';
-import { buildDocsEntry, mergeDocsEntry, serializeDocsEntry } from './docs-entry.js';
+import { buildDocsEntry, componentTitle, mergeDocsEntry, serializeDocsEntry } from './docs-entry.js';
 import { guessFormat } from './ai.js';
 import { diffStats, lineDiff, withContext } from './diff.js';
 
@@ -1053,6 +1053,8 @@ export function startLab() {
     return id;
   }
   on(el.proposeName, 'input', validateProposeName);
+  // Al salir del campo se ve el nombre tal como quedará: «carousel» → «Carousel».
+  on(el.proposeName, 'change', () => (el.proposeName.value = componentTitle(el.proposeName.value)));
 
   on(el.proposeOpen, 'click', () => {
     const info = componentInfo();
@@ -1149,6 +1151,7 @@ export function startLab() {
       setStatus('Añade tu token de GitHub en Ajustes para abrir el pull request.');
       return;
     }
+    el.proposeName.value = componentTitle(el.proposeName.value);
     const id = validateProposeName();
     if (!id) {
       el.proposeName.reportValidity();

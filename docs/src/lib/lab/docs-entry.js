@@ -125,6 +125,28 @@ ${entry.a11y.map((nota) => `    ${literal(nota)},`).join('\n')}
 }
 
 /**
+ * Nombre de un componente como se muestra en la documentación y en el PR: primera letra en
+ * mayúscula y el resto en minúscula («carousel» → «Carousel», «Select Personalizable» →
+ * «Select personalizable»). Las siglas cortas y lo que lleva números se respetan («Tarjeta 3D»,
+ * «Botón CTA»).
+ * @param {string} name
+ * @returns {string}
+ */
+export function componentTitle(name) {
+  const palabras = name.trim().split(/\s+/).filter(Boolean);
+  // Todo en mayúsculas no son siglas: es el nombre escrito en mayúsculas.
+  const todoMayusculas = name === name.toLocaleUpperCase('es');
+  const sigla = (palabra) => !todoMayusculas && /^.{2,4}$/u.test(palabra) && palabra === palabra.toLocaleUpperCase('es');
+  return palabras
+    .map((palabra, i) => {
+      if (/\d/.test(palabra) || sigla(palabra)) return palabra;
+      const minuscula = palabra.toLocaleLowerCase('es');
+      return i === 0 ? minuscula.charAt(0).toLocaleUpperCase('es') + minuscula.slice(1) : minuscula;
+    })
+    .join(' ');
+}
+
+/**
  * Archivo de datos de un componente nuevo, listo para `docs/src/data/componentes/<id>.js`.
  *
  * @param {{
