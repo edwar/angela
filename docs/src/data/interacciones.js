@@ -136,6 +136,6 @@ export function Productos({ productos }: { productos: { id: string; nombre: stri
     archivos: [{ nombre: 'HTML', archivo: 'faq.html', lenguaje: 'html', codigo: acordeonHtml }],
     usa: ['details-name', 'details-content', 'interpolate-size'],
     sinSoporte: 'Sin name, se pueden abrir varias a la vez. Sin ::details-content o interpolate-size, se abren sin animación.',
-    enlace: { texto: 'Desplegable y acordeón', href: '/componentes/desplegable' },
+    enlace: { texto: 'Acordeón', href: '/componentes/acordeon' },
   },
 ];

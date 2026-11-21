@@ -57,6 +57,7 @@ export const componentSources = {
   popover: { css: 'components/popover.css', js: 'overlays.js' },
   pestanas: { css: 'components/tabs.css', js: 'tabs.js' },
   desplegable: { css: 'components/disclosure.css' },
+  acordeon: { css: 'components/disclosure.css' },
   avisos: { css: 'components/feedback.css' },
   tarjeta: { css: 'components/layout.css' },
   tabla: { css: 'components/layout.css' },

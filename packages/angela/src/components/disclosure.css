@@ -1,5 +1,6 @@
 /*
- * Desplegable y acordeón sobre <details>/<summary> nativos.
+ * Desplegable y acordeón sobre <details>/<summary> nativos. Comparten casi todo (cada fila del
+ * acordeón es un desplegable): un solo archivo, dos páginas en la documentación.
  *
  * Suelto:    <details class="disclosure"><summary>…</summary><p>…</p></details>
  * Acordeón:  <section class="accordion" aria-labelledby="…"> con <details> directos (sin clase).
