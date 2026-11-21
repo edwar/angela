@@ -21,7 +21,8 @@ describe('sourcesFor', () => {
   it('resuelve los del núcleo por el mapa y los aportados por convención', () => {
     expect(sourcesFor('campos')).toEqual({ css: 'components/field.css', js: 'forms.js' });
     expect(sourcesFor('spotlight')).toEqual({ css: 'components/spotlight.css', js: 'spotlight.js' });
-    expect(sourcesFor('cards')).toEqual({ css: 'components/cards.css' });
+    expect(sourcesFor('rejilla')).toEqual({ css: 'components/cards.css' });
+    expect(sourcesFor('flip-card')).toEqual({ css: 'components/flip-card.css' });
     expect(sourcesFor('no-existe')).toEqual({});
   });
 });

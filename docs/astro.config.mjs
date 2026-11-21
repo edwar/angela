@@ -5,5 +5,7 @@ export default defineConfig({
   // «Selección» se dividió en Casilla, Radio e Interruptor: los enlaces viejos siguen funcionando.
   redirects: {
     '/componentes/seleccion': '/componentes/casilla',
+    // «Rejilla de tarjetas» (cards) pasa a «Rejilla»; el ejemplo de productos, al bloque «Catálogo».
+    '/componentes/cards': '/componentes/rejilla',
   },
 });

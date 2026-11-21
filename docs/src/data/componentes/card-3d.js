@@ -21,7 +21,7 @@ export default {
     },
     {
       title: 'Dentro de una rejilla',
-      note: 'Se usa junto con «cards»: el contenedor pone el punto de fuga y la tarjeta deja de poner el suyo, de modo que todas giran hacia el mismo sitio.',
+      note: 'Se usa junto con la Rejilla (.cards): el contenedor pone el punto de fuga y la tarjeta deja de poner el suyo, de modo que todas giran hacia el mismo sitio.',
       code: `<section class="cards" style="--cards-min: 12rem">
   <article class="card card-3d"><p class="heading" data-size="md">Una</p></article>
   <article class="card card-3d"><p class="heading" data-size="md">Dos</p></article>
