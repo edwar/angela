@@ -96,6 +96,7 @@ jobs:
               echo "::notice::$name@$VERSION ya está en npm: se salta."
               continue
             fi
-            npm publish "paquetes/angela-ui-$pkg-$VERSION.tgz" --tag "$DIST_TAG"
+            # Con «./» delante: sin él, npm toma «paquetes/…» por un repositorio de GitHub (usuario/repo).
+            npm publish "./paquetes/angela-ui-$pkg-$VERSION.tgz" --tag "$DIST_TAG"
             echo "::notice::Publicado $name@$VERSION ($DIST_TAG)."
           done
