@@ -10,6 +10,7 @@ import { enhanceTabs } from './tabs.js';
 import { enhanceDialogs, enhancePopovers } from './overlays.js';
 import { initThemeToggle } from './theme.js';
 import { enhanceSpotlight } from './spotlight.js';
+import { enhanceCalendar } from './calendario.js';
 
 export * from './theme.js';
 export { enhanceForms } from './forms.js';
@@ -17,6 +18,7 @@ export { enhanceTabs, selectTab } from './tabs.js';
 export { enhanceDialogs, enhancePopovers } from './overlays.js';
 export { loadPolyfills } from './polyfills.js';
 export { enhanceSpotlight } from './spotlight.js';
+export { enhanceCalendar } from './calendario.js';
 
 /**
  * Activa todas las mejoras. Seguro de llamar en SSR (no hace nada fuera del navegador).
@@ -34,6 +36,7 @@ export function angela({ root = globalThis.document, polyfills = true } = {}) {
     enhancePopovers(root),
     initThemeToggle(root),
     enhanceSpotlight(root),
+    enhanceCalendar(root),
   ];
   return () => cleanups.forEach((fn) => fn());
 }
