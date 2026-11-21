@@ -1,0 +1,172 @@
+---
+import Layout from '../layouts/Layout.astro';
+import MiniApp from '../components/MiniApp.astro';
+import { icon } from '../data/icons.js';
+import { FORMAS, FUENTES, MAX_CHROMA, MAX_CROMA, NOMBRES_ROL, PRESETS, ROLES, auditoria, cssDelTema, temaPorDefecto } from '../lib/taller/temas.js';
+
+const inicial = temaPorDefecto();
+const pares = auditoria(inicial).length;
+---
+
+<Layout
+  title="Taller de temas"
+  description="Crea el tema de tu web con angela: color de cada rol, forma y tipografía, con el contraste WCAG garantizado. Exporta el CSS o mira toda la documentación con tu tema."
+>
+  <section class="doc-section" aria-labelledby="taller">
+    <h2 id="taller">Tu tema</h2>
+    <p class="taller-intro">
+      Empieza por un preset o pulsa <strong>Inspírame</strong>, y ajusta el color de cada rol, la forma y la tipografía. La
+      pantalla de ejemplo se ve en claro y en oscuro a la vez. Con cualquier tono y un croma hasta {MAX_CHROMA},
+      <span>los {pares} pares</span> de contraste cumplen WCAG AA: lo comprueba la misma receta que usa el CI.
+    </p>
+
+    <div class="taller" data-taller>
+      <form class="taller-controles" aria-label="Tema">
+        <fieldset class="fieldset">
+          <legend>Presets</legend>
+          <div class="taller-presets">
+            {
+              PRESETS.map((p) => (
+                <label class="taller-preset">
+                  <input type="radio" name="preset" value={p.id} checked={p.id === 'angela'} />
+                  <span class="taller-muestras" aria-hidden="true">
+                    {ROLES.map((rol) => (
+                      <span style={`background: oklch(0.6 ${Math.min(p.tema.roles[rol].c, 0.15) + (rol === 'neutral' ? 0.02 : 0)} ${p.tema.roles[rol].h})`} />
+                    ))}
+                  </span>
+                  <span>{p.nombre}</span>
+                </label>
+              ))
+            }
+          </div>
+          <div class="cluster">
+            <button class="button" type="button" data-variant="soft" data-size="sm" data-accion="inspirame">
+              Inspírame
+            </button>
+            <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" data-accion="restablecer">
+              Restablecer
+            </button>
+          </div>
+        </fieldset>
+
+        {
+          ROLES.map((rol) => (
+            <fieldset class="fieldset taller-rol">
+              <legend>
+                <span class="taller-chip" data-chip={rol} aria-hidden="true" />
+                {NOMBRES_ROL[rol]}
+              </legend>
+              {rol === 'neutral' && (
+                <div class="choice">
+                  <input type="checkbox" role="switch" switch id="t-neutro-sigue" name="neutro-sigue" checked />
+                  <label for="t-neutro-sigue">El tono sigue al de marca</label>
+                </div>
+              )}
+              <div class="field">
+                <label for={`t-${rol}-h`}>
+                  Tono <output for={`t-${rol}-h`} data-salida={`${rol}-h`}>{inicial.roles[rol].h}</output>
+                </label>
+                <input type="range" class="taller-tono" id={`t-${rol}-h`} name={`${rol}-h`} min="0" max="359" step="1" value={inicial.roles[rol].h} disabled={rol === 'neutral'} />
+              </div>
+              <div class="field">
+                <label for={`t-${rol}-c`}>
+                  Croma <output for={`t-${rol}-c`} data-salida={`${rol}-c`}>{inicial.roles[rol].c}</output>
+                </label>
+                <input type="range" id={`t-${rol}-c`} name={`${rol}-c`} min="0" max={MAX_CROMA[rol] ?? MAX_CHROMA} step="0.005" value={inicial.roles[rol].c} />
+              </div>
+            </fieldset>
+          ))
+        }
+
+        <fieldset class="fieldset">
+          <legend>Forma</legend>
+          <div class="cluster">
+            {
+              FORMAS.map((f) => (
+                <label class="pruebalo-opcion">
+                  <input type="radio" name="forma" value={f.id} checked={f.id === inicial.forma} />
+                  <span>{f.nombre}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <fieldset class="fieldset">
+          <legend>Tipografía</legend>
+          <div class="cluster">
+            {
+              FUENTES.map((f) => (
+                <label class="pruebalo-opcion" style={f.pila ? `font-family: ${f.pila}` : 'font-family: var(--font-body)'}>
+                  <input type="radio" name="fuente" value={f.id} checked={f.id === inicial.fuente} />
+                  <span>{f.nombre}</span>
+                </label>
+              ))
+            }
+          </div>
+          <p class="hint">Fuentes del sistema: no se descarga nada.</p>
+        </fieldset>
+      </form>
+
+      <div class="taller-vistas">
+        {
+          [
+            ['light', 'Claro'],
+            ['dark', 'Oscuro'],
+          ].map(([modo, nombre]) => (
+            <section class="taller-vista" data-angela-theme="angela" data-scheme={modo} aria-label={`Vista en ${nombre.toLowerCase()}`}>
+              <p class="eyebrow taller-modo">{nombre}</p>
+              <MiniApp sufijo={modo} />
+            </section>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="doc-section" aria-labelledby="taller-contraste">
+    <h2 id="taller-contraste">Contraste</h2>
+    <p class="taller-resumen" role="status" data-resumen></p>
+    <details class="disclosure">
+      <summary>Ver los {pares} pares</summary>
+      <div class="card" data-flush>
+        <div class="table-wrap" role="region" aria-labelledby="taller-pares-cap" tabindex="0">
+          <table class="table">
+            <caption id="taller-pares-cap" class="visually-hidden">Contraste de cada par de tokens en claro y en oscuro</caption>
+            <thead>
+              <tr>
+                <th scope="col">Texto o borde</th>
+                <th scope="col">Sobre</th>
+                <th scope="col">Modo</th>
+                <th scope="col" data-numeric>Contraste</th>
+                <th scope="col" data-numeric>Mínimo</th>
+              </tr>
+            </thead>
+            <tbody data-pares></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section class="doc-section" aria-labelledby="taller-usar">
+    <h2 id="taller-usar">Úsalo</h2>
+    <p>Pega esto en tu CSS, después de angela. Solo lleva lo que cambia respecto a los valores por defecto.</p>
+    <pre tabindex="0" aria-label="CSS del tema"><code data-css>{cssDelTema(inicial)}</code></pre>
+    <div class="cluster taller-acciones">
+      <button class="button" type="button" data-variant="outline" data-tone="neutral" data-accion="enlace">
+        <Fragment set:html={icon('copy')} /> Copiar enlace al tema
+      </button>
+      <button class="button" type="button" data-accion="aplicar">Ver la documentación con este tema</button>
+      <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-accion="quitar" hidden>
+        Volver a los colores de angela
+      </button>
+    </div>
+    <p class="muted" role="status" data-estado></p>
+  </section>
+</Layout>
+
+<script>
+  import { iniciarTaller } from '../lib/taller/cliente.js';
+  iniciarTaller();
+</script>

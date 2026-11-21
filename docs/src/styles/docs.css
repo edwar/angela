@@ -567,6 +567,403 @@ body {
   white-space: nowrap;
 }
 
+/* «Pruébalo»: vista previa + controles arriba, código por framework abajo. */
+.pruebalo-intro {
+  max-inline-size: var(--measure);
+}
+
+.pruebalo-cuerpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (width >= 60rem) {
+    grid-template-columns: minmax(0, 1.5fr) minmax(17rem, 1fr);
+  }
+}
+
+.pruebalo-vista {
+  display: grid;
+  /* minmax(0, 1fr): una cinta o un carrusel (más anchos que la pantalla) no ensanchan la columna. */
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  min-block-size: 14rem;
+  padding: var(--space-8) var(--space-5);
+  background-color: var(--color-canvas);
+  color: var(--color-text);
+}
+
+/* La cinta y el carrusel ocupan el ancho; el resto se centra. */
+.pruebalo-lienzo {
+  justify-self: center;
+  inline-size: min(100%, 36rem);
+  min-inline-size: 0;
+
+  /* Los componentes pequeños (un botón) van al centro; los de bloque ocupan el ancho. */
+  &[data-centrar] {
+    display: flex;
+    justify-content: center;
+  }
+}
+
+.pruebalo-controles {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-block-start: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+
+  @media (width >= 60rem) {
+    border-block-start: 0;
+    border-inline-start: 1px solid var(--color-border);
+  }
+
+  & code {
+    color: var(--color-text-muted);
+    font-size: var(--fs-xs);
+  }
+
+  & > button[type="reset"] {
+    justify-self: start;
+  }
+
+  & output {
+    color: var(--color-text-muted);
+    font-family: var(--font-code);
+    font-size: var(--fs-xs);
+  }
+
+  & input[type="range"] {
+    inline-size: 100%;
+  }
+}
+
+/* Opciones como botones segmentados: un radio nativo con su texto. */
+.pruebalo-opciones .cluster {
+  --cluster-gap: var(--space-1-5);
+}
+
+.pruebalo-opcion {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--control-h-sm);
+  padding-inline: var(--space-2-5, var(--space-3));
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-family: var(--font-code);
+  font-size: var(--fs-xs);
+  cursor: pointer;
+
+  & > input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  &:hover {
+    background-color: var(--color-surface-hover);
+  }
+
+  /* Elegida: fondo y borde de marca, y texto en negrita (no solo color). */
+  &:has(> input:checked) {
+    border-color: var(--color-brand-solid);
+    background-color: var(--color-brand-subtle);
+    color: var(--color-brand-text);
+    font-weight: var(--fw-bold);
+  }
+
+  &:has(> input:focus-visible) {
+    outline: var(--focus-width) solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+.pruebalo-lenguaje {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1-5);
+  padding: var(--space-3) var(--space-5) 0;
+  border-block-start: 1px solid var(--color-border);
+}
+
+/* «Componente» / «Uso» delante de la ruta del archivo. */
+.pruebalo-parte {
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.pruebalo-nota {
+  margin: 0;
+  padding: var(--space-2) var(--space-5);
+}
+
+/* Componente y uso, uno debajo del otro: el uso se separa con un borde. */
+.example-frameworks [role="tabpanel"] > .example-archivo + .example-archivo {
+  border-block-start: 1px solid var(--color-border);
+}
+
+.pruebalo-tema {
+  border-block-start: 1px solid var(--color-border);
+}
+
+/* Taller de temas: controles a un lado, la pantalla de ejemplo en claro y oscuro al otro. */
+.taller-intro {
+  max-inline-size: var(--measure);
+}
+
+.taller {
+  display: grid;
+  gap: var(--space-6);
+  grid-template-columns: minmax(0, 1fr);
+
+  @media (width >= 64rem) {
+    grid-template-columns: 18rem minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.taller-controles {
+  display: grid;
+  gap: var(--space-5);
+
+  @media (width >= 64rem) {
+    position: sticky;
+    inset-block-start: var(--space-20, 5rem);
+    max-block-size: calc(100dvh - 6rem);
+    overflow-y: auto;
+    padding-inline-end: var(--space-2);
+  }
+
+  & input[type="range"] {
+    inline-size: 100%;
+  }
+
+  & output {
+    color: var(--color-text-muted);
+    font-family: var(--font-code);
+    font-size: var(--fs-xs);
+  }
+}
+
+.taller-rol {
+  gap: var(--space-2);
+
+  & legend {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+}
+
+/* Muestra del color de cada rol, con borde para que se vea también en alto contraste. */
+.taller-chip {
+  inline-size: 1rem;
+  block-size: 1rem;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+
+/* El tono, sobre una rueda de color para elegirlo de un vistazo. El deslizador se dibuja entero:
+   la pista es la rueda y el cursor, un círculo con borde (visible también en alto contraste). */
+.taller-tono {
+  appearance: none;
+  block-size: 0.75rem;
+  margin-block: var(--space-2);
+  border-radius: var(--radius-full);
+  background: linear-gradient(to right in oklch longer hue, oklch(0.65 0.15 0), oklch(0.65 0.15 359));
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    border: 3px solid var(--color-text);
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
+  }
+
+  &::-moz-range-thumb {
+    inline-size: 1.5rem;
+    block-size: 1.5rem;
+    border: 3px solid var(--color-text);
+    border-radius: var(--radius-full);
+    background: var(--color-surface);
+  }
+
+  &:focus-visible {
+    outline: var(--focus-width) solid var(--color-focus);
+    outline-offset: 4px;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  @media (forced-colors: active) {
+    forced-color-adjust: none;
+    background: CanvasText;
+  }
+}
+
+.taller-presets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.taller-preset {
+  position: relative;
+  display: grid;
+  gap: var(--space-1-5);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  cursor: pointer;
+
+  & > input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  &:hover {
+    background-color: var(--color-surface-hover);
+  }
+
+  /* Elegido: borde de marca más grueso y negrita (no solo color). */
+  &:has(> input:checked) {
+    border-color: var(--color-brand-solid);
+    box-shadow: inset 0 0 0 1px var(--color-brand-solid);
+    font-weight: var(--fw-bold);
+  }
+
+  &:has(> input:focus-visible) {
+    outline: var(--focus-width) solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
+
+.taller-muestras {
+  display: flex;
+
+  & > span {
+    flex: 1;
+    block-size: 0.75rem;
+
+    &:first-child {
+      border-start-start-radius: var(--radius-sm);
+      border-end-start-radius: var(--radius-sm);
+    }
+
+    &:last-child {
+      border-start-end-radius: var(--radius-sm);
+      border-end-end-radius: var(--radius-sm);
+    }
+  }
+}
+
+.taller-vistas {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.taller-vista {
+  padding: var(--space-5);
+  border: 1px solid var(--plano-trazo-suave);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-canvas);
+  color: var(--color-text);
+
+  & h3,
+  & h4 {
+    margin: 0;
+    font-family: var(--font-body);
+    text-transform: none;
+    letter-spacing: normal;
+  }
+}
+
+.taller-modo {
+  margin: 0 0 var(--space-3);
+}
+
+.taller-app {
+  display: grid;
+  gap: var(--space-4);
+
+  & .card > p,
+  & .callout p {
+    margin: 0;
+  }
+
+  /* Las cifras y los códigos no se parten: si no caben, la tabla se desplaza en su región. */
+  & .table :is(th, td) {
+    white-space: nowrap;
+  }
+}
+
+.taller-app-cabecera,
+.taller-app-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+
+  & p {
+    margin: 0;
+  }
+}
+
+.taller-app-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+  gap: var(--space-4);
+
+  & > .card {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+  }
+
+  & .meter {
+    inline-size: 100%;
+  }
+}
+
+.taller-resumen {
+  max-inline-size: var(--measure);
+  font-weight: var(--fw-medium);
+}
+
+.taller-acciones {
+  margin-block-start: var(--space-4);
+}
+
+/* Aviso en lo alto de cada página mientras los ejemplos usan el tema del taller. */
+.tema-aviso {
+  align-items: center;
+  margin-block-end: var(--space-6);
+
+  & p {
+    margin: 0;
+  }
+
+  & > .button {
+    margin-inline-start: auto;
+  }
+}
+
 /* Compatibilidad de un componente con los navegadores. */
 .compat {
   & h3 {

@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import Example from '../../components/Example.astro';
 import Compatibilidad from '../../components/Compatibilidad.astro';
+import Playground from '../../components/Playground.astro';
 import { components } from '../../data/components.js';
 
 export function getStaticPaths() {
@@ -12,6 +13,8 @@ const { component } = Astro.props;
 ---
 
 <Layout title={component.title} description={component.summary}>
+  <Playground slug={component.slug} title={component.title} />
+
   <section class="doc-section" aria-labelledby="ejemplos">
     <h2 id="ejemplos">Ejemplos</h2>
     {component.examples.map((ex, i) => <Example title={ex.title} note={ex.note} code={ex.code} index={i} />)}
