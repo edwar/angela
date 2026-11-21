@@ -5,7 +5,7 @@
  * El componente lo pinta igual en todos: lo comprueban los tests renderizando React, Vue y JS.
  */
 import { htmlAJsx } from '../codigo-frameworks.js';
-import { camel, kebab, rasgos } from './ir.js';
+import { camel, kebab, rasgos, usaIndice } from './ir.js';
 
 /* ---------- Ayudantes comunes ---------- */
 
@@ -54,6 +54,9 @@ function expresion(v, { acc, idBase = 'id', nulo = 'undefined', concatenar = fal
       return `${acc(v.nombre)} === ${literal(v.valor)} ? ${cadena(v.siVerdadero)} : ${v.siFalso === undefined ? nulo : cadena(v.siFalso)}`;
     case 'id':
       return idCon(v.sufijo);
+    case 'idItem':
+      // «i» es el índice del bucle de cada() en todos los frameworks.
+      return concatenar ? `${idBase} + ${cadena(`${v.sufijo}-`)} + i` : `\`\${${idBase}}${v.sufijo}-\${i}\``;
     case 'idSi':
       return `${cond(v.cond)} ? ${idCon(v.sufijo)} : ${nulo}`;
     case 'ids':
@@ -148,7 +151,7 @@ function emitirReact(c, ts, next = false) {
         }
         case 'cada':
           // En una línea: los espacios entre el texto y el separador son parte del contenido.
-          out.push(`${pre}{${n.lista}.map((item) => (`, `${pre}  <Fragment key={item}>${nodos(n.hijos, 0).join('')}</Fragment>`, `${pre}))}`);
+          out.push(`${pre}{${n.lista}.map((${usaIndice(n.hijos) ? 'item, i' : 'item'}) => (`, `${pre}  <Fragment key={item}>${nodos(n.hijos, 0).join('')}</Fragment>`, `${pre}))}`);
           break;
         case 'el': {
           const abre = `<${n.etiqueta}${atributos(n)}`;
@@ -266,7 +269,7 @@ function emitirVue(c, ts) {
         }
         case 'cada':
           // En una línea: Vue quita los espacios que quedan solos entre saltos de línea.
-          out.push(`${pre}<template v-for="item in ${n.lista}" :key="item">${nodos(n.hijos, 0).join('')}</template>`);
+          out.push(`${pre}<template v-for="${usaIndice(n.hijos) ? '(item, i)' : 'item'} in ${n.lista}" :key="item">${nodos(n.hijos, 0).join('')}</template>`);
           break;
         case 'el': {
           const abre = `<${n.etiqueta}${d}${atributos(n)}`;
@@ -377,7 +380,7 @@ function emitirAngular(c) {
         case 'cada':
           // En una línea: Angular quita los espacios que quedan solos entre saltos de línea.
           // El espacio tras «{» evita «{{{», que Angular leería como interpolación.
-          out.push(`${pre}@for (item of ${acc(n.lista)}; track item) { ${nodos(n.hijos, 0).join('')} }`);
+          out.push(`${pre}@for (item of ${acc(n.lista)}; track item${usaIndice(n.hijos) ? '; let i = $index' : ''}) { ${nodos(n.hijos, 0).join('')} }`);
           break;
         case 'el': {
           const abre = `<${n.etiqueta}${atributos(n)}`;
@@ -468,7 +471,7 @@ function emitirAstro(c, ts) {
           break;
         }
         case 'cada':
-          out.push(`${pre}{${n.lista}.map((item) => (`, `${pre}  <Fragment>${nodos(n.hijos, 0).join('')}</Fragment>`, `${pre}))}`);
+          out.push(`${pre}{${n.lista}.map((${usaIndice(n.hijos) ? 'item, i' : 'item'}) => (`, `${pre}  <Fragment>${nodos(n.hijos, 0).join('')}</Fragment>`, `${pre}))}`);
           break;
         case 'el': {
           const abre = `<${n.etiqueta}${atributos(n)}`;
@@ -550,7 +553,7 @@ function emitirVanilla(c, ts) {
               .map(([valor, hijos]) => `${n.prop} === ${cadena(valor)} ? \`${plantilla(hijos)}\` : `)
               .join('')}\`${plantilla(n.otro)}\`}`;
           case 'cada':
-            return `\${${n.lista}.map((item) => \`${plantilla(n.hijos)}\`).join('')}`;
+            return `\${${n.lista}.map((${usaIndice(n.hijos) ? 'item, i' : 'item'}) => \`${plantilla(n.hijos)}\`).join('')}`;
           case 'el':
             return VACIOS.has(n.etiqueta) ? `<${n.etiqueta}${atributos(n)}>` : `<${n.etiqueta}${atributos(n)}>${plantilla(n.hijos)}</${n.etiqueta}>`;
           default:

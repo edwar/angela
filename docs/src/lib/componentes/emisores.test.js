@@ -75,7 +75,9 @@ async function renderReact(c, props, slots, ts) {
   const fw = emitir(c, props, slots, ts ? 'ts' : 'js').find((f) => f.id === 'react');
   const mod = await modulo(fw.componente.codigo, ts ? 'C.tsx' : 'C.jsx', { react: React });
   const nombrados = Object.fromEntries(Object.keys(slots).map((n) => [n, marca(n)]));
-  return conSlots(renderToStaticMarkup(React.createElement(mod[c.nombre], { ...props, ...nombrados })), slots);
+  // React 19 añade en el servidor un <link rel="preload"> por cada imagen: no es parte del marcado.
+  const html = renderToStaticMarkup(React.createElement(mod[c.nombre], { ...props, ...nombrados })).replace(/<link rel="preload" as="image"[^>]*\/?>/g, '');
+  return conSlots(html, slots);
 }
 
 async function renderVanilla(c, props, slots, ts) {

@@ -9,7 +9,7 @@
  *
  * Los nombres de las props son los de @angela-ui/react (variant, tone, size, block…).
  */
-import { bandera, booleano, cada, crudo, el, estilo, evento, id, idSi, ids, item, lit, prop, segun, segunProp, si, slot, texto, unir } from '../componentes/ir.js';
+import { bandera, booleano, cada, crudo, el, estilo, evento, id, idItem, idSi, ids, item, lit, prop, segun, segunProp, si, slot, texto, unir } from '../componentes/ir.js';
 import { renderHtml } from '../componentes/render.js';
 
 export const TONOS = ['brand', 'neutral', 'success', 'warning', 'danger', 'info'];
@@ -133,6 +133,206 @@ export const DEFINICIONES = [
           el('label', { for: id() }, [texto('label')]),
           si('indeterminate', [el('progress', { class: 'progress', id: id(), max: prop('max') })]),
           si('!indeterminate', [el('progress', { class: 'progress', id: id(), max: prop('max'), value: prop('value') }, [texto('value')])]),
+        ]),
+      ],
+    },
+    slots: () => ({}),
+  },
+
+  // Calendario: los inputs nativos van dentro (sin JS se usan tal cual); con JS, enhanceCalendar
+  // pinta la cuadrícula. En un .popover es un selector de fecha; suelto, siempre visible.
+  (() => {
+    const fecha = (nombre, etiqueta) => [
+      el('label', { for: id(`-${nombre}`) }, [lit(etiqueta)]),
+      el('input', { class: 'input', id: id(`-${nombre}`), type: 'date', name: nombre, min: prop('min'), max: prop('max') }),
+    ];
+    // Siempre visible, el calendario es un grupo con el nombre de la etiqueta; en el popover lo nombra el panel.
+    const calendario = el('div', { class: 'calendar', 'data-mode': prop('mode'), role: segunProp('inline', 'group'), 'aria-labelledby': idSi('inline', '-etiqueta') }, [
+      segun(
+        'mode',
+        {
+          range: [
+            el('div', { class: 'calendar-fallback' }, [
+              el('div', { class: 'field' }, fecha('inicio', 'Desde')),
+              el('div', { class: 'field' }, fecha('fin', 'Hasta')),
+            ]),
+          ],
+        },
+        [el('div', { class: 'calendar-fallback field' }, fecha('fecha', 'Fecha'))],
+      ),
+    ]);
+    const icono = crudo(
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+    );
+    return {
+      slug: 'calendario',
+      // El panel se abre dentro del marco: necesita altura.
+      altoMinimo: 460,
+      controles: [
+        { nombre: 'label', etiqueta: 'Etiqueta', tipo: 'texto', inicial: 'Fecha de la cita', descripcion: 'Etiqueta visible del selector; también nombra el botón.' },
+        { nombre: 'placeholder', etiqueta: 'Texto sin fecha', tipo: 'texto', inicial: 'Elige una fecha', descripcion: 'Lo que dice el botón mientras no hay fecha.' },
+        { nombre: 'mode', etiqueta: 'Modo', tipo: 'opciones', valores: ['single', 'range'], defecto: 'single', ayuda: 'range: el primer clic marca el inicio y el segundo, el fin.', descripcion: 'single: una fecha · range: un rango (inicio y fin).' },
+        { nombre: 'inline', etiqueta: 'Siempre visible', tipo: 'booleano', defecto: false, ayuda: 'Sin él, el calendario se abre en un popover desde un botón (selector de fecha).', descripcion: 'El calendario a la vista, sin botón ni popover.' },
+        { nombre: 'min', etiqueta: 'Mínimo (AAAA-MM-DD)', tipo: 'texto', defecto: '', descripcion: 'Fecha mínima; los días anteriores no se pueden elegir.' },
+        { nombre: 'max', etiqueta: 'Máximo (AAAA-MM-DD)', tipo: 'texto', defecto: '', descripcion: 'Fecha máxima.' },
+      ],
+      componente: {
+        nombre: 'Calendar',
+        raiz: [
+          si('inline', [el('div', { class: 'field' }, [el('span', { class: 'label', id: id('-etiqueta') }, [texto('label')]), calendario])]),
+          si('!inline', [
+            el('div', { class: 'field' }, [
+              el('label', { id: id('-etiqueta'), for: id('-boton') }, [texto('label')]),
+              el(
+                'button',
+                {
+                  class: 'button calendar-trigger',
+                  id: id('-boton'),
+                  type: 'button',
+                  'data-variant': 'outline',
+                  'data-tone': 'neutral',
+                  commandfor: id('-panel'),
+                  command: 'toggle-popover',
+                  'aria-labelledby': ids([['label', '-etiqueta'], ['placeholder', '-valor']]),
+                },
+                [icono, el('span', { class: 'calendar-value', id: id('-valor') }, [texto('placeholder')])],
+              ),
+              el('div', { class: 'popover', id: id('-panel'), popover: '', 'aria-labelledby': id('-etiqueta') }, [calendario]),
+            ]),
+          ]),
+        ],
+      },
+      slots: () => ({}),
+    };
+  })(),
+
+  {
+    slug: 'foco-de-luz',
+    controles: [
+      { nombre: 'src', etiqueta: 'Imagen', tipo: 'opciones', valores: ['/img/naturaleza/lago-de-montana.webp', '/img/naturaleza/volcan.webp', '/img/ciudad/ciudad-de-noche.webp'], inicial: '/img/naturaleza/lago-de-montana.webp', descripcion: 'La imagen que se revela.' },
+      { nombre: 'alt', etiqueta: 'Texto alternativo', tipo: 'texto', inicial: 'Lago entre montañas nevadas', ayuda: 'Describe lo que se ve en la imagen que elijas: el velo es solo visual y el lector la lee entera.', descripcion: 'Descripción de la imagen (vacío si es decorativa).' },
+      { nombre: 'radius', etiqueta: 'Radio de la luz (px)', tipo: 'numero', min: 40, max: 300, defecto: 120, ayuda: '--spotlight-radius' },
+    ],
+    componente: {
+      nombre: 'Spotlight',
+      raiz: [
+        el('div', { class: 'spotlight', style: estilo([['--spotlight-radius', prop('radius', 120), 'px']]) }, [
+          el('img', { src: prop('src'), alt: prop('alt'), width: '720', height: '480' }),
+          el('div', { class: 'spotlight-overlay' }),
+        ]),
+      ],
+    },
+    slots: () => ({}),
+  },
+
+  {
+    slug: 'pestanas',
+    controles: [
+      { nombre: 'label', etiqueta: 'Nombre de la fila', tipo: 'texto', inicial: 'Detalles del pedido', descripcion: 'Nombre accesible de la fila de pestañas (aria-label).' },
+      { nombre: 'items', etiqueta: 'Pestañas (separadas por |)', tipo: 'lista', separador: '|', inicial: ['Resumen', 'Envío', 'Pagos'], defecto: [], ayuda: 'Las flechas cambian de pestaña; la primera empieza elegida.', descripcion: 'Títulos de las pestañas; cada una tiene su panel.' },
+    ],
+    componente: {
+      nombre: 'Tabs',
+      raiz: [
+        el('div', { class: 'tabs' }, [
+          el('div', { class: 'tablist', role: 'tablist', focusgroup: 'tablist nomemory', 'aria-label': prop('label') }, [
+            cada('items', [el('button', { type: 'button', role: 'tab', id: idItem('-tab') }, [item()])]),
+          ]),
+          // enhanceTabs elige la primera y oculta los demás paneles (hidden="until-found").
+          cada('items', [el('div', { role: 'tabpanel', 'aria-labelledby': idItem('-tab') }, [el('p', {}, [lit('Contenido de «'), item(), lit('».')])])]),
+        ]),
+      ],
+    },
+    slots: () => ({}),
+  },
+
+  // Tabla: con nombre (caption + región enfocable) para desplazarla con el teclado. Cada acción se
+  // describe con su fila (aria-describedby), así «Editar» no se repite sin contexto.
+  (() => {
+    const tabla = el('div', { class: 'table-wrap', role: 'region', 'aria-labelledby': id('-cap'), tabindex: '0' }, [
+      el('table', { class: 'table' }, [
+        el('caption', { id: id('-cap') }, [texto('caption')]),
+        el('thead', {}, [
+          el('tr', {}, [
+            el('th', { scope: 'col' }, [lit('Nombre')]),
+            si('actions', [el('th', { scope: 'col' }, [el('span', { class: 'visually-hidden' }, [lit('Acciones')])])]),
+          ]),
+        ]),
+        el('tbody', {}, [
+          cada('items', [
+            el('tr', {}, [
+              el('th', { scope: 'row', id: idItem('-fila') }, [item()]),
+              si('actions', [
+                el('td', { class: 'table-actions' }, [
+                  el('button', { class: 'button', type: 'button', 'data-variant': 'ghost', 'data-tone': 'neutral', 'data-size': 'sm', 'aria-describedby': idItem('-fila') }, [lit('Editar')]),
+                ]),
+              ]),
+            ]),
+          ]),
+        ]),
+      ]),
+    ]);
+    return {
+      slug: 'tabla',
+      controles: [
+        { nombre: 'caption', etiqueta: 'Título', tipo: 'texto', inicial: 'Equipo', descripcion: 'Título de la tabla (<caption>); también nombra la región con scroll.' },
+        { nombre: 'items', etiqueta: 'Filas (separadas por |)', tipo: 'lista', separador: '|', inicial: ['Ana Torres', 'Luis Pérez', 'Marta Gil'], defecto: [] },
+        { nombre: 'actions', etiqueta: 'Columna de acciones', tipo: 'booleano', defecto: false, inicial: true, ayuda: 'Siempre visibles; cada botón se describe con su fila.', descripcion: 'Un botón «Editar» por fila, descrito con su nombre.' },
+        { nombre: 'flush', etiqueta: 'Dentro de una tarjeta', tipo: 'booleano', defecto: false, ayuda: '.card[data-flush]: la tarjeta sin relleno, para no hacer cajas dentro de cajas.', descripcion: 'En una tarjeta a sangre.' },
+      ],
+      componente: {
+        nombre: 'DataTable',
+        raiz: [si('flush', [el('div', { class: 'card', 'data-flush': '' }, [tabla])]), si('!flush', [tabla])],
+      },
+      slots: () => ({}),
+    };
+  })(),
+
+  {
+    slug: 'tarjeta-3d',
+    controles: [
+      { nombre: 'title', etiqueta: 'Título', tipo: 'texto', inicial: 'Portátil' },
+      { nombre: 'children', etiqueta: 'Texto', tipo: 'texto', slot: 'children', inicial: 'Potencia para crear, en 1,3 kg.' },
+      { nombre: 'action', etiqueta: 'Botón', tipo: 'texto', inicial: 'Comprar', ayuda: 'Con un botón dentro, la tarjeta también se inclina al llegar con el teclado.', descripcion: 'Texto del botón (vacío: sin botón).' },
+      { nombre: 'x', etiqueta: 'Giro horizontal (°)', tipo: 'numero', min: 0, max: 30, defecto: 12, ayuda: '--card-3d-x' },
+      { nombre: 'y', etiqueta: 'Giro vertical (°)', tipo: 'numero', min: 0, max: 30, defecto: 8, ayuda: '--card-3d-y' },
+    ],
+    componente: {
+      nombre: 'TiltCard',
+      slots: { children: 'El texto de la tarjeta.' },
+      raiz: [
+        el('article', { class: 'card card-3d stack', style: estilo([['--card-3d-x', prop('x', 12), 'deg'], ['--card-3d-y', prop('y', 8), 'deg']]) }, [
+          el('h3', { class: 'heading', 'data-size': 'lg' }, [texto('title')]),
+          el('p', { class: 'text', 'data-size': 'sm', 'data-muted': '' }, [slot()]),
+          si('action', [el('div', { class: 'cluster card-3d-actions' }, [el('button', { class: 'button', type: 'button', 'data-variant': 'soft' }, [texto('action')])])]),
+        ]),
+      ],
+    },
+    slots: (v) => ({ children: esc(v.children) }),
+  },
+
+  {
+    slug: 'tarjeta-giratoria',
+    controles: [
+      { nombre: 'front', etiqueta: 'Frente', tipo: 'texto', inicial: 'Plan Pro' },
+      { nombre: 'back', etiqueta: 'Reverso', tipo: 'texto', inicial: 'Proyectos ilimitados y ayuda prioritaria.' },
+      { nombre: 'action', etiqueta: 'Botón del reverso', tipo: 'texto', inicial: 'Elegir plan', ayuda: 'Algo enfocable en el reverso hace que la tarjeta también gire con el teclado.', descripcion: 'Texto del botón del reverso (vacío: sin botón).' },
+      { nombre: 'flip', etiqueta: 'Eje', tipo: 'opciones', valores: ['horizontal', 'vertical'], defecto: 'horizontal', descripcion: 'horizontal: como una página · vertical: como un calendario de mesa.' },
+      { nombre: 'duration', etiqueta: 'Duración (ms)', tipo: 'numero', min: 200, max: 2000, defecto: 600, ayuda: '--flip-duration. Con movimiento reducido, cambia de cara sin animación.' },
+    ],
+    componente: {
+      nombre: 'FlipCard',
+      raiz: [
+        el('div', { class: 'flip-card', 'data-flip': prop('flip', 'horizontal'), style: estilo([['--flip-duration', prop('duration', 600), 'ms']]) }, [
+          el('div', { class: 'flip-card-inner' }, [
+            el('div', { class: 'flip-card-face flip-card-front' }, [el('p', { class: 'heading', 'data-size': 'lg' }, [texto('front')])]),
+            el('div', { class: 'flip-card-face flip-card-back' }, [
+              el('div', { class: 'stack' }, [
+                el('p', {}, [texto('back')]),
+                si('action', [el('button', { class: 'button', type: 'button', 'data-size': 'sm' }, [texto('action')])]),
+              ]),
+            ]),
+          ]),
         ]),
       ],
     },

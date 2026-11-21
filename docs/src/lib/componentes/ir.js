@@ -47,6 +47,16 @@ export const segunProp = (nombre, siVerdadero, siFalso) => ({ tipo: 'segunProp',
 /** Un valor si la prop es igual a `valor` y otro (o nada) si no: type = kind === 'radio' ? 'radio' : 'checkbox'. */
 export const siIgual = (nombre, valor, siVerdadero, siFalso) => ({ tipo: 'siIgual', nombre, valor, siVerdadero, siFalso });
 export const id = (sufijo = '') => ({ tipo: 'id', sufijo });
+/** ¿Algún nodo de dentro usa el índice del bucle (idItem)? Solo entonces se declara «i». */
+export function usaIndice(hijos) {
+  let usa = false;
+  recorrer(hijos, (n) => {
+    if (n && typeof n === 'object' && n.tipo === 'idItem') usa = true;
+  });
+  return usa;
+}
+/** Dentro de cada(): un id por elemento, «<id><sufijo>-<índice>» (p. ej. una pestaña y su panel). */
+export const idItem = (sufijo = '') => ({ tipo: 'idItem', sufijo });
 export const idSi = (cond, sufijo) => ({ tipo: 'idSi', cond: [cond].flat(), sufijo });
 export const ids = (lista) => ({ tipo: 'ids', lista: lista.map(([cond, sufijo]) => ({ cond: [cond].flat(), sufijo })) });
 export const estilo = (lista) => ({ tipo: 'estilo', lista: lista.map(([variable, valor, unidad = '']) => ({ variable, valor, unidad })) });
@@ -73,7 +83,7 @@ export function rasgos(componente) {
   const r = { ids: false, eventos: new Set(), slots: new Set(), listas: new Set(), estilos: false, autofocus: false };
   recorrer(componente.raiz, (n) => {
     if (typeof n !== 'object' || n === null) return;
-    if (['id', 'idSi', 'ids'].includes(n.tipo)) r.ids = true;
+    if (['id', 'idSi', 'ids', 'idItem'].includes(n.tipo)) r.ids = true;
     if (n.tipo === 'evento') r.eventos.add(n.nombre);
     if (n.tipo === 'slot') r.slots.add(n.nombre);
     if (n.tipo === 'cada' || n.tipo === 'unir') r.listas.add(n.lista);
