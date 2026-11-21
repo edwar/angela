@@ -964,6 +964,25 @@ body {
   }
 }
 
+/* Interacciones: qué usa cada demo y qué se ve sin soporte, entre la vista previa y el código. */
+.interacciones-intro {
+  max-inline-size: var(--measure);
+}
+
+.interacciones-usa {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-block-start: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.interacciones-sin {
+  margin: 0;
+  max-inline-size: var(--measure);
+  font-size: var(--fs-sm);
+}
+
 /* Compatibilidad de un componente con los navegadores. */
 .compat {
   & h3 {

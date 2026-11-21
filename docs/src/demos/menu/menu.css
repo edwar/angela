@@ -1,0 +1,11 @@
+/* El menú ya lo resuelve .popover de angela: anchor positioning con posiciones de reserva
+   (position-try-fallbacks). Se recoloca según el espacio que queda en la ventana. */
+.menu-zona {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+
+  & p {
+    margin: 0;
+  }
+}

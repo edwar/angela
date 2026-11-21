@@ -1,0 +1,10 @@
+<div class="menu-zona">
+  <p class="muted">Desplaza la página hasta dejar el botón cerca del borde inferior de la ventana y ábrelo: si no cabe debajo, se abre encima.</p>
+  <button class="button" type="button" data-variant="outline" data-tone="neutral" commandfor="menu-cuenta" command="toggle-popover">Mi cuenta</button>
+  <div class="popover" id="menu-cuenta" popover>
+    <button class="popover-item" type="button" commandfor="menu-cuenta" command="hide-popover">Perfil</button>
+    <button class="popover-item" type="button" commandfor="menu-cuenta" command="hide-popover">Ajustes</button>
+    <hr>
+    <button class="popover-item" type="button" data-tone="danger" commandfor="menu-cuenta" command="hide-popover">Cerrar sesión</button>
+  </div>
+</div>

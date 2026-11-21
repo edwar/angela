@@ -98,7 +98,7 @@ export const CARACTERISTICAS = [
   { id: 'backdrop-filter', nombre: 'backdrop-filter', papel: 'mejora', css: /backdrop-filter/, nota: 'Sin él, sin el desenfoque del fondo.' },
   { id: 'scrollbar-width', nombre: 'scrollbar-width', papel: 'mejora', css: /scrollbar-width/, nota: 'Sin él, la barra de scroll nativa.' },
   { id: 'scrollbar-gutter', nombre: 'scrollbar-gutter', papel: 'mejora', css: /scrollbar-gutter/, nota: 'Sin él, el contenido puede moverse al aparecer la barra.' },
-  { id: 'view-transitions', nombre: 'View transitions', papel: 'mejora', css: /view-transition/, nota: 'Sin ellas, el cambio es instantáneo.' },
+  { id: 'view-transitions', nombre: 'View Transitions', papel: 'mejora', css: /view-transition/, nota: 'Sin ellas, el cambio es instantáneo.' },
   { id: 'content-visibility', nombre: 'content-visibility', papel: 'mejora', css: /content-visibility/, nota: 'Sin él, se pinta todo de una vez.' },
 ];
 
@@ -226,4 +226,14 @@ export function compatibilidad({ css = '', html = '', nucleo = '' }) {
     identificado: NAVEGADORES.reduce((s, n) => s + cobertura(n.caniuse, [0]).total, 0),
     total: usoTotal(),
   };
+}
+
+/**
+ * El soporte de una sola característica: su estado de Baseline y qué parte del uso mundial la ve.
+ * @param {string} id  id de web-features
+ */
+export function soporteDe(id) {
+  const c = CARACTERISTICAS.find((x) => x.id === id) ?? { id, nombre: features[id]?.name ?? id, papel: 'mejora' };
+  const r = resumen([c]);
+  return { id, nombre: c.nombre, nota: c.nota ?? null, baseline: features[id]?.status?.baseline ?? false, global: r.global, navegadores: r.navegadores };
 }

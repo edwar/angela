@@ -30,6 +30,7 @@ docs/                     Sitio de documentación (Astro)
   src/lib/codigo-frameworks.js  Pasa el HTML de cada ejemplo a Astro, React, Next.js, Vue y Angular (pestañas de los ejemplos)
   src/lib/playground/           «Pruébalo»: props de cada componente (definiciones.js) → controles, vista previa y código
   src/lib/componentes/          Componentes reutilizables por framework (TS o JS) desde un árbol neutro (ir.js, emisores.js)
+  src/demos/<id>/               Demos de «Interacciones» (/interacciones): su HTML, CSS y JS son lo que se ejecuta y lo que se muestra
   src/lib/taller/               Taller de temas (/temas): presets, CSS exportado, enlace y contraste con palette.js
   src/lib/compatibilidad.js     Compatibilidad de cada componente: qué usa (tabla CARACTERISTICAS), desde qué versión (web-features) y cuántos usuarios (caniuse)
   src/styles/docs.css     Estilo «plano» del sitio (tema data-angela-theme="plano")

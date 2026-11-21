@@ -1,0 +1,63 @@
+/* La bandeja vive en la capa superior (popover): por encima de diálogos, menús y de todo. */
+.avisos {
+  inset: auto var(--space-4) var(--space-4) auto;
+  inline-size: min(24rem, 100vw - 2 * var(--space-4));
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  overflow: visible;
+  list-style: none;
+
+  /* Solo mientras está abierta: si no, el display propio vencería al oculto del popover. */
+  &:popover-open {
+    display: grid;
+    gap: var(--space-2);
+  }
+}
+
+.aviso {
+  align-items: center;
+  box-shadow: var(--elevation-2);
+  transition:
+    opacity var(--duration-normal) var(--ease-standard),
+    translate var(--duration-normal) var(--ease-standard);
+
+  /* Entrada: el estado del que parte al aparecer, sin JS. */
+  @starting-style {
+    opacity: 0;
+    translate: 0 var(--space-4);
+  }
+
+  /* Salida: el JS marca data-saliendo y lo quita cuando acaba la transición. */
+  &[data-saliendo] {
+    opacity: 0;
+    translate: 0 var(--space-4);
+  }
+
+  & > p {
+    flex: 1;
+    margin: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aviso,
+  .aviso[data-saliendo] {
+    translate: none;
+  }
+
+  .aviso {
+    @starting-style {
+      translate: none;
+    }
+  }
+}
+
+/* En el móvil, centrados abajo y a todo el ancho. */
+@media (width < 40rem) {
+  .avisos {
+    inset-inline: var(--space-4);
+    inline-size: auto;
+  }
+}
