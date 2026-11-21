@@ -132,6 +132,9 @@ export function iniciarEditor() {
     historia: [],
     futuro: [],
     peticion: null,
+    // Nombre del icono del repositorio que se está editando; null si es un diseño propio.
+    // Solo un diseño propio se guarda como borrador: «Diseñar un icono» abre ese borrador o el lienzo vacío.
+    origen: null,
   };
   const avisar = (texto) => (el.estado.textContent = texto);
 
@@ -196,6 +199,7 @@ export function iniciarEditor() {
   const svgCompleto = (tamano) => `<svg ${RAIZ}${tamano ? ` width="${tamano}" height="${tamano}"` : ''} aria-hidden="true">${interior()}</svg>`;
 
   function guardarBorrador() {
+    if (estado.origen) return;
     escribir(BORRADOR, { formas: estado.formas, nombre: el.nombre.value, categoria: el.categoria.value, etiquetas: el.etiquetas.value });
   }
 
@@ -793,7 +797,8 @@ export function iniciarEditor() {
   for (const campo of [el.nombre, el.categoria, el.etiquetas]) campo.addEventListener('input', pintar);
   el.autor.addEventListener('input', () => escribir(AUTOR, el.autor.value));
 
-  function cargar(datos) {
+  function cargar(datos, origen = null) {
+    estado.origen = origen;
     estado.formas = clonar(datos.formas ?? []);
     el.nombre.value = datos.nombre ?? '';
     el.categoria.value = CATEGORIAS.includes(datos.categoria) ? datos.categoria : '';
@@ -809,7 +814,7 @@ export function iniciarEditor() {
     if (!i) return;
     if (estado.formas.length) guardarHistoria();
     const historia = estado.historia;
-    cargar(i);
+    cargar(i, i.nombre);
     estado.historia = historia;
     pintar();
     avisar(`Abierto «${i.nombre}» del repositorio. Deshacer vuelve a lo que tenías.`);
@@ -908,9 +913,16 @@ export function iniciarEditor() {
   const pedido = new URLSearchParams(location.search).get('icono');
   const delRepositorio = repositorio.find((x) => x.nombre === pedido);
   if (delRepositorio) {
-    cargar(delRepositorio);
+    cargar(delRepositorio, delRepositorio.nombre);
     el.abrir.value = delRepositorio.nombre;
     avisar(`Abierto «${delRepositorio.nombre}» del repositorio.`);
-  } else cargar(leer(BORRADOR, {}));
+  } else {
+    // Un borrador idéntico a un icono del repositorio no es un diseño propio (lo dejaban
+    // versiones anteriores al editar un icono): se empieza con el lienzo vacío.
+    const borrador = leer(BORRADOR, {});
+    const copia = JSON.stringify(borrador.formas ?? []);
+    const esDelRepositorio = repositorio.some((x) => JSON.stringify(x.formas) === copia);
+    cargar(esDelRepositorio ? {} : borrador);
+  }
   elegirHerramienta('trazo');
 }
