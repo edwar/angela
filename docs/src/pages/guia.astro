@@ -1,7 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Example from '../components/Example.astro';
-import { icon } from '../data/icons.js';
 import { roles } from '@angela-ui/angela/palette';
 
 const surfaceTokens = ['canvas', 'surface', 'surface-sunken', 'surface-hover', 'text', 'text-muted', 'border', 'border-strong', 'focus'];
@@ -65,36 +64,6 @@ const maquetacionApi = [
 
 const spaceScale = ['--space-1', '--space-2', '--space-3', '--space-4', '--space-5', '--space-6', '--space-8', '--space-12', '--space-16'];
 
-const controls = [
-  { id: 'brand-h', label: 'Tono de marca', min: 0, max: 360, step: 1, value: roles.brand.h, role: 'brand', key: 'h' },
-  { id: 'brand-c', label: 'Croma de marca', min: 0, max: 0.2, step: 0.005, value: roles.brand.c, role: 'brand', key: 'c' },
-  { id: 'neutral-c', label: 'Tinte de los neutros', min: 0, max: 0.03, step: 0.001, value: roles.neutral.c, role: 'neutral', key: 'c' },
-  { id: 'success-h', label: 'Tono de éxito', min: 0, max: 360, step: 1, value: roles.success.h, role: 'success', key: 'h' },
-  { id: 'warning-h', label: 'Tono de aviso', min: 0, max: 360, step: 1, value: roles.warning.h, role: 'warning', key: 'h' },
-  { id: 'danger-h', label: 'Tono de peligro', min: 0, max: 360, step: 1, value: roles.danger.h, role: 'danger', key: 'h' },
-  { id: 'info-h', label: 'Tono de información', min: 0, max: 360, step: 1, value: roles.info.h, role: 'info', key: 'h' },
-];
-
-const previewHtml = `
-  <div class="cluster">
-    <button class="button" type="button">Guardar</button>
-    <button class="button" type="button" data-variant="soft">Vista previa</button>
-    <button class="button" type="button" data-variant="outline">Exportar</button>
-    <button class="button" type="button" data-variant="ghost" data-tone="neutral">Cancelar</button>
-  </div>
-  <div class="cluster">
-    <button class="button" type="button" data-size="sm" data-tone="success">Aprobar</button>
-    <button class="button" type="button" data-size="sm" data-tone="warning">Revisar</button>
-    <button class="button" type="button" data-size="sm" data-tone="danger">Eliminar</button>
-    <span class="badge" data-tone="success" data-dot>Activo</span>
-    <span class="badge" data-tone="info">Nuevo</span>
-  </div>
-  <div class="callout" data-tone="warning">${icon('alert')}<div><p class="callout-title">Atención</p><p>Tu plan vence en 3 días.</p></div></div>
-  <div class="field">
-    <label>Correo <input class="input" value="ana@" aria-invalid="true" tabindex="-1"></label>
-    <p class="error">Escribe un correo válido.</p>
-  </div>
-  <p style="margin: 0">Texto normal con un <a href="#color">enlace</a> y <span class="muted">texto secundario</span>.</p>`;
 ---
 
 <Layout
@@ -126,65 +95,10 @@ const previewHtml = `
   --angela-danger-h: ${roles.danger.h};    --angela-info-h: ${roles.info.h};
 }`}</code></pre>
 
-    <h3 id="playground-titulo">Prueba tu paleta</h3>
-    <p>Mueve los controles: se aplica a este recuadro, que parte de los valores por defecto de angela. Abajo ves los componentes en claro y en oscuro a la vez y el contraste real de los pares clave.</p>
-
-    <!-- data-angela-theme: la paleta se recalcula solo aquí, sin tocar el tema del sitio. -->
-    <div class="playground card" data-angela-theme="angela" role="group" aria-labelledby="playground-titulo">
-      <div class="playground-controls">
-        {
-          controls.map((c) => (
-            <div class="range-field">
-              <label for={`pg-${c.id}`}>
-                {c.label} <output id={`pg-${c.id}-out`} for={`pg-${c.id}`}>{c.value}</output>
-              </label>
-              <input
-                type="range"
-                id={`pg-${c.id}`}
-                min={c.min}
-                max={c.max}
-                step={c.step}
-                value={c.value}
-                data-role={c.role}
-                data-key={c.key}
-              />
-            </div>
-          ))
-        }
-      </div>
-
-      <div class="preview-pair">
-        <div class="preview-pane" data-scheme="light">
-          <h4>Claro</h4>
-          <Fragment set:html={previewHtml} />
-        </div>
-        <div class="preview-pane" data-scheme="dark">
-          <h4>Oscuro</h4>
-          <Fragment set:html={previewHtml} />
-        </div>
-      </div>
-
-      <div class="preview-pair">
-        <div>
-          <h4 style="margin: 0 0 var(--space-2)">Contraste en claro</h4>
-          <ul class="contrast-list" id="pg-contrast-light" role="list"></ul>
-        </div>
-        <div>
-          <h4 style="margin: 0 0 var(--space-2)">Contraste en oscuro</h4>
-          <ul class="contrast-list" id="pg-contrast-dark" role="list"></ul>
-        </div>
-      </div>
-
-      <div class="stack" style="--stack-gap: var(--space-2)">
-        <h4 style="margin: 0">Tu CSS</h4>
-        <pre tabindex="0" aria-label="CSS de la paleta"><code id="pg-css"></code></pre>
-        <div class="cluster">
-          <button class="button" type="button" id="pg-copy"><Fragment set:html={icon('copy')} /> Copiar CSS</button>
-          <button class="button" type="button" data-variant="ghost" data-tone="neutral" id="pg-reset">Restablecer</button>
-          <p role="status" id="pg-status" class="muted" style="margin: 0"></p>
-        </div>
-      </div>
-    </div>
+    <p>
+      Para probar tu paleta (los componentes en claro y oscuro a la vez, el contraste de cada par y el CSS listo para
+      copiar), usa el <a href="/temas">Taller de temas</a>.
+    </p>
 
     <h3>Roles y tokens</h3>
     <p>
@@ -371,86 +285,4 @@ const previewHtml = `
     </ol>
   </section>
 
-  <script>
-    import { auditPalette, contrastRatio, resolvePalette, roles } from '@angela-ui/angela/palette';
-
-    // La paleta de prueba vive en el recuadro del playground, no en toda la página.
-    const root = document.querySelector<HTMLElement>('.playground')!;
-    const inputs = [...document.querySelectorAll<HTMLInputElement>('.playground-controls input[type="range"]')];
-    const cssOut = document.getElementById('pg-css')!;
-    const status = document.getElementById('pg-status')!;
-
-    const pairs: [string, string, string, number][] = [
-      ['Texto / fondo', 'text', 'canvas', 4.5],
-      ['Texto secundario / superficie', 'text-muted', 'surface', 4.5],
-      ['Botón: texto / fondo', 'brand-on-solid', 'brand-solid', 4.5],
-      ['Enlace / fondo', 'brand-text', 'canvas', 4.5],
-      ['Texto / fondo teñido', 'brand-text', 'brand-subtle', 4.5],
-      ['Error / fondo', 'danger-text', 'surface', 4.5],
-      ['Borde de control / superficie', 'border-strong', 'surface', 3],
-      ['Foco / fondo', 'focus', 'canvas', 3],
-    ];
-
-    function currentValues() {
-      const values: Record<string, { h: number; c: number }> = structuredClone(roles);
-      for (const input of inputs) {
-        values[input.dataset.role!][input.dataset.key as 'h' | 'c'] = Number(input.value);
-      }
-      values.neutral.h = values.brand.h;
-      return values;
-    }
-
-    function renderContrast(mode: 'light' | 'dark', values: ReturnType<typeof currentValues>) {
-      const palette = resolvePalette(mode, values);
-      const list = document.getElementById(`pg-contrast-${mode}`)!;
-      list.replaceChildren(
-        ...pairs.map(([label, fg, bg, min]) => {
-          const ratio = contrastRatio(palette[fg], palette[bg]);
-          const ok = ratio >= min;
-          const li = document.createElement('li');
-          li.innerHTML = `<span>${label}</span><span class="ratio"><span class="badge" data-tone="${ok ? 'success' : 'danger'}">${ok ? 'Cumple' : 'No cumple'}</span> ${ratio.toFixed(2)}:1</span>`;
-          return li;
-        }),
-      );
-      return auditPalette(mode, values).length;
-    }
-
-    function update() {
-      const values = currentValues();
-      const lines: string[] = [];
-      for (const input of inputs) {
-        const name = `--angela-${input.dataset.role}-${input.dataset.key}`;
-        root.style.setProperty(name, input.value);
-        document.getElementById(`${input.id}-out`)!.textContent = input.value;
-        if (Number(input.value) !== (roles as any)[input.dataset.role!][input.dataset.key!]) {
-          lines.push(`  ${name}: ${input.value};`);
-        }
-      }
-      cssOut.textContent = lines.length ? `:root {\n${lines.join('\n')}\n}` : '/* Valores por defecto: no necesitas sobrescribir nada. */';
-      const failures = renderContrast('light', values) + renderContrast('dark', values);
-      status.textContent = failures ? `${failures} pares no cumplen WCAG AA.` : '';
-    }
-
-    inputs.forEach((input) => input.addEventListener('input', update));
-
-    document.getElementById('pg-copy')!.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(cssOut.textContent ?? '');
-        status.textContent = 'CSS copiado al portapapeles.';
-      } catch {
-        status.textContent = 'No se pudo copiar. Selecciona el texto y cópialo a mano.';
-      }
-    });
-
-    document.getElementById('pg-reset')!.addEventListener('click', () => {
-      for (const input of inputs) {
-        input.value = String((roles as any)[input.dataset.role!][input.dataset.key!]);
-        root.style.removeProperty(`--angela-${input.dataset.role}-${input.dataset.key}`);
-      }
-      update();
-      status.textContent = 'Paleta restablecida.';
-    });
-
-    update();
-  </script>
 </Layout>

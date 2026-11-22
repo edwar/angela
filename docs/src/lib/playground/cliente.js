@@ -5,13 +5,17 @@
  *
  * La configuración (props, color, ancho, dirección, movimiento y esquema) va en el enlace:
  * #pruebalo:variant=outline&tone=danger… Al abrirlo, el «Pruébalo» empieza así.
+ *
+ * El color que se edita es el del tono elegido (prop tone) o, si el componente no tiene, el de
+ * marca: lo que se mueve es lo que se ve. Cada rol guarda su color al cambiar de tono.
  */
+import { roles } from '@angela-ui/angela/palette';
 import { DEFINICIONES, htmlDe, valoresPorDefecto } from './definiciones.js';
-import { codigoPlayground, codigoTema } from './codigo.js';
+import { codigoPlayground, codigoTema, variablesTema } from './codigo.js';
+import { MAX_CROMA, NOMBRES_ROL } from '../taller/temas.js';
 
 const CLAVE_LENGUAJE = 'angela-docs:lenguaje';
 const PREFIJO = '#pruebalo:';
-const MARCA = { h: 262, c: 0.17 };
 const VISTA = { ancho: '', dir: 'ltr', movimiento: 'normal', esquema: '' };
 
 const leerLenguaje = () => {
@@ -65,9 +69,32 @@ export function iniciarPlaygrounds(root = document) {
       const datos = new FormData(form);
       return Object.fromEntries(Object.keys(VISTA).map((k) => [k, String(datos.get(k) ?? VISTA[k])]));
     };
-    const marcaElegida = () => {
-      const datos = new FormData(form);
-      return { h: Number(datos.get('marca-h')), c: Number(datos.get('marca-c')) };
+    /* ---------- Color del tono elegido ---------- */
+
+    let colores = structuredClone(roles);
+    let rolMostrado = null;
+    const conTono = def.controles.some((c) => c.nombre === 'tone');
+    const rolDe = (valores) => (conTono && roles[valores.tone] ? valores.tone : 'brand');
+    const campoH = form.elements.namedItem('color-h');
+    const campoC = form.elements.namedItem('color-c');
+
+    /** Al cambiar de tono, los controles muestran el color de ese rol; si no, guardan lo que se mueve. */
+    const sincronizarColor = (rol) => {
+      if (rol !== rolMostrado) {
+        rolMostrado = rol;
+        campoH.value = String(colores[rol].h);
+        campoC.value = String(colores[rol].c);
+        campoC.max = String(MAX_CROMA[rol] ?? 0.2);
+        // El neutro sigue el tono de marca: aquí solo cambia su croma.
+        campoH.disabled = rol === 'neutral';
+        raiz.querySelector('[data-rol-nombre]').textContent = NOMBRES_ROL[rol];
+      } else {
+        if (rol !== 'neutral') colores[rol].h = Number(campoH.value);
+        colores[rol].c = Number(campoC.value);
+      }
+      const { h, c } = colores[rol];
+      const muestra = raiz.querySelector('[data-muestra]');
+      if (muestra) muestra.style.background = `oklch(0.6 ${rol === 'neutral' ? c * 3 : c} ${rol === 'neutral' ? colores.brand.h : h})`;
     };
 
     /** Pone un valor en su control (para abrir un enlace). */
@@ -93,8 +120,8 @@ export function iniciarPlaygrounds(root = document) {
       }
       const vista = leerVista();
       for (const [k, v] of Object.entries(vista)) if (v !== VISTA[k]) p.set(k, v);
-      const marca = marcaElegida();
-      if (marca.h !== MARCA.h || marca.c !== MARCA.c) p.set('marca', `${marca.h},${marca.c}`);
+      const cambiados = Object.entries(colores).filter(([rol, { h, c }]) => h !== roles[rol].h || c !== roles[rol].c);
+      if (cambiados.length) p.set('color', cambiados.map(([rol, { h, c }]) => `${rol}:${h},${c}`).join(';'));
       return `${location.origin}${location.pathname}${PREFIJO}${p}`;
     };
 
@@ -102,10 +129,14 @@ export function iniciarPlaygrounds(root = document) {
       if (!location.hash.startsWith(PREFIJO)) return false;
       const p = new URLSearchParams(location.hash.slice(PREFIJO.length));
       for (const [k, v] of p) {
-        if (k === 'marca') {
-          const [h, c] = v.split(',');
-          poner('marca-h', h);
-          poner('marca-c', c);
+        if (k === 'color' || k === 'marca') {
+          // color=info:200,0.1;brand:20,0.15 (marca=h,c es el formato de antes: solo la marca).
+          for (const parte of v.split(';')) {
+            const [rol, hc] = k === 'marca' ? ['brand', parte] : parte.split(':');
+            const [h, c] = String(hc ?? '').split(',').map(Number);
+            if (roles[rol] && Number.isFinite(h) && Number.isFinite(c)) colores[rol] = { h, c };
+          }
+          rolMostrado = null;
         } else poner(k, v);
       }
       return true;
@@ -138,19 +169,23 @@ export function iniciarPlaygrounds(root = document) {
         pintarCodigo(valores);
       }
 
-      const marca = marcaElegida();
-      const css = codigoTema(marca);
+      sincronizarColor(rolDe(valores));
+      const css = codigoTema(colores);
       tema.hidden = !css;
       if (css) tema.querySelector('code').textContent = css;
 
       const vista = leerVista();
       ajustarAncho(vista.ancho);
       // Solo si se mueve el color: si no, el marco usa el tema guardado del taller (o el de angela).
-      marco.contentWindow?.pruebalo?.pintar({ html, dir: vista.dir, esquema: vista.esquema, movimiento: vista.movimiento, marca: css ? marca : null, centrar: def.centrar });
+      marco.contentWindow?.pruebalo?.pintar({ html, dir: vista.dir, esquema: vista.esquema, movimiento: vista.movimiento, variables: css ? variablesTema(colores) : null, centrar: def.centrar });
 
       for (const salida of form.querySelectorAll('output[data-salida]')) {
         salida.textContent = String(new FormData(form).get(salida.dataset.salida) ?? '');
       }
+      // El tono del neutro está desactivado (no va en FormData): sus salidas, desde el color guardado.
+      const actual = colores[rolMostrado];
+      form.querySelector('output[data-salida="color-h"]').textContent = String(rolMostrado === 'neutral' ? colores.brand.h : actual.h);
+      form.querySelector('output[data-salida="color-c"]').textContent = String(actual.c);
     };
 
     /* ---------- El marco ---------- */
@@ -194,7 +229,11 @@ export function iniciarPlaygrounds(root = document) {
     form.addEventListener('input', pintar);
     form.addEventListener('change', pintar);
     // El reset del formulario cambia los valores después del evento.
-    form.addEventListener('reset', () => setTimeout(pintar));
+    form.addEventListener('reset', () => {
+      colores = structuredClone(roles);
+      rolMostrado = null;
+      setTimeout(pintar);
+    });
     form.addEventListener('submit', (e) => e.preventDefault());
     for (const r of radiosLenguaje) {
       r.addEventListener('change', () => {
