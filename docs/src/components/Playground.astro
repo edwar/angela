@@ -7,6 +7,7 @@
  */
 import { definicion, htmlDe, valoresPorDefecto, componenteDe } from '../lib/playground/definiciones.js';
 import { codigoPlayground } from '../lib/playground/codigo.js';
+import EtiquetaVista from './EtiquetaVista.astro';
 import { roles } from '@angela-ui/angela/palette';
 import { NOMBRES_ROL } from '../lib/taller/temas.js';
 
@@ -59,6 +60,7 @@ const valorControl = (v: unknown, separador?: string) => (Array.isArray(v) ? v.j
                 </fieldset>
               ))}
             </div>
+            <EtiquetaVista />
             <!-- La vista previa es una página propia: el ancho activa las media queries de verdad. -->
             <p class="pruebalo-escala hint" data-pg-escala hidden></p>
             <div class="pruebalo-marco-caja">

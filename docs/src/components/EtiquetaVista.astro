@@ -1,0 +1,17 @@
+---
+/**
+ * La leyenda de una vista previa: dice con qué colores se ve. Con un tema guardado en el taller
+ * (data-tema-usuario en <html>, lo pone el <head> antes de pintar), lo dice y deja editarlo o
+ * quitarlo; si no, son los colores por defecto de angela. Los botones los atiende tema-usuario.js.
+ */
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+
+<p class="eyebrow example-label">
+  <span class="sin-tema">Vista previa · colores por defecto de angela</span>
+  <span class="con-tema cluster">
+    <span>Vista previa · tu tema del taller</span>
+    <a href={`${base}/temas`} data-tema-editar>Editar</a>
+    <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm" data-tema-quitar>Quitar</button>
+  </span>
+</p>

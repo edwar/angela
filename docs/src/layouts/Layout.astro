@@ -56,12 +56,53 @@ const nav = [
           s.id = 'tema-usuario';
           s.textContent = t.css;
           document.head.append(s);
+          // Las leyendas de las vistas previas dicen «tu tema del taller» (EtiquetaVista.astro).
+          document.documentElement.dataset.temaUsuario = '';
         }
       } catch {}
     </script>
     <title>{title === 'angela' ? 'angela · componentes sobre HTML nativo' : `${title} · angela`}</title>
     <meta name="description" content={description} />
     <link rel="icon" href={href('/favicon.svg')} type="image/svg+xml" />
+    <!--
+      Transición entre páginas: no se pinta (ni empieza la animación) hasta tener la barra lateral, con
+      su scroll recuperado, y el título. Sin esto, la página nueva podría entrar a medio pintar.
+    -->
+    <link rel="expect" href="#site-nav" blocking="render" />
+    <link rel="expect" href="#contenido" blocking="render" />
+    <!--
+      Transición entre páginas (los estilos, en docs.css). Va en el <head> para estar lista antes del
+      primer pintado. Al salir, el enlace pulsado de la barra se llama «titulo»; al llegar, el <h1>
+      también: el enlace vuela hasta el título. Y si se baja o se sube en el menú, el contenido entra
+      desde abajo o desde arriba. Los nombres se quitan al acabar (si no, la página no entra en la bfcache).
+    -->
+    <script is:inline>
+      (() => {
+        const ruta = (url) => new URL(url, location.href).pathname.replace(/\/$/, '') || '/';
+        const enlaces = () => [...document.querySelectorAll('#site-nav a')];
+        const nombrar = (el, nombre, transicion) => {
+          if (!el) return;
+          el.style.viewTransitionName = nombre;
+          transicion.finished.then(() => (el.style.viewTransitionName = ''));
+        };
+        addEventListener('pageswap', (e) => {
+          const destino = e.activation?.entry?.url;
+          if (!e.viewTransition || !destino) return;
+          nombrar(enlaces().find((a) => ruta(a.href) === ruta(destino)), 'titulo', e.viewTransition);
+        });
+        addEventListener('pagereveal', (e) => {
+          if (!e.viewTransition) return;
+          nombrar(document.getElementById('contenido'), 'titulo', e.viewTransition);
+          const desde = window.navigation?.activation?.from?.url;
+          const hasta = window.navigation?.activation?.entry?.url;
+          if (!desde || !hasta) return;
+          const rutas = enlaces().map((a) => ruta(a.href));
+          const i = rutas.indexOf(ruta(desde));
+          const j = rutas.indexOf(ruta(hasta));
+          if (i !== -1 && j !== -1 && i !== j) e.viewTransition.types.add(j > i ? 'adelante' : 'atras');
+        });
+      })();
+    </script>
   </head>
   <body>
     <a class="skip-link visually-hidden" href="#contenido">Saltar al contenido</a>
@@ -164,13 +205,6 @@ const nav = [
       </script>
 
       <main class="site-main">
-        <div class="tema-aviso callout" data-tone="info" data-tema-aviso hidden>
-          <Fragment set:html={icon('info')} />
-          <div>
-            <p>Ves los ejemplos con tu tema del taller. <a href={href('/temas')}>Editarlo</a></p>
-          </div>
-          <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-size="sm">Quitar</button>
-        </div>
         {
           heading && (
             <header class="page-header">
@@ -204,11 +238,11 @@ const nav = [
       import { angela } from '@angela-ui/angela/js';
       import { botonesDeCopiar } from '../lib/copiar-codigo.js';
       import { recordarFramework } from '../lib/framework-preferido.js';
-      import { avisoTemaUsuario } from '../lib/tema-usuario.js';
+      import { temaEnLasVistas } from '../lib/tema-usuario.js';
       angela();
       botonesDeCopiar();
       recordarFramework();
-      avisoTemaUsuario(import.meta.env.BASE_URL.replace(/\/$/, ''));
+      temaEnLasVistas(import.meta.env.BASE_URL.replace(/\/$/, ''));
     </script>
   </body>
 </html>

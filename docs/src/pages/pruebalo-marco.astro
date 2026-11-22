@@ -18,14 +18,27 @@ import { themeInlineScript } from '@angela-ui/angela/js/theme';
     <script is:inline set:html={themeInlineScript} />
     <!-- El tema del taller, si lo hay, como en el resto del sitio. -->
     <script is:inline>
-      try {
-        const t = JSON.parse(localStorage.getItem('angela-docs:tema') ?? 'null');
-        if (t && t.css) {
-          const s = document.createElement('style');
+      // Y al quitarlo o cambiarlo desde la página (o desde otra pestaña), el evento storage lo pone al día.
+      (() => {
+        const poner = () => {
+          let t = null;
+          try {
+            t = JSON.parse(localStorage.getItem('angela-docs:tema') ?? 'null');
+          } catch {}
+          let s = document.getElementById('tema-usuario');
+          if (!t?.css) return s?.remove();
+          if (!s) {
+            s = document.createElement('style');
+            s.id = 'tema-usuario';
+            document.head.append(s);
+          }
           s.textContent = t.css;
-          document.head.append(s);
-        }
-      } catch {}
+        };
+        poner();
+        addEventListener('storage', (e) => {
+          if (e.key === 'angela-docs:tema' || e.key === null) poner();
+        });
+      })();
     </script>
     <style>
       body {

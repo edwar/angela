@@ -3,7 +3,8 @@
  * a las vistas previas de todas las páginas (las zonas data-angela-theme="angela"), no al sitio.
  *
  * Lo pinta un script en línea del <head> (Layout.astro) antes de que se vea la página, sin
- * destello. Aquí se guarda, se quita y se muestra el aviso.
+ * destello, y marca <html data-tema-usuario> para que las leyendas de las vistas previas lo digan
+ * (EtiquetaVista.astro). Aquí se guarda, se quita y se atienden «Editar» y «Quitar».
  */
 
 export const CLAVE_TEMA = 'angela-docs:tema';
@@ -40,6 +41,7 @@ export function quitarTema() {
     // Sin almacenamiento no había nada guardado.
   }
   document.getElementById('tema-usuario')?.remove();
+  delete document.documentElement.dataset.temaUsuario;
 }
 
 function aplicar(css) {
@@ -50,23 +52,44 @@ function aplicar(css) {
     document.head.append(estilo);
   }
   estilo.textContent = css;
+  document.documentElement.dataset.temaUsuario = '';
 }
 
-/** El aviso «Ves los ejemplos con tu tema» con su botón para quitarlo. */
-export function avisoTemaUsuario(base = '') {
-  const aviso = document.querySelector('[data-tema-aviso]');
-  if (!aviso) return;
-  const mostrar = () => {
+/**
+ * Las leyendas de las vistas previas: «Editar» lleva al tema guardado en el taller y «Quitar» lo
+ * borra. Escucha en el documento (las leyendas pueden llegar después) y también los cambios desde
+ * otra pestaña (evento storage), para que la página siempre diga la verdad.
+ * @param {string} [base]
+ * @returns {() => void} Limpieza.
+ */
+export function temaEnLasVistas(base = '') {
+  if (typeof window === 'undefined') return () => {};
+  const sincronizar = () => {
     const guardado = leerTemaGuardado();
-    aviso.hidden = !guardado;
-    const enlace = aviso.querySelector('a');
-    if (guardado && enlace) enlace.href = `${base}/temas#${guardado.hash}`;
+    if (guardado?.css) aplicar(guardado.css);
+    else {
+      document.getElementById('tema-usuario')?.remove();
+      delete document.documentElement.dataset.temaUsuario;
+    }
+    for (const enlace of document.querySelectorAll('[data-tema-editar]')) {
+      enlace.href = guardado?.hash ? `${base}/temas#${guardado.hash}` : `${base}/temas`;
+    }
   };
-  aviso.querySelector('button')?.addEventListener('click', () => {
+  const onClick = (event) => {
+    if (!event.target.closest?.('[data-tema-quitar]')) return;
     quitarTema();
-    mostrar();
     document.dispatchEvent(new CustomEvent('angela-docs:tema'));
-  });
-  document.addEventListener('angela-docs:tema', mostrar);
-  mostrar();
+  };
+  const onStorage = (event) => {
+    if (event.key === CLAVE_TEMA || event.key === null) sincronizar();
+  };
+  document.addEventListener('click', onClick);
+  document.addEventListener('angela-docs:tema', sincronizar);
+  addEventListener('storage', onStorage);
+  sincronizar();
+  return () => {
+    document.removeEventListener('click', onClick);
+    document.removeEventListener('angela-docs:tema', sincronizar);
+    removeEventListener('storage', onStorage);
+  };
 }
