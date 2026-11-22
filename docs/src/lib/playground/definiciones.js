@@ -489,6 +489,7 @@ export const DEFINICIONES = [
       { nombre: 'items', etiqueta: 'Textos (separados por ✧)', tipo: 'lista', separador: '✧', inicial: ['Envío gratis', 'Devoluciones en 30 días', 'Pago seguro'], defecto: [] },
       { nombre: 'tone', etiqueta: 'Tono', tipo: 'opciones', valores: TONOS, defecto: 'brand' },
       { nombre: 'duration', etiqueta: 'Segundos por vuelta', tipo: 'numero', min: 5, max: 60, defecto: 20, ayuda: '--marquee-duration: menos segundos, más rápido.' },
+      { nombre: 'pausable', etiqueta: 'Con interruptor «Pausar»', tipo: 'booleano', defecto: true, ayuda: 'Sin él no cumple WCAG 2.2.2: lo que se mueve más de 5 s se tiene que poder detener, y pasar el ratón no sirve con teclado ni en pantallas táctiles. Quítalo solo si la página da otra forma de pararla.', descripcion: 'El interruptor para detenerla (WCAG 2.2.2). Quitarlo deja la cinta sin forma de pararse con teclado o en pantallas táctiles.' },
       { nombre: 'pauseLabel', etiqueta: 'Texto del interruptor', tipo: 'texto', defecto: 'Pausar', descripcion: 'Lo que se mueve más de 5 s se tiene que poder pausar (WCAG 2.2.2).' },
     ],
     componente: {
@@ -499,9 +500,11 @@ export const DEFINICIONES = [
             el('span', {}, [cada('items', [item(), lit(' '), el('span', { 'aria-hidden': 'true' }, [lit('✧')]), lit(' ')])]),
             el('span', { 'aria-hidden': 'true' }, [unir('items', ' ✧ ', ' ✧')]),
           ]),
-          el('div', { class: 'choice marquee-pause' }, [
-            el('input', { type: 'checkbox', role: 'switch', switch: '', id: id('-pausa') }),
-            el('label', { for: id('-pausa') }, [texto('pauseLabel')]),
+          si('pausable', [
+            el('div', { class: 'choice marquee-pause' }, [
+              el('input', { type: 'checkbox', role: 'switch', switch: '', id: id('-pausa') }),
+              el('label', { for: id('-pausa') }, [texto('pauseLabel')]),
+            ]),
           ]),
         ]),
       ],
