@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import EtiquetaVista from '../components/EtiquetaVista.astro';
 import { DEMOS } from '../data/interacciones.js';
 import { soporteDe } from '../lib/compatibilidad.js';
 
@@ -32,7 +33,7 @@ const tono = (b: false | 'low' | 'high') => (b === 'high' ? 'success' : b === 'l
 
           {d.css && <Fragment set:html={`<style>${d.css}</style>`} />}
           <div class="example">
-            <p class="eyebrow example-label">Vista previa · colores por defecto de angela</p>
+            <EtiquetaVista />
             <div class="example-preview" data-angela-theme="angela" set:html={d.html} />
 
             <div class="interacciones-usa">

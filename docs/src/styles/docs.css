@@ -520,6 +520,17 @@ body {
   border-block-start: 1px dashed var(--plano-trazo-suave);
 }
 
+/* Con un tema guardado en el taller, la leyenda lo dice (y deja editarlo o quitarlo). */
+html:not([data-tema-usuario]) .example-label .con-tema,
+html[data-tema-usuario] .example-label .sin-tema {
+  display: none;
+}
+
+.example-label .con-tema {
+  --cluster-gap: var(--space-2);
+  display: inline-flex;
+}
+
 .example-preview {
   padding: var(--space-6) var(--space-5);
   background-color: var(--color-surface);
@@ -996,20 +1007,6 @@ body {
 
 .taller-acciones {
   margin-block-start: var(--space-4);
-}
-
-/* Aviso en lo alto de cada página mientras los ejemplos usan el tema del taller. */
-.tema-aviso {
-  align-items: center;
-  margin-block-end: var(--space-6);
-
-  & p {
-    margin: 0;
-  }
-
-  & > .button {
-    margin-inline-start: auto;
-  }
 }
 
 /* Interacciones: qué usa cada demo y qué se ve sin soporte, entre la vista previa y el código. */
@@ -2387,4 +2384,149 @@ body {
   display: grid;
   gap: var(--space-1);
   font-size: var(--fs-sm);
+}
+
+/*
+ * Transiciones entre páginas (View Transitions entre documentos). Mejora progresiva: sin soporte
+ * (Firefox), la navegación es la de siempre; con «reducir movimiento», sin transición.
+ * - La cabecera y la barra lateral se quedan quietas.
+ * - El enlace pulsado vuela hasta el título de la página nueva («titulo», lo nombra el script del
+ *   <head> de Layout.astro) y el marcador de la barra se desliza al enlace nuevo («marcador»).
+ * - El contenido entra con dirección: desde abajo al bajar en el menú, desde arriba al subir.
+ */
+@view-transition {
+  navigation: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @view-transition {
+    navigation: none;
+  }
+}
+
+:root {
+  --vt-duracion: 520ms;
+  --vt-curva: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.site-header {
+  view-transition-name: cabecera;
+}
+
+.site-main {
+  view-transition-name: contenido;
+}
+
+@media (width >= 60rem) {
+  /* Solo en escritorio: en móvil la barra es un popover cerrado al navegar. */
+  .site-nav:not(:popover-open) {
+    view-transition-name: barra;
+  }
+
+  .site-nav:not(:popover-open) a[aria-current="page"] {
+    view-transition-name: marcador;
+  }
+}
+
+/* Lo que no cambia, sin animar; la cabecera, por encima del contenido que entra. */
+::view-transition-old(cabecera),
+::view-transition-new(cabecera),
+::view-transition-old(barra),
+::view-transition-new(barra) {
+  animation: none;
+}
+
+::view-transition-group(cabecera) {
+  z-index: 1;
+}
+
+/* El título y el marcador viajan de su sitio al nuevo, por encima de todo. */
+::view-transition-group(titulo),
+::view-transition-group(marcador) {
+  z-index: 2;
+  animation-duration: var(--vt-duracion);
+  animation-timing-function: var(--vt-curva);
+}
+
+::view-transition-old(titulo),
+::view-transition-new(titulo) {
+  /* El texto crece (o mengua) sin deformarse, alineado a la izquierda, mientras la caja viaja. */
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+  object-position: left center;
+}
+
+/* La caja del título, del ancho de su texto: así el enlace vuela hasta el texto y no hasta una línea vacía. */
+#contenido {
+  inline-size: fit-content;
+  max-inline-size: 100%;
+}
+
+/* Si se llega sin pulsar la barra (un enlace del contenido), el título aparece solo. */
+::view-transition-new(titulo):only-child {
+  animation: var(--vt-duracion) var(--vt-curva) both vt-titulo-entra;
+}
+
+::view-transition-old(contenido) {
+  animation: 240ms ease-in both vt-sale-arriba;
+}
+
+::view-transition-new(contenido) {
+  animation: var(--vt-duracion) var(--vt-curva) both vt-entra-abajo;
+}
+
+/* Al subir en el menú, al revés. */
+:active-view-transition-type(atras) {
+  &::view-transition-old(contenido) {
+    animation-name: vt-sale-abajo;
+  }
+
+  &::view-transition-new(contenido) {
+    animation-name: vt-entra-arriba;
+  }
+}
+
+@keyframes vt-sale-arriba {
+  to {
+    opacity: 0;
+    translate: 0 -2.5rem;
+    scale: 0.97;
+    filter: blur(6px);
+  }
+}
+
+@keyframes vt-sale-abajo {
+  to {
+    opacity: 0;
+    translate: 0 2.5rem;
+    scale: 0.97;
+    filter: blur(6px);
+  }
+}
+
+@keyframes vt-entra-abajo {
+  from {
+    opacity: 0;
+    translate: 0 4rem;
+    scale: 0.97;
+    filter: blur(8px);
+  }
+}
+
+@keyframes vt-entra-arriba {
+  from {
+    opacity: 0;
+    translate: 0 -4rem;
+    scale: 0.97;
+    filter: blur(8px);
+  }
+}
+
+@keyframes vt-titulo-entra {
+  from {
+    opacity: 0;
+    translate: 0 1rem;
+    filter: blur(6px);
+  }
 }

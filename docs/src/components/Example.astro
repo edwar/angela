@@ -1,5 +1,6 @@
 ---
 import { codigoPorFramework } from '../lib/codigo-frameworks.js';
+import EtiquetaVista from './EtiquetaVista.astro';
 
 interface Props {
   title?: string;
@@ -27,7 +28,7 @@ const id = `ej-${index}`;
     )
   }
   <!-- Los ejemplos muestran angela como la recibe quien la instala, no con el tema del sitio. -->
-  <p class="eyebrow example-label">Vista previa · colores por defecto de angela</p>
+  <EtiquetaVista />
   <div class="example-preview" data-angela-theme="angela" set:html={code} />
   <!-- data-framework: elegir uno cambia todos los ejemplos (lib/framework-preferido.js). -->
   <div class="tabs example-frameworks">
