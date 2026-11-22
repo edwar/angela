@@ -2,6 +2,7 @@
  * El código del «Pruébalo»: el componente reutilizable de cada framework (con sus props, en
  * TypeScript o JavaScript) y un ejemplo de uso con los valores elegidos en los controles.
  */
+import { roles } from '@angela-ui/angela/palette';
 import { emitir } from '../componentes/emisores.js';
 import { componenteDe, propsDe } from './definiciones.js';
 
@@ -24,8 +25,26 @@ export function codigoPlayground(def, valores, lenguaje = 'ts') {
   }));
 }
 
-/** El CSS del tema si cambia el color de marca; null si son los valores por defecto. */
-export function codigoTema({ h, c }, defecto = { h: 262, c: 0.17 }) {
-  if (Number(h) === defecto.h && Number(c) === defecto.c) return null;
-  return `:root {\n  --angela-brand-h: ${Number(h)};\n  --angela-brand-c: ${Number(c)};\n}`;
+/**
+ * Las variables del tema que cambian respecto a angela: [['--angela-info-h', 200], …]. El neutro
+ * solo tiene croma propio (su tono sigue al de marca).
+ * @param {Record<string, { h: number, c: number }>} colores
+ * @param {Record<string, { h: number, c: number }>} [defecto]
+ * @returns {[string, number][]}
+ */
+export function variablesTema(colores, defecto = roles) {
+  const vars = [];
+  for (const [rol, { h, c }] of Object.entries(colores)) {
+    const d = defecto[rol];
+    if (!d) continue;
+    if (rol !== 'neutral' && Number(h) !== d.h) vars.push([`--angela-${rol}-h`, Number(h)]);
+    if (Number(c) !== d.c) vars.push([`--angela-${rol}-c`, Number(c)]);
+  }
+  return vars;
+}
+
+/** El CSS del tema con los colores que cambian; null si son los de angela. */
+export function codigoTema(colores, defecto = roles) {
+  const vars = variablesTema(colores, defecto);
+  return vars.length ? `:root {\n${vars.map(([k, v]) => `  ${k}: ${v};`).join('\n')}\n}` : null;
 }

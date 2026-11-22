@@ -133,6 +133,35 @@ const nav = [
           }
         </ul>
       </nav>
+      <!-- En línea y justo después de la barra: recupera su scroll antes de pintar, sin saltos. -->
+      <script is:inline>
+        (() => {
+          const nav = document.getElementById('site-nav');
+          const CLAVE = 'angela-docs:nav-scroll';
+          try {
+            const y = sessionStorage.getItem(CLAVE);
+            if (y !== null) nav.scrollTop = Number(y);
+          } catch {
+            // Sin almacenamiento: la barra empieza arriba.
+          }
+          // Si el enlace de esta página queda fuera de la vista (p. ej. al llegar desde fuera), se centra en la barra.
+          const actual = nav.querySelector('[aria-current="page"]');
+          if (actual) {
+            const n = nav.getBoundingClientRect();
+            const a = actual.getBoundingClientRect();
+            if (n.height && (a.top < n.top || a.bottom > n.bottom)) nav.scrollTop += a.top - n.top - (n.height - a.height) / 2;
+          }
+          const guardar = () => {
+            try {
+              sessionStorage.setItem(CLAVE, String(nav.scrollTop));
+            } catch {
+              // Sin almacenamiento: no se recuerda.
+            }
+          };
+          nav.addEventListener('click', guardar);
+          addEventListener('pagehide', guardar);
+        })();
+      </script>
 
       <main class="site-main">
         <div class="tema-aviso callout" data-tone="info" data-tema-aviso hidden>

@@ -809,17 +809,17 @@ body {
   }
 }
 
-/* Muestra del color de cada rol, con borde para que se vea también en alto contraste. */
-.taller-chip {
+/* Muestra del color de cada rol (Taller de temas y «Pruébalo»), con borde para que se vea también en alto contraste. */
+.muestra-color {
   inline-size: 1rem;
   block-size: 1rem;
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm);
 }
 
-/* El tono, sobre una rueda de color para elegirlo de un vistazo. El deslizador se dibuja entero:
+/* El tono (Taller de temas y «Pruébalo»), sobre una rueda de color para elegirlo de un vistazo. El deslizador se dibuja entero:
    la pista es la rueda y el cursor, un círculo con borde (visible también en alto contraste). */
-.taller-tono {
+.rango-tono {
   appearance: none;
   block-size: 0.75rem;
   margin-block: var(--space-2);
@@ -1284,85 +1284,6 @@ body {
   background-color: var(--color-surface);
   font-family: var(--font-code);
   font-size: var(--fs-xs);
-}
-
-/* Playground de la paleta */
-.playground {
-  display: grid;
-  /* minmax(0, …): el código largo se desplaza dentro, no ensancha la página en móvil. */
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-6);
-}
-
-.playground-controls {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
-  gap: var(--space-4);
-}
-
-.range-field {
-  display: grid;
-  gap: var(--space-1);
-
-  & label {
-    display: flex;
-    justify-content: space-between;
-    font-size: var(--fs-sm);
-    font-weight: var(--fw-medium);
-  }
-
-  & output {
-    font-family: var(--font-code);
-    color: var(--color-text-muted);
-  }
-
-  & input[type="range"] {
-    inline-size: 100%;
-    margin: 0;
-    accent-color: var(--color-brand-solid);
-  }
-}
-
-.preview-pair {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
-  gap: var(--space-4);
-}
-
-.preview-pane {
-  display: grid;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  background-color: var(--color-canvas);
-  color: var(--color-text);
-
-  & > h4 {
-    margin: 0;
-    font-size: var(--fs-sm);
-    color: var(--color-text-muted);
-  }
-}
-
-.contrast-list {
-  display: grid;
-  gap: var(--space-1);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--fs-sm);
-
-  & li {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-3);
-  }
-
-  & .ratio {
-    font-family: var(--font-code);
-    font-variant-numeric: tabular-nums;
-  }
 }
 
 .hero {

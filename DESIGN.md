@@ -1,6 +1,6 @@
 # Guía de diseño de angela
 
-Fuente de verdad del sistema visual. La versión interactiva (con el playground de paleta) está en `docs/src/pages/guia.astro`.
+Fuente de verdad del sistema visual. La versión web es la Guía de diseño (`docs/src/pages/guia.astro`); para probar una paleta, el Taller de temas (`/temas`).
 
 ## Principios
 

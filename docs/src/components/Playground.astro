@@ -7,6 +7,8 @@
  */
 import { definicion, htmlDe, valoresPorDefecto, componenteDe } from '../lib/playground/definiciones.js';
 import { codigoPlayground } from '../lib/playground/codigo.js';
+import { roles } from '@angela-ui/angela/palette';
+import { NOMBRES_ROL } from '../lib/taller/temas.js';
 
 interface Props {
   slug: string;
@@ -17,7 +19,10 @@ const def = definicion(slug);
 const valores = def ? valoresPorDefecto(def) : {};
 const codigo = def ? codigoPlayground(def, valores, 'ts') : [];
 const nombre = def ? componenteDe(def).nombre : title;
-const MARCA = { h: 262, c: 0.17 };
+// El color que se edita es el del tono elegido (con prop tone) o, si no hay, el de marca.
+const controlTono = def?.controles.find((c) => c.nombre === 'tone');
+const rolInicial = String((controlTono && valores.tone) || 'brand') as keyof typeof roles;
+const COLOR = roles[rolInicial] ?? roles.brand;
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const valorControl = (v: unknown, separador?: string) => (Array.isArray(v) ? v.join(` ${separador} `) : String(v ?? ''));
 ---
@@ -27,7 +32,7 @@ const valorControl = (v: unknown, separador?: string) => (Array.isArray(v) ? v.j
     <section class="doc-section pruebalo" aria-labelledby="pruebalo" data-playground={slug}>
       <h2 id="pruebalo">Pruébalo</h2>
       <p class="pruebalo-intro">
-        Juega con las props y el color de marca, y mira el resultado en móvil, en RTL, en oscuro o con «reducir
+        Juega con las props y el color, y mira el resultado en móvil, en RTL, en oscuro o con «reducir
         movimiento». Abajo tienes el componente <code>{nombre}</code> listo para copiar
         en tu proyecto: recibe estas mismas props, en TypeScript o JavaScript, y es tuyo para cambiarlo. Debajo, cómo usarlo con
         lo que has elegido.
@@ -115,22 +120,26 @@ const valorControl = (v: unknown, separador?: string) => (Array.isArray(v) ? v.j
             ))}
 
             <fieldset class="fieldset">
-              <legend>Color de marca</legend>
+              <legend class="cluster" style="--cluster-gap: var(--space-2)">
+                <span class="muestra-color" data-muestra aria-hidden="true" style={`background: oklch(0.6 ${COLOR.c} ${COLOR.h})`}></span>
+                <span>Color: <span data-rol-nombre>{NOMBRES_ROL[rolInicial] ?? 'Marca'}</span></span>
+              </legend>
               <div class="field">
-                <label for="pg-marca-h">
-                  Tono <output for="pg-marca-h" data-salida="marca-h">{MARCA.h}</output>
+                <label for="pg-color-h">
+                  Tono <output for="pg-color-h" data-salida="color-h">{COLOR.h}</output>
                 </label>
-                <input type="range" id="pg-marca-h" name="marca-h" min="0" max="360" step="1" value={String(MARCA.h)} />
+                <input type="range" class="rango-tono" id="pg-color-h" name="color-h" min="0" max="359" step="1" value={String(COLOR.h)} disabled={rolInicial === 'neutral'} />
               </div>
               <div class="field">
-                <label for="pg-marca-c">
-                  Croma <output for="pg-marca-c" data-salida="marca-c">{MARCA.c}</output>
+                <label for="pg-color-c">
+                  Croma <output for="pg-color-c" data-salida="color-c">{COLOR.c}</output>
                 </label>
-                <input type="range" id="pg-marca-c" name="marca-c" min="0" max="0.2" step="0.01" value={String(MARCA.c)} />
+                <input type="range" id="pg-color-c" name="color-c" min="0" max="0.2" step="0.005" value={String(COLOR.c)} />
               </div>
               <p class="hint">
-                El contraste está garantizado con cualquier tono y croma hasta 0,2. Para todos los colores, el
-                <a href={`${base}/temas`}>taller de temas</a>.
+                Es el color del tono que usa el componente: lo que mueves es lo que ves. El contraste está
+                garantizado con cualquier tono y croma hasta 0,2. Para todos los colores a la vez,
+                el <a href={`${base}/temas`}>taller de temas</a>.
               </p>
             </fieldset>
 

@@ -16,8 +16,8 @@ const pares = auditoria(inicial).length;
     <h2 id="taller">Tu tema</h2>
     <p class="taller-intro">
       Empieza por un preset o pulsa <strong>Inspírame</strong>, y ajusta el color de cada rol, la forma y la tipografía. La
-      pantalla de ejemplo se ve en claro y en oscuro a la vez. Con cualquier tono y un croma hasta {MAX_CHROMA},
-      <span>los {pares} pares</span> de contraste cumplen WCAG AA: lo comprueba la misma receta que usa el CI.
+      pantalla de ejemplo se ve en claro y en oscuro a la vez.
+      Con cualquier tono y un croma hasta {MAX_CHROMA}, <span>los {pares} pares</span> de contraste cumplen WCAG AA: lo comprueba la misma receta que usa el CI.
     </p>
 
     <div class="taller" data-taller>
@@ -53,7 +53,7 @@ const pares = auditoria(inicial).length;
           ROLES.map((rol) => (
             <fieldset class="fieldset taller-rol">
               <legend>
-                <span class="taller-chip" data-chip={rol} aria-hidden="true" />
+                <span class="muestra-color" data-chip={rol} aria-hidden="true" />
                 {NOMBRES_ROL[rol]}
               </legend>
               {rol === 'neutral' && (
@@ -66,7 +66,7 @@ const pares = auditoria(inicial).length;
                 <label for={`t-${rol}-h`}>
                   Tono <output for={`t-${rol}-h`} data-salida={`${rol}-h`}>{inicial.roles[rol].h}</output>
                 </label>
-                <input type="range" class="taller-tono" id={`t-${rol}-h`} name={`${rol}-h`} min="0" max="359" step="1" value={inicial.roles[rol].h} disabled={rol === 'neutral'} />
+                <input type="range" class="rango-tono" id={`t-${rol}-h`} name={`${rol}-h`} min="0" max="359" step="1" value={inicial.roles[rol].h} disabled={rol === 'neutral'} />
               </div>
               <div class="field">
                 <label for={`t-${rol}-c`}>
