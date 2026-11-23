@@ -1050,12 +1050,41 @@ export function startLab() {
   /** El componente de angela cuyo CSS es el del PR (el slug no siempre coincide: boton → button.css). */
   const slugForFile = (id) => components.find((c) => sourcesFor(c.slug).css === `components/${id}.css`)?.slug ?? '';
 
+  /** Qué pasará al proponer: se actualiza el PR (es tuyo) o se abre otro que parte de él. */
+  function prDestino(pr) {
+    if (pr.mio === true) return `Al proponer se actualiza el pull request #${pr.number}, sin abrir otro.`;
+    if (pr.mio === false) {
+      return `Es de ${pr.autor}: al proponer se abrirá uno nuevo a tu nombre que parte de #${pr.number} y lo menciona.`;
+    }
+    return `Si el pull request #${pr.number} es tuyo, al proponer se actualiza; si no, se abre uno nuevo a tu nombre que parte de él.`;
+  }
+
   function renderPrState() {
     el.prState.hidden = !state.pr;
     if (!state.pr) return;
     el.prStateTitle.textContent = `Trabajas sobre el pull request #${state.pr.number}`;
-    el.prStateText.textContent = `«${state.pr.title}». Al proponer se actualiza ese pull request; para proponerlo aparte, elige otro punto de partida.`;
+    el.prStateText.textContent = `«${state.pr.title}». ${prDestino(state.pr)}`;
     el.prStateLink.href = state.pr.url;
+  }
+
+  /**
+   * Con token se sabe de antemano si el PR se puede actualizar o se abrirá otro; sin él, se
+   * decide al proponer (proposeComponent hace la misma comprobación).
+   */
+  async function checkPrOwner(pr) {
+    const token = githubToken.get();
+    if (!token || pr.mio != null) return;
+    try {
+      const { canUpdatePullRequest, currentLogin } = await import('./github.js');
+      const login = await currentLogin(token, { signal: abort.signal });
+      if (!login) return;
+      pr.mio = canUpdatePullRequest(login, pr);
+      if (state.pr !== pr) return;
+      renderPrState();
+      if (el.propose.open) el.proposeKind.textContent = prDestino(pr);
+    } catch {
+      // Sin cuenta no pasa nada: se decide al proponer.
+    }
   }
 
   /** Pone en el editor el código de un pull request y, si sigue abierto, lo deja como destino. */
@@ -1072,7 +1101,7 @@ export function startLab() {
         test: pr.files.test || STARTER.test,
       };
     }
-    state.pr = pr.abierto && pr.head ? pr : null;
+    state.pr = pr.abierto && pr.head ? { ...pr, mio: null } : null;
     // Queda como borrador: al recargar con ?pr= se sigue desde aquí, no desde uno anterior.
     if (!borrador) drafts.set(slug, state.files);
     fillEditor();
@@ -1085,9 +1114,8 @@ export function startLab() {
     const url = new URL(location.href);
     url.searchParams.set('pr', String(pr.number));
     history.replaceState(null, '', url);
-    const destino = state.pr
-      ? 'Al proponer se actualizará ese pull request.'
-      : `Está ${pr.estado}: al proponer se abrirá uno nuevo.`;
+    const destino = state.pr ? prDestino(state.pr) : `Está ${pr.estado}: al proponer se abrirá uno nuevo.`;
+    if (state.pr) checkPrOwner(state.pr);
     const que = borrador ? `Sigues con tu borrador sobre el pull request #${pr.number}.` : `Código del pull request #${pr.number} en el editor.`;
     setStatus([que, destino, ...(borrador ? [] : pr.avisos)].join(' '));
   }
@@ -1234,8 +1262,9 @@ export function startLab() {
     el.proposeStep.textContent = '';
     showProposeError(null);
     el.done.hidden = true;
+    if (state.pr) checkPrOwner(state.pr);
     el.proposeKind.textContent = state.pr
-      ? `Se actualizará el pull request #${state.pr.number} con un commit nuevo en su rama: no se abre otro.`
+      ? prDestino(state.pr)
       : info
       ? `Partes de «${info.title}», así que se propondrá como un cambio sobre ese componente.`
       : 'Se comprobará en el repositorio si el componente ya existe, para proponerlo como nuevo o como un cambio.';
@@ -1268,13 +1297,15 @@ export function startLab() {
   }
 
   /** Tras abrir el pull request: se cierra el modal, se avisa con el enlace y el laboratorio empieza de cero. */
-  function proposalSent({ url, nuevo, partes, actualizado }) {
+  function proposalSent({ url, nuevo, partes, actualizado, continua }) {
     const numero = state.pr?.number;
     el.propose.close();
     drafts.clear(state.slug);
     load('');
     const que = partes > 1 ? `${partes} componentes` : nuevo ? 'componente nuevo' : 'cambio';
-    el.doneTitle.textContent = actualizado ? `Pull request #${numero} actualizado` : `Pull request abierto (${que})`;
+    el.doneTitle.textContent = actualizado
+      ? `Pull request #${numero} actualizado`
+      : `Pull request abierto (${continua ? `continúa #${continua}` : que})`;
     el.doneLink.href = url;
     el.done.hidden = false;
     el.done.scrollIntoView({ block: 'nearest' });

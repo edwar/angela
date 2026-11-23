@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchPullRequest, proposeComponent } from './github.js';
+import { canUpdatePullRequest, fetchPullRequest, proposeComponent } from './github.js';
 import { serializeDocsEntry } from './docs-entry.js';
 
 const indexJs = readFileSync(new URL('../../../../packages/angela/src/js/index.js', import.meta.url), 'utf8');
@@ -201,7 +201,7 @@ describe('proposeComponent', () => {
   it('abre el PR con título y descripción; si GitHub lo rechaza, da el enlace para abrirlo a mano', async () => {
     let calls = fakeGitHub();
     const result = await proposeComponent(input(''));
-    expect(result).toEqual({ url: 'https://github.com/edwar/angela/pull/99', nuevo: true, partes: 1, actualizado: false });
+    expect(result).toEqual({ url: 'https://github.com/edwar/angela/pull/99', nuevo: true, partes: 1, actualizado: false, continua: null });
     expect(prBody(calls).title).toBe('feat(galeria): añade el componente Galería');
     expect(prBody(calls).body).toContain('Una galería.');
 
@@ -232,6 +232,8 @@ describe('fetchPullRequest', () => {
           title: 'feat(galeria): añade el componente Galería',
           state: 'open',
           merged_at: null,
+          user: { login: 'ana' },
+          maintainer_can_modify: true,
           head: { sha: 'cafe', ref: 'feat/galeria-x', repo: { name: 'angela', owner: { login: 'ana' } } },
           ...pr,
         });
@@ -263,6 +265,8 @@ describe('fetchPullRequest', () => {
     expect(pr).toMatchObject({
       number: 58,
       abierto: true,
+      autor: 'ana',
+      mantenedorPuede: true,
       id: 'galeria',
       jsFile: 'galeria.js',
       head: { owner: 'ana', name: 'angela', branch: 'feat/galeria-x' },
@@ -301,7 +305,7 @@ describe('proposeComponent sobre un pull request abierto', () => {
   it('escribe en su rama, sin crear rama ni pull request, y solo lo que cambia', async () => {
     const calls = fakeGitHub({ existing: { 'docs/src/data/componentes/galeria.js': 'export default {}' } });
     const result = await proposeComponent(input('', { pr }));
-    expect(result).toEqual({ url: pr.url, nuevo: true, partes: 1, actualizado: true });
+    expect(result).toEqual({ url: pr.url, nuevo: true, partes: 1, actualizado: true, continua: null });
     expect(calls.some((c) => c.path.endsWith('/git/refs'))).toBe(false);
     expect(calls.some((c) => c.path.endsWith('/pulls'))).toBe(false);
     expect(writes(calls).every((c) => c.body.branch === 'feat/galeria-x')).toBe(true);
@@ -322,13 +326,51 @@ describe('proposeComponent sobre un pull request abierto', () => {
     expect(writes(calls)).toHaveLength(0);
   });
 
-  it('el pull request de otra persona no se puede actualizar', async () => {
-    fakeGitHub();
-    const ajeno = { ...pr, head: { ...pr.head, owner: 'ana' } };
+  /** GitHub de mentira con otra cuenta en /user. */
+  function comoUsuario(login, opciones) {
+    const calls = fakeGitHub(opciones);
     const original = globalThis.fetch.getMockImplementation();
-    globalThis.fetch.mockImplementation(async (url, init) =>
-      url.endsWith('/user') ? new Response(JSON.stringify({ login: 'luis' })) : original(url, init),
-    );
-    await expect(proposeComponent(input('', { pr: ajeno }))).rejects.toThrow('es de ana');
+    globalThis.fetch.mockImplementation(async (url, init) => {
+      if (url.endsWith('/user')) return new Response(JSON.stringify({ login }));
+      // La bifurcación de quien propone.
+      if (url.endsWith('/forks')) {
+        calls.push({ method: 'POST', path: url.replace('https://api.github.com', '') });
+        return new Response(JSON.stringify({ owner: { login }, name: 'angela' }), { status: 202 });
+      }
+      return original(url, init);
+    });
+    return calls;
+  }
+
+  it('el pull request de otra persona: abre uno nuevo a tu nombre que dice de cuál parte', async () => {
+    const calls = comoUsuario('luis');
+    const ajeno = { ...pr, autor: 'ana', head: { ...pr.head, owner: 'ana' } };
+    const result = await proposeComponent(input('', { pr: ajeno }));
+    expect(result).toMatchObject({ actualizado: false, continua: 58, url: 'https://github.com/edwar/angela/pull/99' });
+    expect(writes(calls).some((c) => c.body.branch === 'feat/galeria-x')).toBe(false);
+    expect(calls.some((c) => c.path.endsWith('/forks'))).toBe(true);
+    expect(prBody(calls).body).toMatch(/^Continúa #58 de @ana/);
+  });
+
+  it('quien mantiene angela actualiza una bifurcación solo si el autor lo permite', async () => {
+    const fork = { ...pr, autor: 'ana', head: { ...pr.head, owner: 'ana' } };
+    let calls = comoUsuario('edwar');
+    expect(await proposeComponent(input('', { pr: { ...fork, mantenedorPuede: true } }))).toMatchObject({ actualizado: true });
+    expect(writes(calls).every((c) => c.path.startsWith('/repos/ana/angela/') && c.body.branch === 'feat/galeria-x')).toBe(true);
+
+    calls = comoUsuario('edwar');
+    expect(await proposeComponent(input('', { pr: { ...fork, mantenedorPuede: false } }))).toMatchObject({ actualizado: false, continua: 58 });
+  });
+});
+
+describe('canUpdatePullRequest', () => {
+  const rama = (owner, mantenedorPuede = false) => ({ head: { owner }, mantenedorPuede });
+  it('quien lo abrió, sí; otra persona, no; quien mantiene angela, en su repo o si el autor lo permite', () => {
+    expect(canUpdatePullRequest('Ana', rama('ana'))).toBe(true);
+    expect(canUpdatePullRequest('luis', rama('ana', true))).toBe(false);
+    expect(canUpdatePullRequest('luis', rama('edwar'))).toBe(false);
+    expect(canUpdatePullRequest('edwar', rama('edwar'))).toBe(true);
+    expect(canUpdatePullRequest('edwar', rama('ana', true))).toBe(true);
+    expect(canUpdatePullRequest('edwar', rama('ana', false))).toBe(false);
   });
 });

@@ -174,6 +174,26 @@ export function testFromRepo(test, file) {
   return test.replace(new RegExp(`(from\\s*|import\\s*\\(\\s*)(['"])\\./${nombre}\\2`, 'g'), '$1$2./componente.js$2');
 }
 
+/**
+ * ¿Puede esta cuenta escribir en la rama del pull request? Quien lo abrió, siempre; quien
+ * tiene el repositorio, si la rama está en él o si el autor deja que quien mantiene el
+ * proyecto modifique su bifurcación (maintainer_can_modify). El resto, no.
+ * @param {string} login
+ * @param {{ head: { owner: string }, mantenedorPuede?: boolean }} pr
+ */
+export function canUpdatePullRequest(login, pr) {
+  const igual = (a, b) => a?.toLowerCase() === b?.toLowerCase();
+  if (igual(login, pr.head.owner)) return true;
+  return igual(login, REPO.owner) && (igual(pr.head.owner, REPO.owner) || Boolean(pr.mantenedorPuede));
+}
+
+/** Cuenta del token, para saber antes de proponer si se actualiza el PR o se abre otro. */
+export async function currentLogin(token, { signal } = {}) {
+  if (!token) return null;
+  const me = await call('/user', { token, signal });
+  return me?.login ?? null;
+}
+
 /** «58», «#58» o el enlace del pull request → 58. */
 export function pullNumber(text) {
   const m = /^\s*(?:https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/|#)?(\d+)\/?(?:[#?/].*)?\s*$/i.exec(text ?? '');
@@ -188,6 +208,7 @@ export function pullNumber(text) {
  * @param {string} ref  Número del pull request o su enlace.
  * @returns {Promise<{
  *   number: number, url: string, title: string, abierto: boolean, estado: 'abierto' | 'cerrado' | 'mezclado',
+ *   autor: string, mantenedorPuede: boolean,
  *   head: { owner: string, name: string, branch: string } | null,
  *   id: string, jsFile: string | null,
  *   files: { html: string, css: string, js: string, test: string },
@@ -252,6 +273,8 @@ export async function fetchPullRequest(ref, { token, signal } = {}) {
     title: pr.title,
     abierto: estado === 'abierto',
     estado,
+    autor: pr.user?.login ?? pr.head.repo?.owner.login ?? '',
+    mantenedorPuede: Boolean(pr.maintainer_can_modify),
     head: pr.head.repo ? { owner: pr.head.repo.owner.login, name: pr.head.repo.name, branch: pr.head.ref } : null,
     id,
     jsFile: js != null ? jsFile : null,
@@ -321,11 +344,13 @@ function cambiosDocs(resumen) {
   return ['## Documentación', '', lineas.length ? lineas.join('\n') : '- Sin cambios en ejemplos ni API.', ''].join('\n');
 }
 
-function prBody({ partes, id, nuevo, sinCss = false, resumen, html, hallazgos, documentado, docs, js }) {
+function prBody({ partes, id, nuevo, sinCss = false, resumen, html, hallazgos, documentado, docs, js, continua = null }) {
   const modulo = jsLines(js);
   const avisos = hallazgos.filter((h) => h.level === 'warn');
   const conjunto = partes.length > 1;
   return [
+    // Quien mantiene angela ve de qué PR sale este y puede cerrar el anterior.
+    ...(continua ? [`Continúa #${continua.number} de @${continua.autor}: parte de su código con correcciones encima.`, ''] : []),
     resumen.trim(),
     '',
     `## ${nuevo ? (conjunto ? 'Componentes nuevos' : 'Componente nuevo') : 'Cambio sobre componentes existentes'}`,
@@ -407,11 +432,12 @@ async function mismaPagina(fuente, docs) {
  *   jsFile?: string | null,
  *   files: { html: string, css: string, js: string },
  *   findings?: { level: string, text: string }[],
- *   pr?: { number: number, url: string, head: { owner: string, name: string, branch: string } } | null,
+ *   pr?: { number: number, url: string, autor: string, mantenedorPuede: boolean, head: { owner: string, name: string, branch: string } } | null,
  *   onStep?: (text: string) => void, signal?: AbortSignal,
  * }} input
- *   pr: el pull request abierto del que se trajo el código: se escribe en su rama.
- * @returns {Promise<{ url: string, nuevo: boolean, partes: number, actualizado: boolean }>}
+ *   pr: el pull request abierto del que se trajo el código. Si se puede escribir en su rama
+ *   (canUpdatePullRequest) se actualiza; si no, se abre uno nuevo que dice de cuál parte.
+ * @returns {Promise<{ url: string, nuevo: boolean, partes: number, actualizado: boolean, continua: number | null }>}
  */
 export async function proposeComponent({
   token,
@@ -431,6 +457,16 @@ export async function proposeComponent({
   const opts = { token, signal };
 
   if (!parts.length) throw new GitHubError('No hay ningún componente que proponer.');
+
+  paso('Identificando tu cuenta…');
+  const me = await call('/user', opts);
+  const login = me?.login;
+  if (!login) throw new GitHubError('No se pudo leer tu cuenta de GitHub.');
+
+  // El PR del que se partió se actualiza solo si se puede escribir en su rama; si no, se abre
+  // uno nuevo a nombre de quien propone que dice de cuál parte.
+  const destino = pr && canUpdatePullRequest(login, pr) ? pr : null;
+  const continua = pr && !destino ? pr : null;
 
   paso(parts.length > 1 ? 'Comprobando los componentes en el repositorio…' : 'Comprobando el componente en el repositorio…');
   for (const part of parts) {
@@ -453,7 +489,7 @@ export async function proposeComponent({
     const archivoJs = jsFile || `${id}.js`;
     soloDocs.test = conJs && hasCode(files.test) && (await enMain(testPath(archivoJs))) !== testForRepo(files.test, archivoJs);
     // Al actualizar un PR se compara con su rama (put), no con main.
-    if (!pr && !soloDocs.docs && !soloDocs.js && !soloDocs.test) {
+    if (!destino && !soloDocs.docs && !soloDocs.js && !soloDocs.test) {
       throw new GitHubError(
         parts.length > 1
           ? 'Los componentes son idénticos a los que ya están en el repositorio, también su documentación: no hay nada que proponer.'
@@ -463,23 +499,11 @@ export async function proposeComponent({
   }
   const sinCss = parts.every((p) => p.igual);
 
-  paso('Identificando tu cuenta…');
-  const me = await call('/user', opts);
-  const login = me?.login;
-  if (!login) throw new GitHubError('No se pudo leer tu cuenta de GitHub.');
-
   // Quien tiene el repositorio trabaja directo; el resto, sobre su bifurcación.
   const propio = login.toLowerCase() === REPO.owner.toLowerCase();
   let head = { owner: login, name: REPO.name };
-  if (pr) {
-    // Quien abrió el PR escribe en su rama; quien tiene el repositorio, también en las de
-    // las bifurcaciones (maintainer_can_modify). El resto no puede.
-    if (!propio && login.toLowerCase() !== pr.head.owner.toLowerCase()) {
-      throw new GitHubError(
-        `El pull request #${pr.number} es de ${pr.head.owner}: solo esa persona puede actualizarlo. Para proponer tus cambios aparte, quita el pull request del punto de partida.`,
-      );
-    }
-    head = { owner: pr.head.owner, name: pr.head.name };
+  if (destino) {
+    head = { owner: destino.head.owner, name: destino.head.name };
   } else if (!propio) {
     paso('Preparando tu copia del repositorio…');
     const fork = await call(`/repos/${REPO.owner}/${REPO.name}/forks`, { ...opts, method: 'POST' });
@@ -492,8 +516,8 @@ export async function proposeComponent({
     }
   }
 
-  let branch = pr?.head.branch;
-  if (!pr) {
+  let branch = destino?.head.branch;
+  if (!destino) {
     paso('Creando la rama…');
     const base = await call(`/repos/${REPO.owner}/${REPO.name}/git/ref/heads/${REPO.branch}`, opts);
     branch = `${nuevo ? 'feat' : 'fix'}/${id}-${Date.now().toString(36)}`;
@@ -534,7 +558,7 @@ export async function proposeComponent({
         : `fix(${id}): mejora ${quienes}`;
 
   for (const part of parts) {
-    if (part.igual && !pr) continue;
+    if (part.igual && !destino) continue;
     paso(`Subiendo ${part.id}.css…`);
     await put(cssPath(part.id), `${part.css.trimEnd()}\n`, `${nuevo ? 'feat' : 'fix'}(${part.id}): CSS del componente`);
   }
@@ -561,7 +585,7 @@ export async function proposeComponent({
   // escrito a mano. Si no, queda como tarea en el PR.
   const documentado = Boolean(docs) && (nuevo || Boolean(docs.actualiza));
   // Con el CSS igual y la página igual (solo cambia el JS), la página ya está al día.
-  if (documentado && (pr || !(sinCss && !soloDocs.docs))) {
+  if (documentado && (destino || !(sinCss && !soloDocs.docs))) {
     paso(docs.actualiza ? 'Poniendo al día la página de documentación…' : 'Escribiendo la página de documentación…');
     await put(
       docsPath(docs.slug),
@@ -573,8 +597,8 @@ export async function proposeComponent({
   // El JS se sube y se registra en @angela-ui/angela/js: si no, angela() no lo ejecuta nunca.
   // Un JS sin efecto (una plantilla que quedó en la pestaña) no se sube: solo añadiría peso.
   let js = null;
-  const subeJs = hasCode(files.js) && !jsSinEfecto(files.js) && (Boolean(pr) || !(sinCss && !soloDocs.js));
-  const subeTest = hasCode(files.js) && !jsSinEfecto(files.js) && hasCode(files.test) && (Boolean(pr) || !(sinCss && !soloDocs.test));
+  const subeJs = hasCode(files.js) && !jsSinEfecto(files.js) && (Boolean(destino) || !(sinCss && !soloDocs.js));
+  const subeTest = hasCode(files.js) && !jsSinEfecto(files.js) && hasCode(files.test) && (Boolean(destino) || !(sinCss && !soloDocs.test));
   if (subeJs) {
     const file = jsFile || `${id}.js`;
     paso('Subiendo el JavaScript…');
@@ -597,9 +621,9 @@ export async function proposeComponent({
     await put(testPath(file), testForRepo(files.test, file), `test(${id}): pruebas del módulo`);
   }
 
-  if (pr) {
-    if (!escritos) throw new GitHubError(`No hay cambios respecto al pull request #${pr.number}: no hay nada que subir.`);
-    return { url: pr.url, nuevo, partes: parts.length, actualizado: true };
+  if (destino) {
+    if (!escritos) throw new GitHubError(`No hay cambios respecto al pull request #${destino.number}: no hay nada que subir.`);
+    return { url: destino.url, nuevo, partes: parts.length, actualizado: true, continua: null };
   }
 
   paso('Abriendo el pull request…');
@@ -624,6 +648,7 @@ export async function proposeComponent({
           hallazgos: findings,
           documentado,
           docs,
+          continua,
         }),
         maintainer_can_modify: true,
       },
@@ -641,7 +666,7 @@ export async function proposeComponent({
     );
   }
 
-  return { url: abierto.html_url, nuevo, partes: parts.length, actualizado: false };
+  return { url: abierto.html_url, nuevo, partes: parts.length, actualizado: false, continua: continua?.number ?? null };
 }
 
 /* ---------- Iconos ---------- */
