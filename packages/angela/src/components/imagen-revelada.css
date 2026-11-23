@@ -18,9 +18,15 @@
     }
   }
 
-  @media (preference-reduce-motion: reduce),
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-image {
+      clip-path: none;
+      animation: none;
+    }
+  }
+  
   @media (prefers-reduced-motion: no-preference) {
-    .reveal-image: {
+    .reveal-image {
       clip-path: none;
       animation: none;
     }
