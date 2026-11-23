@@ -18,6 +18,24 @@ const stripCss = (css) => css.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/"[^"]*"
 const stripHtml = (html) => html.replace(/<!--[\s\S]*?-->/g, ' ');
 const stripJs = (js) => js.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/\/\/[^\n]*/g, ' ');
 
+/** Contenido de cada bloque @media cuya condición cumple `condicion` (con sus bloques anidados). */
+function mediaBlocks(css, condicion) {
+  const limpio = stripCss(css);
+  const bloques = [];
+  for (const m of limpio.matchAll(/@media\s*([^{;]*)\{/gi)) {
+    if (!condicion.test(m[1])) continue;
+    let nivel = 1;
+    let i = m.index + m[0].length;
+    const inicio = i;
+    for (; i < limpio.length && nivel > 0; i++) {
+      if (limpio[i] === '{') nivel++;
+      else if (limpio[i] === '}') nivel--;
+    }
+    bloques.push(limpio.slice(inicio, i - 1));
+  }
+  return bloques;
+}
+
 /** Declaraciones del CSS como pares [propiedad, valor], ya sin comentarios. */
 function declarations(css) {
   return [...stripCss(css).matchAll(/([-a-z]+)\s*:\s*([^;{}]+)/gi)].map(([, prop, value]) => [
@@ -116,6 +134,19 @@ const CSS_RULES = [
       return /prefers-reduced-motion/.test(limpio)
         ? null
         : 'Hay desplazamientos o animaciones: enciérralos en @media (prefers-reduced-motion: no-preference).';
+    },
+  },
+  {
+    // Quitar la animación dentro de «no-preference» se la quita a quien no pidió reducir el
+    // movimiento: el efecto no se ve nunca. Pasó con imagen-revelada.
+    id: 'movimiento-al-reves',
+    level: 'error',
+    check(css) {
+      const sinPreferencia = mediaBlocks(css, /prefers-reduced-motion\s*:\s*no-preference/i).join('\n');
+      const quita = /\b(animation|animation-name|transition|transition-property)\s*:\s*none\b/i.exec(sinPreferencia);
+      return quita
+        ? `Dentro de @media (prefers-reduced-motion: no-preference) hay «${quita[1]}: none»: eso quita el efecto a quien no pidió reducir el movimiento, así que no se ve nunca. La animación va dentro de ese bloque; con «reduce» se quita (o, mejor, no se declara fuera de él).`
+        : null;
     },
   },
   {

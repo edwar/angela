@@ -170,3 +170,30 @@ describe('regla de sintaxis del CSS', () => {
     }
   });
 });
+
+describe('regla de movimiento al revés', () => {
+  const regla = (css) => reviewComponent({ html: '', css, js: '' }).find((h) => h.id === 'movimiento-al-reves');
+
+  it('marca quitar la animación dentro de no-preference (el CSS que quedó en imagen-revelada)', () => {
+    const css = `@layer angela.components {
+  @supports (animation-timeline: view()) {
+    .reveal-image { animation: reveal-image linear both; animation-timeline: view(); }
+  }
+  @keyframes reveal-image { to { clip-path: inset(0); } }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal-image { clip-path: none; animation: none; }
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal-image { clip-path: none; animation: none; }
+  }
+}`;
+    expect(regla(css)).toMatchObject({ level: 'error' });
+    expect(regla(css).text).toContain('animation: none');
+    expect(regla('@media (prefers-reduced-motion: no-preference) { @supports (x: y) { .a { transition: none; } } }')).toBeTruthy();
+  });
+
+  it('no marca quitarla con reduce ni animar dentro de no-preference', () => {
+    expect(regla('@media (prefers-reduced-motion: reduce) { .a { animation: none; transition: none; } }')).toBeUndefined();
+    expect(regla('@media (prefers-reduced-motion: no-preference) { .a { animation: x 1s; } } .b { animation: none; }')).toBeUndefined();
+  });
+});
