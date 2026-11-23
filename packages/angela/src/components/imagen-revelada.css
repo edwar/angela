@@ -1,0 +1,28 @@
+@layer angela.components {
+  :where(.reveal-image) {
+    
+  }
+
+  @supports (animation-timeline: view()) {
+    .reveal-image {
+      clip-path: inset(100% 0 0);
+      animation: reveal-image linear both;
+      animation-timeline: view();
+      animation-range: entry 25% cover 50%;
+    }
+  }
+
+  @keyframes reveal-image {
+    to {
+      clip-path: inset(0 0 0);
+    }
+  }
+
+  @media (preference-reduce-motion: reduce),
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal-image: {
+      clip-path: none;
+      animation: none;
+    }
+  }
+}
