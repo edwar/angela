@@ -170,6 +170,20 @@ export function startLab() {
     done: $('lab-done'),
     doneTitle: $('lab-done-title'),
     doneLink: $('lab-done-link'),
+    prOpen: $('lab-pr-open'),
+    pr: $('lab-pr'),
+    prForm: $('lab-pr-form'),
+    prRef: $('lab-pr-ref'),
+    prSend: $('lab-pr-send'),
+    prStep: $('lab-pr-step'),
+    prDraft: $('lab-pr-draft'),
+    prDraftText: $('lab-pr-draft-text'),
+    prError: $('lab-pr-error'),
+    prErrorText: $('lab-pr-error-text'),
+    prState: $('lab-pr-state'),
+    prStateTitle: $('lab-pr-state-title'),
+    prStateText: $('lab-pr-state-text'),
+    prStateLink: $('lab-pr-state-link'),
     aiReviewRun: $('lab-ai-review-run'),
     aiReviewCancel: $('lab-ai-review-cancel'),
     aiReviewProgress: $('lab-ai-review-progress'),
@@ -214,6 +228,10 @@ export function startLab() {
     port: null,
     logs: 0,
     request: null,
+    /** Pull request abierto del que se trajo el código: al proponer se actualiza. */
+    pr: null,
+    /** Pull request traído que espera confirmación porque sustituiría un borrador. */
+    prPendiente: null,
     /** Respuesta del parser del build para un CSS: { css, error }. */
     cssBuild: null,
     findings: [],
@@ -381,6 +399,8 @@ export function startLab() {
 
   function load(slug) {
     state.slug = components.some((c) => c.slug === slug) ? slug : '';
+    state.pr = null;
+    renderPrState();
     el.base.value = state.slug;
     const draft = drafts.get(state.slug);
     state.files = { ...original(state.slug), ...pickFiles(draft) };
@@ -397,6 +417,7 @@ export function startLab() {
     const url = new URL(location.href);
     if (state.slug) url.searchParams.set('componente', state.slug);
     else url.searchParams.delete('componente');
+    url.searchParams.delete('pr');
     history.replaceState(null, '', url);
     setStatus(draft ? 'Recuperado lo que tenías escrito en este navegador.' : '');
   }
@@ -1024,6 +1045,136 @@ export function startLab() {
     el.ideSaved.textContent = 'Restablecido';
   });
 
+  /* ---------- Traer un pull request ---------- */
+
+  /** El componente de angela cuyo CSS es el del PR (el slug no siempre coincide: boton → button.css). */
+  const slugForFile = (id) => components.find((c) => sourcesFor(c.slug).css === `components/${id}.css`)?.slug ?? '';
+
+  /** Qué pasará al proponer: se actualiza el PR (es tuyo) o se abre otro que parte de él. */
+  function prDestino(pr) {
+    if (pr.mio === true) return `Al proponer se actualiza el pull request #${pr.number}, sin abrir otro.`;
+    if (pr.mio === false) {
+      return `Es de ${pr.autor}: al proponer se abrirá uno nuevo a tu nombre que parte de #${pr.number} y lo menciona.`;
+    }
+    return `Si el pull request #${pr.number} es tuyo, al proponer se actualiza; si no, se abre uno nuevo a tu nombre que parte de él.`;
+  }
+
+  function renderPrState() {
+    el.prState.hidden = !state.pr;
+    if (!state.pr) return;
+    el.prStateTitle.textContent = `Trabajas sobre el pull request #${state.pr.number}`;
+    el.prStateText.textContent = `«${state.pr.title}». ${prDestino(state.pr)}`;
+    el.prStateLink.href = state.pr.url;
+  }
+
+  /**
+   * Con token se sabe de antemano si el PR se puede actualizar o se abrirá otro; sin él, se
+   * decide al proponer (proposeComponent hace la misma comprobación).
+   */
+  async function checkPrOwner(pr) {
+    const token = githubToken.get();
+    if (!token || pr.mio != null) return;
+    try {
+      const { canUpdatePullRequest, currentLogin } = await import('./github.js');
+      const login = await currentLogin(token, { signal: abort.signal });
+      if (!login) return;
+      pr.mio = canUpdatePullRequest(login, pr);
+      if (state.pr !== pr) return;
+      renderPrState();
+      if (el.propose.open) el.proposeKind.textContent = prDestino(pr);
+    } catch {
+      // Sin cuenta no pasa nada: se decide al proponer.
+    }
+  }
+
+  /** Pone en el editor el código de un pull request y, si sigue abierto, lo deja como destino. */
+  function applyPullRequest(pr, { conservarBorrador = false } = {}) {
+    const slug = slugForFile(pr.id);
+    load(slug);
+    const base = original(slug);
+    const borrador = conservarBorrador && drafts.get(slug);
+    if (!borrador) {
+      state.files = {
+        html: pr.files.html || (slug ? base.html : ''),
+        css: pr.files.css,
+        js: pr.files.js || STARTER.js,
+        test: pr.files.test || STARTER.test,
+      };
+    }
+    state.pr = pr.abierto && pr.head ? { ...pr, mio: null } : null;
+    // Queda como borrador: al recargar con ?pr= se sigue desde aquí, no desde uno anterior.
+    if (!borrador) drafts.set(slug, state.files);
+    fillEditor();
+    showFileStatus();
+    renderReview();
+    renderParts();
+    renderMotionNotice();
+    render();
+    renderPrState();
+    const url = new URL(location.href);
+    url.searchParams.set('pr', String(pr.number));
+    history.replaceState(null, '', url);
+    const destino = state.pr ? prDestino(state.pr) : `Está ${pr.estado}: al proponer se abrirá uno nuevo.`;
+    if (state.pr) checkPrOwner(state.pr);
+    const que = borrador ? `Sigues con tu borrador sobre el pull request #${pr.number}.` : `Código del pull request #${pr.number} en el editor.`;
+    setStatus([que, destino, ...(borrador ? [] : pr.avisos)].join(' '));
+  }
+
+  on(el.prOpen, 'click', () => {
+    state.prPendiente = null;
+    el.prDraft.hidden = true;
+    el.prError.hidden = true;
+    el.prStep.textContent = '';
+    el.prSend.textContent = 'Traer el código';
+    el.pr.showModal();
+  });
+  on(el.prRef, 'input', () => {
+    // Otro número: la confirmación del borrador era para el anterior.
+    state.prPendiente = null;
+    el.prDraft.hidden = true;
+    el.prSend.textContent = 'Traer el código';
+  });
+
+  on(el.prForm, 'submit', async (event) => {
+    event.preventDefault();
+    if (!el.prRef.reportValidity()) return;
+    if (state.prPendiente) {
+      applyPullRequest(state.prPendiente);
+      state.prPendiente = null;
+      el.pr.close();
+      return;
+    }
+    el.prSend.disabled = true;
+    el.prError.hidden = true;
+    el.prStep.textContent = 'Leyendo el pull request…';
+    try {
+      const { fetchPullRequest } = await import('./github.js');
+      const pr = await fetchPullRequest(el.prRef.value, { token: githubToken.get(), signal: abort.signal });
+      el.prStep.textContent = '';
+      // Si hay un borrador de ese componente con otro código, se pide confirmación antes.
+      const slug = slugForFile(pr.id);
+      const borrador = drafts.get(slug);
+      if (borrador && FILES.some((f) => typeof borrador[f] === 'string' && borrador[f] !== original(slug)[f])) {
+        const info = components.find((c) => c.slug === slug);
+        state.prPendiente = pr;
+        el.prDraftText.textContent = `Tienes un borrador ${info ? `de «${info.title}»` : 'de componente nuevo'} en este navegador. Si traes el pull request #${pr.number}, el editor lo sustituye.`;
+        el.prDraft.hidden = false;
+        el.prSend.textContent = 'Sustituir mi borrador';
+        return;
+      }
+      applyPullRequest(pr);
+      el.pr.close();
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      el.prStep.textContent = '';
+      el.prErrorText.textContent = error.message;
+      el.prError.hidden = false;
+      el.prError.focus();
+    } finally {
+      el.prSend.disabled = false;
+    }
+  });
+
   /* ---------- Proponer al proyecto ---------- */
 
   /**
@@ -1032,6 +1183,7 @@ export function startLab() {
    * sale del nombre que escriba quien aporta.
    */
   function componentFileId() {
+    if (state.pr) return state.pr.id;
     const css = sources().css;
     if (css) return css.split('/').pop().replace(/\.css$/, '');
     return toComponentId(el.proposeName.value);
@@ -1101,14 +1253,19 @@ export function startLab() {
 
   on(el.proposeOpen, 'click', () => {
     const info = componentInfo();
-    el.proposeName.value = info ? info.title : '';
-    el.proposeSummary.value = '';
-    // Si parte de un componente, vienen las notas de su página: lo que quede es lo que tendrá.
-    el.proposeA11y.value = info ? info.a11y.join('\n') : '';
+    // Del pull request vienen el nombre, el resumen y las notas de su página; si no, de la
+    // página del componente de partida: lo que quede es lo que tendrá.
+    const pagina = state.pr?.docs ?? info;
+    el.proposeName.value = pagina ? pagina.title : '';
+    el.proposeSummary.value = state.pr?.docs?.summary ?? '';
+    el.proposeA11y.value = pagina ? pagina.a11y.join('\n') : '';
     el.proposeStep.textContent = '';
     showProposeError(null);
     el.done.hidden = true;
-    el.proposeKind.textContent = info
+    if (state.pr) checkPrOwner(state.pr);
+    el.proposeKind.textContent = state.pr
+      ? prDestino(state.pr)
+      : info
       ? `Partes de «${info.title}», así que se propondrá como un cambio sobre ese componente.`
       : 'Se comprobará en el repositorio si el componente ya existe, para proponerlo como nuevo o como un cambio.';
     const errores = state.findings.filter((h) => h.level === 'error').length;
@@ -1140,12 +1297,15 @@ export function startLab() {
   }
 
   /** Tras abrir el pull request: se cierra el modal, se avisa con el enlace y el laboratorio empieza de cero. */
-  function proposalSent({ url, nuevo, partes }) {
+  function proposalSent({ url, nuevo, partes, actualizado, continua }) {
+    const numero = state.pr?.number;
     el.propose.close();
     drafts.clear(state.slug);
     load('');
     const que = partes > 1 ? `${partes} componentes` : nuevo ? 'componente nuevo' : 'cambio';
-    el.doneTitle.textContent = `Pull request abierto (${que})`;
+    el.doneTitle.textContent = actualizado
+      ? `Pull request #${numero} actualizado`
+      : `Pull request abierto (${continua ? `continúa #${continua}` : que})`;
     el.doneLink.href = url;
     el.done.hidden = false;
     el.done.scrollIntoView({ block: 'nearest' });
@@ -1163,14 +1323,16 @@ export function startLab() {
       .map((linea) => linea.trim())
       .filter(Boolean);
     const info = componentInfo();
-    if (info) {
-      const { entry, resumen } = mergeDocsEntry(info, {
+    // La página del pull request (o la del componente en main) se pone al día, no se rehace.
+    const pagina = state.pr?.docs ?? info;
+    if (pagina) {
+      const { entry, resumen } = mergeDocsEntry(pagina, {
         html: state.files.html,
         css: state.files.css,
-        oldCss: original(info.slug).css,
+        oldCss: state.pr?.docs ? state.pr.files.css : original(info.slug).css,
         a11y,
       });
-      return { slug: info.slug, content: serializeDocsEntry(entry), actualiza: true, resumen, entry };
+      return { slug: pagina.slug, content: serializeDocsEntry(entry), actualiza: true, resumen, entry };
     }
     return {
       slug: id,
@@ -1224,8 +1386,9 @@ export function startLab() {
         parts: currentParts().map(({ id: parteId, css }) => ({ id: parteId, css })),
         docs: docsForProposal(id),
         files: { ...state.files },
-        jsFile: sources().js ?? null,
+        jsFile: state.pr?.jsFile ?? sources().js ?? null,
         findings: state.findings,
+        pr: state.pr,
         onStep: (text) => (el.proposeStep.textContent = text),
         signal: state.request.signal,
       });
@@ -1246,7 +1409,17 @@ export function startLab() {
   el.scheme.setAttribute('aria-pressed', String(state.scheme === 'dark'));
   el.scheme.dataset.scheme = state.scheme;
   refreshAiState();
+  // Un enlace con ?pr=58 trae ese pull request. Al recargar, lo escrito encima (el borrador)
+  // se conserva: solo se recupera a qué pull request va.
+  const prInicial = new URLSearchParams(location.search).get('pr');
   load(new URLSearchParams(location.search).get('componente') ?? '');
+  if (prInicial) {
+    setStatus(`Trayendo el pull request #${prInicial}…`);
+    import('./github.js')
+      .then(({ fetchPullRequest }) => fetchPullRequest(prInicial, { token: githubToken.get(), signal: abort.signal }))
+      .then((pr) => applyPullRequest(pr, { conservarBorrador: true }))
+      .catch((error) => error?.name !== 'AbortError' && setStatus(error.message));
+  }
 
   return () => {
     abort.abort();

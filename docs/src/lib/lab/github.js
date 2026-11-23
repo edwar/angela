@@ -3,7 +3,8 @@
  * a su nombre, sin servidor de por medio.
  *
  * Pasos: mira si el componente ya existe → bifurca el repositorio (si hace falta) →
- * crea una rama → escribe los archivos → abre el pull request.
+ * crea una rama → escribe los archivos → abre el pull request. Si se trajo el código de un
+ * pull request abierto (fetchPullRequest), escribe en su rama y no abre otro.
  *
  * El token se queda en este navegador y solo viaja a api.github.com. Necesita permiso
  * para repositorios públicos: un token clásico con «public_repo», o uno de acceso fino
@@ -21,6 +22,7 @@ const JS_ENTRY = 'packages/angela/src/js/index.js';
 const DOCS_DIR = 'docs/src/data/componentes';
 
 import { findEntryFunction, jsSinEfecto, registerJsModule } from './js-entry.js';
+import { parseDocsEntry } from './docs-entry.js';
 
 export class GitHubError extends Error {}
 
@@ -166,6 +168,122 @@ export async function lookUpComponent(id, { token, signal } = {}) {
   return { existe: true, sha: file.sha, css: fromBase64(file.content.replace(/\n/g, '')) };
 }
 
+/** Lo inverso de testForRepo: el test del repositorio, como se escribe en el laboratorio. */
+export function testFromRepo(test, file) {
+  const nombre = file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return test.replace(new RegExp(`(from\\s*|import\\s*\\(\\s*)(['"])\\./${nombre}\\2`, 'g'), '$1$2./componente.js$2');
+}
+
+/**
+ * ¿Puede esta cuenta escribir en la rama del pull request? Quien lo abrió, siempre; quien
+ * tiene el repositorio, si la rama está en él o si el autor deja que quien mantiene el
+ * proyecto modifique su bifurcación (maintainer_can_modify). El resto, no.
+ * @param {string} login
+ * @param {{ head: { owner: string }, mantenedorPuede?: boolean }} pr
+ */
+export function canUpdatePullRequest(login, pr) {
+  const igual = (a, b) => a?.toLowerCase() === b?.toLowerCase();
+  if (igual(login, pr.head.owner)) return true;
+  return igual(login, REPO.owner) && (igual(pr.head.owner, REPO.owner) || Boolean(pr.mantenedorPuede));
+}
+
+/** Cuenta del token, para saber antes de proponer si se actualiza el PR o se abre otro. */
+export async function currentLogin(token, { signal } = {}) {
+  if (!token) return null;
+  const me = await call('/user', { token, signal });
+  return me?.login ?? null;
+}
+
+/** «58», «#58» o el enlace del pull request → 58. */
+export function pullNumber(text) {
+  const m = /^\s*(?:https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/|#)?(\d+)\/?(?:[#?/].*)?\s*$/i.exec(text ?? '');
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * Trae el código de un pull request del repositorio para seguir con él en el laboratorio:
+ * el CSS de sus componentes, el HTML de los ejemplos de su página, su JS y su test. No hace
+ * falta token (el repo es público), pero con él hay más margen de llamadas.
+ *
+ * @param {string} ref  Número del pull request o su enlace.
+ * @returns {Promise<{
+ *   number: number, url: string, title: string, abierto: boolean, estado: 'abierto' | 'cerrado' | 'mezclado',
+ *   autor: string, mantenedorPuede: boolean,
+ *   head: { owner: string, name: string, branch: string } | null,
+ *   id: string, jsFile: string | null,
+ *   files: { html: string, css: string, js: string, test: string },
+ *   docs: ReturnType<typeof parseDocsEntry>, avisos: string[],
+ * }>}
+ */
+export async function fetchPullRequest(ref, { token, signal } = {}) {
+  const number = pullNumber(String(ref));
+  if (!number) throw new GitHubError('Escribe el número del pull request (por ejemplo 58) o pega su enlace.');
+  const opts = { token, signal };
+  const repo = `/repos/${REPO.owner}/${REPO.name}`;
+
+  const pr = await call(`${repo}/pulls/${number}`, { ...opts, allow404: true });
+  if (!pr) throw new GitHubError(`No existe el pull request #${number} en ${REPO.owner}/${REPO.name}.`);
+  const cambiados = (await call(`${repo}/pulls/${number}/files?per_page=100`, opts)).filter((f) => f.status !== 'removed');
+  const nombres = cambiados.map((f) => f.filename);
+
+  // Se lee del commit del PR: existe en el repositorio aunque venga de una bifurcación.
+  const leer = async (path) => {
+    const file = await call(`${repo}/contents/${path}?ref=${pr.head.sha}`, { ...opts, allow404: true });
+    return file?.content != null ? fromBase64(file.content.replace(/\n/g, '')) : null;
+  };
+  const enCarpeta = (dir, filtro = () => true) =>
+    nombres.filter((n) => n.startsWith(`${dir}/`) && !n.slice(dir.length + 1).includes('/') && filtro(n));
+
+  const cssFiles = enCarpeta(COMPONENTS_DIR, (n) => n.endsWith('.css'));
+  if (!cssFiles.length) {
+    throw new GitHubError(`El pull request #${number} no cambia el CSS de ningún componente: el laboratorio no tiene nada que traer.`);
+  }
+  const avisos = [];
+  const ids = cssFiles.map((n) => n.split('/').pop().replace(/\.css$/, ''));
+  const id = ids[0];
+  // Varias piezas: cada una con su marcador, como las escribe el laboratorio (splitComponents).
+  const piezas = await Promise.all(cssFiles.map(leer));
+  const css =
+    ids.length === 1
+      ? piezas[0]
+      : piezas.map((pieza, i) => (/@componente\s/.test(pieza) ? pieza : `/* @componente ${ids[i]} */\n${pieza}`)).join('\n\n');
+
+  // La página: la que cambia el PR o, si no la toca, la que tiene el componente en su rama.
+  const docsFile = enCarpeta(DOCS_DIR, (n) => n.endsWith('.js'))[0] ?? docsPath(id);
+  const docsSource = await leer(docsFile);
+  const docs = docsSource ? parseDocsEntry(docsSource) : null;
+  if (!docs) {
+    avisos.push(
+      docsSource
+        ? 'Su página de documentación no tiene el formato que entiende el laboratorio: falta el HTML, escríbelo en su pestaña.'
+        : 'No tiene página de documentación: falta el HTML, escríbelo en su pestaña.',
+    );
+  }
+  const html = docs ? docs.examples.map((ex) => `<!-- ${ex.title} -->\n${ex.code}`).join('\n\n') : '';
+
+  const jsFiles = enCarpeta(JS_DIR, (n) => n.endsWith('.js') && !n.endsWith('.test.js') && !n.endsWith('/index.js'));
+  const jsFile = jsFiles[0]?.split('/').pop() ?? `${id}.js`;
+  const js = await leer(jsPath(jsFile));
+  const test = js != null ? await leer(testPath(jsFile)) : null;
+
+  const estado = pr.merged_at ? 'mezclado' : pr.state === 'open' ? 'abierto' : 'cerrado';
+  return {
+    number,
+    url: pr.html_url,
+    title: pr.title,
+    abierto: estado === 'abierto',
+    estado,
+    autor: pr.user?.login ?? pr.head.repo?.owner.login ?? '',
+    mantenedorPuede: Boolean(pr.maintainer_can_modify),
+    head: pr.head.repo ? { owner: pr.head.repo.owner.login, name: pr.head.repo.name, branch: pr.head.ref } : null,
+    id,
+    jsFile: js != null ? jsFile : null,
+    files: { html, css, js: js ?? '', test: test != null ? testFromRepo(test, jsFile) : '' },
+    docs,
+    avisos,
+  };
+}
+
 /** Añade el @import del componente nuevo justo antes del de utilities, si falta. */
 function withImport(entryCss, id) {
   const linea = `@import "./components/${id}.css";`;
@@ -226,11 +344,13 @@ function cambiosDocs(resumen) {
   return ['## Documentación', '', lineas.length ? lineas.join('\n') : '- Sin cambios en ejemplos ni API.', ''].join('\n');
 }
 
-function prBody({ partes, id, nuevo, sinCss = false, resumen, html, hallazgos, documentado, docs, js }) {
+function prBody({ partes, id, nuevo, sinCss = false, resumen, html, hallazgos, documentado, docs, js, continua = null }) {
   const modulo = jsLines(js);
   const avisos = hallazgos.filter((h) => h.level === 'warn');
   const conjunto = partes.length > 1;
   return [
+    // Quien mantiene angela ve de qué PR sale este y puede cerrar el anterior.
+    ...(continua ? [`Continúa #${continua.number} de @${continua.autor}: parte de su código con correcciones encima.`, ''] : []),
     resumen.trim(),
     '',
     `## ${nuevo ? (conjunto ? 'Componentes nuevos' : 'Componente nuevo') : 'Cambio sobre componentes existentes'}`,
@@ -312,9 +432,12 @@ async function mismaPagina(fuente, docs) {
  *   jsFile?: string | null,
  *   files: { html: string, css: string, js: string },
  *   findings?: { level: string, text: string }[],
+ *   pr?: { number: number, url: string, autor: string, mantenedorPuede: boolean, head: { owner: string, name: string, branch: string } } | null,
  *   onStep?: (text: string) => void, signal?: AbortSignal,
  * }} input
- * @returns {Promise<{ url: string, nuevo: boolean, partes: number }>}
+ *   pr: el pull request abierto del que se trajo el código. Si se puede escribir en su rama
+ *   (canUpdatePullRequest) se actualiza; si no, se abre uno nuevo que dice de cuál parte.
+ * @returns {Promise<{ url: string, nuevo: boolean, partes: number, actualizado: boolean, continua: number | null }>}
  */
 export async function proposeComponent({
   token,
@@ -326,6 +449,7 @@ export async function proposeComponent({
   docs = null,
   jsFile = null,
   findings = [],
+  pr = null,
   onStep = () => {},
   signal,
 }) {
@@ -333,6 +457,16 @@ export async function proposeComponent({
   const opts = { token, signal };
 
   if (!parts.length) throw new GitHubError('No hay ningún componente que proponer.');
+
+  paso('Identificando tu cuenta…');
+  const me = await call('/user', opts);
+  const login = me?.login;
+  if (!login) throw new GitHubError('No se pudo leer tu cuenta de GitHub.');
+
+  // El PR del que se partió se actualiza solo si se puede escribir en su rama; si no, se abre
+  // uno nuevo a nombre de quien propone que dice de cuál parte.
+  const destino = pr && canUpdatePullRequest(login, pr) ? pr : null;
+  const continua = pr && !destino ? pr : null;
 
   paso(parts.length > 1 ? 'Comprobando los componentes en el repositorio…' : 'Comprobando el componente en el repositorio…');
   for (const part of parts) {
@@ -354,7 +488,8 @@ export async function proposeComponent({
     soloDocs.js = conJs && (await enMain(jsPath(jsFile || `${id}.js`))) !== `${files.js.trimEnd()}\n`;
     const archivoJs = jsFile || `${id}.js`;
     soloDocs.test = conJs && hasCode(files.test) && (await enMain(testPath(archivoJs))) !== testForRepo(files.test, archivoJs);
-    if (!soloDocs.docs && !soloDocs.js && !soloDocs.test) {
+    // Al actualizar un PR se compara con su rama (put), no con main.
+    if (!destino && !soloDocs.docs && !soloDocs.js && !soloDocs.test) {
       throw new GitHubError(
         parts.length > 1
           ? 'Los componentes son idénticos a los que ya están en el repositorio, también su documentación: no hay nada que proponer.'
@@ -364,15 +499,12 @@ export async function proposeComponent({
   }
   const sinCss = parts.every((p) => p.igual);
 
-  paso('Identificando tu cuenta…');
-  const me = await call('/user', opts);
-  const login = me?.login;
-  if (!login) throw new GitHubError('No se pudo leer tu cuenta de GitHub.');
-
   // Quien tiene el repositorio trabaja directo; el resto, sobre su bifurcación.
   const propio = login.toLowerCase() === REPO.owner.toLowerCase();
   let head = { owner: login, name: REPO.name };
-  if (!propio) {
+  if (destino) {
+    head = { owner: destino.head.owner, name: destino.head.name };
+  } else if (!propio) {
     paso('Preparando tu copia del repositorio…');
     const fork = await call(`/repos/${REPO.owner}/${REPO.name}/forks`, { ...opts, method: 'POST' });
     head = { owner: fork.owner.login, name: fork.name };
@@ -384,21 +516,30 @@ export async function proposeComponent({
     }
   }
 
-  paso('Creando la rama…');
-  const base = await call(`/repos/${REPO.owner}/${REPO.name}/git/ref/heads/${REPO.branch}`, opts);
-  const branch = `${nuevo ? 'feat' : 'fix'}/${id}-${Date.now().toString(36)}`;
-  await call(`/repos/${head.owner}/${head.name}/git/refs`, {
-    ...opts,
-    method: 'POST',
-    body: { ref: `refs/heads/${branch}`, sha: base.object.sha },
-  });
+  let branch = destino?.head.branch;
+  if (!destino) {
+    paso('Creando la rama…');
+    const base = await call(`/repos/${REPO.owner}/${REPO.name}/git/ref/heads/${REPO.branch}`, opts);
+    branch = `${nuevo ? 'feat' : 'fix'}/${id}-${Date.now().toString(36)}`;
+    await call(`/repos/${head.owner}/${head.name}/git/refs`, {
+      ...opts,
+      method: 'POST',
+      body: { ref: `refs/heads/${branch}`, sha: base.object.sha },
+    });
+  }
 
-  /** Escribe un archivo en la rama. Si ya existe en la bifurcación, hace falta su sha. */
+  /**
+   * Escribe un archivo en la rama. Si ya existe en la bifurcación, hace falta su sha; si es
+   * idéntico, no se escribe (al actualizar un PR, solo sube lo que cambia).
+   */
+  let escritos = 0;
   const put = async (path, content, message) => {
     const existente = await call(`/repos/${head.owner}/${head.name}/contents/${path}?ref=${branch}`, {
       ...opts,
       allow404: true,
     });
+    if (existente?.content != null && fromBase64(existente.content.replace(/\n/g, '')) === content) return;
+    escritos += 1;
     await call(`/repos/${head.owner}/${head.name}/contents/${path}`, {
       ...opts,
       method: 'PUT',
@@ -417,7 +558,7 @@ export async function proposeComponent({
         : `fix(${id}): mejora ${quienes}`;
 
   for (const part of parts) {
-    if (part.igual) continue;
+    if (part.igual && !destino) continue;
     paso(`Subiendo ${part.id}.css…`);
     await put(cssPath(part.id), `${part.css.trimEnd()}\n`, `${nuevo ? 'feat' : 'fix'}(${part.id}): CSS del componente`);
   }
@@ -444,7 +585,7 @@ export async function proposeComponent({
   // escrito a mano. Si no, queda como tarea en el PR.
   const documentado = Boolean(docs) && (nuevo || Boolean(docs.actualiza));
   // Con el CSS igual y la página igual (solo cambia el JS), la página ya está al día.
-  if (documentado && !(sinCss && !soloDocs.docs)) {
+  if (documentado && (destino || !(sinCss && !soloDocs.docs))) {
     paso(docs.actualiza ? 'Poniendo al día la página de documentación…' : 'Escribiendo la página de documentación…');
     await put(
       docsPath(docs.slug),
@@ -456,8 +597,8 @@ export async function proposeComponent({
   // El JS se sube y se registra en @angela-ui/angela/js: si no, angela() no lo ejecuta nunca.
   // Un JS sin efecto (una plantilla que quedó en la pestaña) no se sube: solo añadiría peso.
   let js = null;
-  const subeJs = hasCode(files.js) && !jsSinEfecto(files.js) && !(sinCss && !soloDocs.js);
-  const subeTest = hasCode(files.js) && !jsSinEfecto(files.js) && hasCode(files.test) && !(sinCss && !soloDocs.test);
+  const subeJs = hasCode(files.js) && !jsSinEfecto(files.js) && (Boolean(destino) || !(sinCss && !soloDocs.js));
+  const subeTest = hasCode(files.js) && !jsSinEfecto(files.js) && hasCode(files.test) && (Boolean(destino) || !(sinCss && !soloDocs.test));
   if (subeJs) {
     const file = jsFile || `${id}.js`;
     paso('Subiendo el JavaScript…');
@@ -480,11 +621,16 @@ export async function proposeComponent({
     await put(testPath(file), testForRepo(files.test, file), `test(${id}): pruebas del módulo`);
   }
 
+  if (destino) {
+    if (!escritos) throw new GitHubError(`No hay cambios respecto al pull request #${destino.number}: no hay nada que subir.`);
+    return { url: destino.url, nuevo, partes: parts.length, actualizado: true, continua: null };
+  }
+
   paso('Abriendo el pull request…');
   const headRef = propio ? branch : `${head.owner}:${branch}`;
-  let pr;
+  let abierto;
   try {
-    pr = await call(`/repos/${REPO.owner}/${REPO.name}/pulls`, {
+    abierto = await call(`/repos/${REPO.owner}/${REPO.name}/pulls`, {
       ...opts,
       method: 'POST',
       body: {
@@ -502,6 +648,7 @@ export async function proposeComponent({
           hallazgos: findings,
           documentado,
           docs,
+          continua,
         }),
         maintainer_can_modify: true,
       },
@@ -519,7 +666,7 @@ export async function proposeComponent({
     );
   }
 
-  return { url: pr.html_url, nuevo, partes: parts.length };
+  return { url: abierto.html_url, nuevo, partes: parts.length, actualizado: false, continua: continua?.number ?? null };
 }
 
 /* ---------- Iconos ---------- */

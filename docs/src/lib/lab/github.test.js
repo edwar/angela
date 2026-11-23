@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { proposeComponent } from './github.js';
+import { canUpdatePullRequest, fetchPullRequest, proposeComponent } from './github.js';
+import { serializeDocsEntry } from './docs-entry.js';
 
 const indexJs = readFileSync(new URL('../../../../packages/angela/src/js/index.js', import.meta.url), 'utf8');
 const b64 = (text) => Buffer.from(text, 'utf8').toString('base64');
@@ -200,7 +201,7 @@ describe('proposeComponent', () => {
   it('abre el PR con título y descripción; si GitHub lo rechaza, da el enlace para abrirlo a mano', async () => {
     let calls = fakeGitHub();
     const result = await proposeComponent(input(''));
-    expect(result).toEqual({ url: 'https://github.com/edwar/angela/pull/99', nuevo: true, partes: 1 });
+    expect(result).toEqual({ url: 'https://github.com/edwar/angela/pull/99', nuevo: true, partes: 1, actualizado: false, continua: null });
     expect(prBody(calls).title).toBe('feat(galeria): añade el componente Galería');
     expect(prBody(calls).body).toContain('Una galería.');
 
@@ -208,5 +209,168 @@ describe('proposeComponent', () => {
     const error = await proposeComponent(input('')).catch((e) => e);
     expect(error.message).toMatch(/Los archivos ya están en la rama feat\/galeria-/);
     expect(new URL(error.cause.compareUrl).searchParams.get('title')).toBe('feat(galeria): añade el componente Galería');
+  });
+});
+
+describe('fetchPullRequest', () => {
+  const pagina = serializeDocsEntry({
+    slug: 'galeria',
+    title: 'Galería',
+    summary: 'Una galería.',
+    examples: [{ title: 'Básico', code: '<div class="galeria"></div>' }],
+    api: [],
+    a11y: ['Nota.'],
+  });
+
+  function fakePr({ pr = {}, files, contents }) {
+    globalThis.fetch = vi.fn(async (url) => {
+      const path = url.replace('https://api.github.com', '');
+      const reply = (data, status = 200) => new Response(JSON.stringify(data), { status });
+      if (path === '/repos/edwar/angela/pulls/58') {
+        return reply({
+          html_url: 'https://github.com/edwar/angela/pull/58',
+          title: 'feat(galeria): añade el componente Galería',
+          state: 'open',
+          merged_at: null,
+          user: { login: 'ana' },
+          maintainer_can_modify: true,
+          head: { sha: 'cafe', ref: 'feat/galeria-x', repo: { name: 'angela', owner: { login: 'ana' } } },
+          ...pr,
+        });
+      }
+      if (path.startsWith('/repos/edwar/angela/pulls/58/files')) return reply(files.map((filename) => ({ filename, status: 'added' })));
+      const m = /\/contents\/(.+)\?ref=cafe$/.exec(path);
+      if (m && contents[m[1]] != null) return reply({ content: b64(contents[m[1]]) });
+      return new Response('{}', { status: 404 });
+    });
+  }
+
+  it('trae el CSS, el HTML de los ejemplos, el JS y el test (con el import del laboratorio)', async () => {
+    fakePr({
+      files: [
+        'packages/angela/src/components/galeria.css',
+        'packages/angela/src/js/galeria.js',
+        'packages/angela/src/js/galeria.test.js',
+        'packages/angela/src/js/index.js',
+        'docs/src/data/componentes/galeria.js',
+      ],
+      contents: {
+        'packages/angela/src/components/galeria.css': '.galeria{}\n',
+        'packages/angela/src/js/galeria.js': 'export function enhanceGaleria() {}\n',
+        'packages/angela/src/js/galeria.test.js': "import { enhanceGaleria } from './galeria.js';\n",
+        'docs/src/data/componentes/galeria.js': pagina,
+      },
+    });
+    const pr = await fetchPullRequest('https://github.com/edwar/angela/pull/58');
+    expect(pr).toMatchObject({
+      number: 58,
+      abierto: true,
+      autor: 'ana',
+      mantenedorPuede: true,
+      id: 'galeria',
+      jsFile: 'galeria.js',
+      head: { owner: 'ana', name: 'angela', branch: 'feat/galeria-x' },
+      files: {
+        css: '.galeria{}\n',
+        html: '<!-- Básico -->\n<div class="galeria"></div>',
+        js: 'export function enhanceGaleria() {}\n',
+        test: "import { enhanceGaleria } from './componente.js';\n",
+      },
+      avisos: [],
+    });
+    expect(pr.docs.summary).toBe('Una galería.');
+  });
+
+  it('cerrado o mezclado: trae el código pero no es destino; sin página, avisa', async () => {
+    fakePr({
+      pr: { state: 'closed', merged_at: '2026-11-20T00:00:00Z' },
+      files: ['packages/angela/src/components/galeria.css'],
+      contents: { 'packages/angela/src/components/galeria.css': '.galeria{}' },
+    });
+    const pr = await fetchPullRequest('#58');
+    expect(pr).toMatchObject({ abierto: false, estado: 'mezclado', files: { html: '', js: '' } });
+    expect(pr.avisos[0]).toContain('No tiene página de documentación');
+  });
+
+  it('explica cuándo no hay nada que traer', async () => {
+    fakePr({ files: ['packages/angela-icons/iconos/sol.json'], contents: {} });
+    await expect(fetchPullRequest('58')).rejects.toThrow('no cambia el CSS de ningún componente');
+    await expect(fetchPullRequest('hola')).rejects.toThrow('Escribe el número');
+  });
+});
+
+describe('proposeComponent sobre un pull request abierto', () => {
+  const pr = { number: 58, url: 'https://github.com/edwar/angela/pull/58', head: { owner: 'edwar', name: 'angela', branch: 'feat/galeria-x' } };
+
+  it('escribe en su rama, sin crear rama ni pull request, y solo lo que cambia', async () => {
+    const calls = fakeGitHub({ existing: { 'docs/src/data/componentes/galeria.js': 'export default {}' } });
+    const result = await proposeComponent(input('', { pr }));
+    expect(result).toEqual({ url: pr.url, nuevo: true, partes: 1, actualizado: true, continua: null });
+    expect(calls.some((c) => c.path.endsWith('/git/refs'))).toBe(false);
+    expect(calls.some((c) => c.path.endsWith('/pulls'))).toBe(false);
+    expect(writes(calls).every((c) => c.body.branch === 'feat/galeria-x')).toBe(true);
+    expect(written(calls, 'packages/angela/src/components/galeria.css')).toBeTruthy();
+    // La página es idéntica a la de la rama: no se vuelve a escribir.
+    expect(written(calls, 'docs/src/data/componentes/galeria.js')).toBeUndefined();
+  });
+
+  it('sin cambios respecto a la rama, lo dice en vez de subir nada', async () => {
+    const calls = fakeGitHub({
+      existing: {
+        'packages/angela/src/components/galeria.css': '.galeria{}\n',
+        'packages/angela/src/angela.css': '@import "./components/galeria.css";\n@import "./utilities.css";\n',
+        'docs/src/data/componentes/galeria.js': 'export default {}',
+      },
+    });
+    await expect(proposeComponent(input('', { pr }))).rejects.toThrow('No hay cambios respecto al pull request #58');
+    expect(writes(calls)).toHaveLength(0);
+  });
+
+  /** GitHub de mentira con otra cuenta en /user. */
+  function comoUsuario(login, opciones) {
+    const calls = fakeGitHub(opciones);
+    const original = globalThis.fetch.getMockImplementation();
+    globalThis.fetch.mockImplementation(async (url, init) => {
+      if (url.endsWith('/user')) return new Response(JSON.stringify({ login }));
+      // La bifurcación de quien propone.
+      if (url.endsWith('/forks')) {
+        calls.push({ method: 'POST', path: url.replace('https://api.github.com', '') });
+        return new Response(JSON.stringify({ owner: { login }, name: 'angela' }), { status: 202 });
+      }
+      return original(url, init);
+    });
+    return calls;
+  }
+
+  it('el pull request de otra persona: abre uno nuevo a tu nombre que dice de cuál parte', async () => {
+    const calls = comoUsuario('luis');
+    const ajeno = { ...pr, autor: 'ana', head: { ...pr.head, owner: 'ana' } };
+    const result = await proposeComponent(input('', { pr: ajeno }));
+    expect(result).toMatchObject({ actualizado: false, continua: 58, url: 'https://github.com/edwar/angela/pull/99' });
+    expect(writes(calls).some((c) => c.body.branch === 'feat/galeria-x')).toBe(false);
+    expect(calls.some((c) => c.path.endsWith('/forks'))).toBe(true);
+    expect(prBody(calls).body).toMatch(/^Continúa #58 de @ana/);
+  });
+
+  it('quien mantiene angela actualiza una bifurcación solo si el autor lo permite', async () => {
+    const fork = { ...pr, autor: 'ana', head: { ...pr.head, owner: 'ana' } };
+    let calls = comoUsuario('edwar');
+    expect(await proposeComponent(input('', { pr: { ...fork, mantenedorPuede: true } }))).toMatchObject({ actualizado: true });
+    expect(writes(calls).every((c) => c.path.startsWith('/repos/ana/angela/') && c.body.branch === 'feat/galeria-x')).toBe(true);
+
+    calls = comoUsuario('edwar');
+    expect(await proposeComponent(input('', { pr: { ...fork, mantenedorPuede: false } }))).toMatchObject({ actualizado: false, continua: 58 });
+  });
+});
+
+describe('canUpdatePullRequest', () => {
+  const rama = (owner, mantenedorPuede = false) => ({ head: { owner }, mantenedorPuede });
+  it('quien lo abrió, sí; otra persona, no; quien mantiene angela, en su repo o si el autor lo permite', () => {
+    expect(canUpdatePullRequest('Ana', rama('ana'))).toBe(true);
+    expect(canUpdatePullRequest('luis', rama('ana', true))).toBe(false);
+    expect(canUpdatePullRequest('luis', rama('edwar'))).toBe(false);
+    expect(canUpdatePullRequest('edwar', rama('edwar'))).toBe(true);
+    expect(canUpdatePullRequest('edwar', rama('ana', true))).toBe(true);
+    expect(canUpdatePullRequest('edwar', rama('ana', false))).toBe(false);
   });
 });

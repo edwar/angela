@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildDocsEntry, componentTitle, mergeDocsEntry, readParameters, rowToken, serializeDocsEntry, splitExamples } from './docs-entry.js';
+import { readdirSync, readFileSync } from 'node:fs';
+import { buildDocsEntry, componentTitle, mergeDocsEntry, parseDocsEntry, readParameters, rowToken, serializeDocsEntry, splitExamples } from './docs-entry.js';
 
 /** Importa el archivo generado como lo haría el sitio. */
 const importar = async (source) =>
@@ -149,5 +150,41 @@ describe('readParameters y los tonos', () => {
   it('las --tone-* no son parámetros del componente: las pone data-tone', () => {
     const css = ':where(.aviso) { --tone-solid: var(--color-info-solid); --tone-text: var(--color-info-text); --aviso-gap: 1rem; }';
     expect(readParameters(css).map(([n]) => n)).toEqual(['--aviso-gap']);
+  });
+});
+
+describe('parseDocsEntry', () => {
+  const entry = {
+    slug: 'galeria',
+    title: 'Galería',
+    summary: 'Con "comillas", `invertidas`, \\barras y ${plantillas} escritas como texto.',
+    examples: [
+      { title: 'Básico', note: 'Una nota.', code: '<div class="galeria">\n  <p>${no se ejecuta}</p>\n  <code>`x`</code>\n</div>' },
+      { title: 'Una línea', code: '<p>hola</p>' },
+    ],
+    api: [['.galeria', 'Clase del componente.']],
+    a11y: ['Primera nota.', 'Segunda: ñ, acentos y emojis 🎉.'],
+  };
+
+  it('lee lo que escribe serializeDocsEntry, sin perder nada', () => {
+    expect(parseDocsEntry(serializeDocsEntry(entry))).toEqual(entry);
+  });
+
+  it('lee todas las páginas del sitio igual que al importarlas', async () => {
+    const dir = new URL('../../data/componentes/', import.meta.url);
+    const archivos = readdirSync(dir).filter((f) => f.endsWith('.js'));
+    expect(archivos.length).toBeGreaterThan(10);
+    for (const archivo of archivos) {
+      const real = (await import(new URL(archivo, dir).href)).default;
+      expect(parseDocsEntry(readFileSync(new URL(archivo, dir), 'utf8')), archivo).toEqual({ ...real, summary: real.summary ?? '', api: real.api ?? [], a11y: real.a11y ?? [] });
+    }
+  });
+
+  it('no ejecuta nada: lo que no es un dato literal devuelve null', () => {
+    expect(parseDocsEntry('export default { slug: "a", title: `${globalThis.x = 1}`, examples: [] };')).toBeNull();
+    expect(parseDocsEntry('export default { slug: "a", title: fn(), examples: [] };')).toBeNull();
+    expect(parseDocsEntry('const x = 1;')).toBeNull();
+    expect(parseDocsEntry('export default { slug: "a", title: "A" };')).toBeNull();
+    expect(globalThis.x).toBeUndefined();
   });
 });
