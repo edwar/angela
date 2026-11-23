@@ -182,6 +182,8 @@ export function startLab() {
     proposeLead: $('lab-propose-lead'),
     proposeOpenText: $('lab-propose-open-text'),
     proposeTitle: $('lab-propose-title'),
+    proposeAi: $('lab-propose-ai'),
+    proposeAiStatus: $('lab-propose-ai-status'),
     proposePartsTitle: $('lab-propose-parts-title'),
     proposeNameField: $('lab-propose-name-field'),
     proposeSummaryField: $('lab-propose-summary-field'),
@@ -235,6 +237,8 @@ export function startLab() {
     port: null,
     logs: 0,
     request: null,
+    /** La petición a la IA que escribe los textos de «Proponer», mientras dura. */
+    describiendo: null,
     /** Pull request abierto del que se trajo el código: al proponer se actualiza. */
     pr: null,
     /** Pull request traído que espera confirmación porque sustituiría un borrador. */
@@ -1306,6 +1310,57 @@ export function startLab() {
   // Al salir del campo se ve el nombre tal como quedará: «carousel» → «Carousel».
   on(el.proposeName, 'change', () => (el.proposeName.value = componentTitle(el.proposeName.value)));
 
+  /* ---------- Textos de la propuesta con IA ---------- */
+
+  const PROPONER_IA = { boton: el.proposeAi.textContent.trim(), ayuda: el.proposeAiStatus.textContent.trim().replace(/\s+/g, ' ') };
+
+  on(el.proposeAi, 'click', async () => {
+    if (!aiConfigured()) {
+      el.proposeAiStatus.textContent = 'Primero configura una IA en Ajustes (URL, modelo y clave): la misma que usa el asistente.';
+      return;
+    }
+    // El nombre de un componente que ya existe (en main o en el PR) no se cambia: es su archivo.
+    const info = componentInfo();
+    const fijo = state.pr?.docs?.title ?? info?.title ?? null;
+    state.describiendo = new AbortController();
+    el.proposeAi.disabled = true;
+    el.proposeAi.textContent = 'Escribiendo…';
+    el.proposeAiStatus.textContent = 'La IA está leyendo el código. Puede tardar unos segundos.';
+    try {
+      const { describeComponent } = await import('./ai.js');
+      const { aiUrl, aiModel, aiFormat } = settings.get();
+      const notas = el.proposeA11y.value
+        .split('\n')
+        .map((linea) => linea.trim())
+        .filter(Boolean);
+      const textos = await describeComponent({
+        url: aiUrl,
+        apiKey: aiKey.get(),
+        model: aiModel,
+        format: aiFormat,
+        component: fijo ? { title: fijo } : null,
+        files: { html: state.files.html, css: state.files.css, js: state.files.js },
+        notas,
+        signal: state.describiendo.signal,
+      });
+      if (!el.proposeName.disabled && !fijo) {
+        el.proposeName.value = componentTitle(textos.nombre);
+        validateProposeName();
+      }
+      if (!el.proposeSummary.disabled) el.proposeSummary.value = textos.resumen;
+      el.proposeA11y.value = textos.accesibilidad.join('\n');
+      el.proposeAiStatus.textContent = 'Listo. Revísalo y corrige lo que haga falta antes de enviarlo: lo firma quien propone.';
+    } catch (error) {
+      if (!state.describiendo?.signal.aborted) el.proposeAiStatus.textContent = error?.message || 'La IA no pudo escribir los textos.';
+    } finally {
+      state.describiendo = null;
+      el.proposeAi.disabled = false;
+      el.proposeAi.textContent = PROPONER_IA.boton;
+    }
+  });
+  // Al cerrar el diálogo, lo que esté escribiendo la IA ya no hace falta.
+  on(el.propose, 'close', () => state.describiendo?.abort());
+
   on(el.proposeOpen, 'click', () => {
     const info = componentInfo();
     // Del pull request vienen el nombre, el resumen y las notas de su página; si no, de la
@@ -1315,6 +1370,7 @@ export function startLab() {
     el.proposeSummary.value = state.pr?.docs?.summary ?? '';
     el.proposeA11y.value = pagina ? pagina.a11y.join('\n') : '';
     el.proposeStep.textContent = '';
+    el.proposeAiStatus.textContent = PROPONER_IA.ayuda;
     showProposeError(null);
     el.done.hidden = true;
     if (state.pr) checkPrOwner(state.pr);
