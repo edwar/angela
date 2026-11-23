@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import { globSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { cssBuildError } from './css-build.js';
+import { cssBuildError, cssBuildResult } from './css-build.js';
 import { reviewComponent } from './review.js';
 
 const raiz = new URL('../../../../', import.meta.url);
@@ -45,6 +45,26 @@ describe('parser del build en el laboratorio', () => {
     expect(archivos.length).toBeGreaterThan(20);
     for (const archivo of archivos) {
       expect(await cssBuildError(readFileSync(new URL(archivo, raiz), 'utf8')), archivo).toBeNull();
+    }
+  });
+});
+
+describe('la animación con línea de tiempo, tal como la deja el build', () => {
+  const regla = async (css) => {
+    const { minificado } = await cssBuildResult(css);
+    return reviewComponent({ html: '', css, js: '', cssMinificado: minificado }).find((h) => h.id === 'linea-de-tiempo');
+  };
+
+  it('marca el shorthand que el minificador junta con view() (lo que rompió imagen-revelada)', async () => {
+    const css = '@layer angela.components { .reveal-image { animation: reveal-image linear both; animation-timeline: view(); } }';
+    expect(await regla(css)).toMatchObject({ level: 'error' });
+  });
+
+  it('no marca las propiedades sueltas ni el CSS de angela', async () => {
+    const sueltas = '.a { animation-name: x; animation-timing-function: linear; animation-fill-mode: both; animation-timeline: view(); }';
+    expect(await regla(sueltas)).toBeUndefined();
+    for (const archivo of globSync('packages/angela/src/components/*.css', { cwd: raiz })) {
+      expect(await regla(readFileSync(new URL(archivo, raiz), 'utf8')), archivo).toBeUndefined();
     }
   });
 });
