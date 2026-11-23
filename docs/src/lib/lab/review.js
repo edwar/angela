@@ -32,8 +32,10 @@ const CSS_RULES = [
     id: 'sintaxis',
     level: 'error',
     bloquea: true,
-    check: (css) => {
-      const fallo = cssSyntaxError(css);
+    // Primero la revisión propia, que explica cómo arreglarlo; si no ve nada, lo que diga el
+    // parser del build (cssBuild, de css-build.js), que cubre todo lo que lo rompería.
+    check: (css, { cssBuild }) => {
+      const fallo = cssSyntaxError(css) ?? cssBuild;
       return fallo ? `El CSS tiene un error de sintaxis y rompería el build del sitio. ${fallo}` : null;
     },
   },
@@ -311,13 +313,14 @@ const JS_RULES = [
 
 /**
  * Revisa un componente.
- * @param {{ html: string, css: string, js: string, test?: string }} files
+ * @param {{ html: string, css: string, js: string, test?: string, cssBuild?: string | null }} files
+ *   cssBuild: el error del parser del build para este CSS (cssBuildError), si ya se tiene.
  * @returns {{ level: 'error' | 'warn', id: string, text: string, bloquea?: boolean }[]}
  */
-export function reviewComponent({ html, css, js, test = '' }) {
+export function reviewComponent({ html, css, js, test = '', cssBuild = null }) {
   const hallazgos = [];
   for (const rule of CSS_RULES) {
-    const text = rule.check(css, { html, js });
+    const text = rule.check(css, { html, js, cssBuild });
     if (text) hallazgos.push({ level: rule.level, id: rule.id, text, ...(rule.bloquea && { bloquea: true }) });
   }
   for (const rule of HTML_RULES) {
