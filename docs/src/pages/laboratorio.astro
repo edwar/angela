@@ -69,7 +69,7 @@ const tabs = [
           <div>
             <p class="callout-title" id="lab-pr-state-title"></p>
             <p>
-              <span id="lab-pr-state-text"></span>
+              <span id="lab-pr-state-text"></span>{' '}
               <a id="lab-pr-state-link" href="#" target="_blank" rel="noopener">Ver en GitHub</a>
             </p>
           </div>
@@ -355,13 +355,13 @@ const tabs = [
     <h2 class="lab-step-title" id="lab-step-propose">
       <span class="lab-step-num" aria-hidden="true">04</span><span class="visually-hidden">Paso 4: </span>Propón al proyecto
     </h2>
-    <p class="muted lab-step-lead">
+    <p class="muted lab-step-lead" id="lab-propose-lead">
       Abre un pull request con tu componente, su página de documentación y lo que encontró la revisión. Queda a tu nombre
       y se mezcla cuando pase la revisión del proyecto.
     </p>
     <div class="cluster">
       <button class="button" type="button" id="lab-propose-open">
-        <Fragment set:html={icon('upload')} /> Proponer al proyecto
+        <Fragment set:html={icon('upload')} /> <span id="lab-propose-open-text">Proponer al proyecto</span>
       </button>
       <a class="button" data-variant="ghost" data-tone="neutral" href={href('/contribuir')}>Cómo aportar</a>
     </div>
@@ -491,13 +491,13 @@ const tabs = [
           <p class="heading" data-size="md" id="lab-propose-parts-title">Archivos que se van a crear</p>
           <ul class="lab-parts" id="lab-propose-parts" role="list" aria-labelledby="lab-propose-parts-title"></ul>
         </div>
-        <div class="field">
+        <div class="field" id="lab-propose-name-field">
           <label for="lab-propose-name">Nombre del componente</label>
           <p class="hint" id="lab-propose-name-hint">Da el nombre del archivo CSS y el título del pull request.</p>
           <input class="input" id="lab-propose-name" name="nombre" required maxlength="40" autocomplete="off" aria-describedby="lab-propose-name-hint lab-propose-name-error" data-error="lab-propose-name-error" />
           <p class="error" id="lab-propose-name-error">Escribe un nombre con al menos una letra o número.</p>
         </div>
-        <div class="field">
+        <div class="field" id="lab-propose-summary-field">
           <label for="lab-propose-summary">Qué aporta</label>
           <p class="hint" id="lab-propose-summary-hint">Una o dos frases. Es lo primero que lee quien revisa.</p>
           <textarea class="input" id="lab-propose-summary" name="resumen" rows="3" required aria-describedby="lab-propose-summary-hint"></textarea>
@@ -586,7 +586,7 @@ const tabs = [
         <div class="callout" data-tone="warning" id="lab-pr-draft" hidden>
           <Fragment set:html={icon('alert')} />
           <div>
-            <p class="callout-title">Se sustituirá tu borrador</p>
+            <p class="callout-title" id="lab-pr-draft-title">Se sustituirá tu borrador</p>
             <p id="lab-pr-draft-text"></p>
           </div>
         </div>
