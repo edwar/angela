@@ -491,6 +491,16 @@ const tabs = [
           <p class="heading" data-size="md" id="lab-propose-parts-title">Archivos que se van a crear</p>
           <ul class="lab-parts" id="lab-propose-parts" role="list" aria-labelledby="lab-propose-parts-title"></ul>
         </div>
+        <div class="stack" style="--stack-gap: var(--space-2)">
+          <div class="cluster">
+            <button class="button" type="button" data-variant="outline" data-tone="neutral" data-size="sm" id="lab-propose-ai">
+              Rellenar con IA
+            </button>
+          </div>
+          <p class="hint" id="lab-propose-ai-status" role="status">
+            Escribe el nombre, qué aporta y las notas de accesibilidad a partir del código, con la IA de Ajustes.
+          </p>
+        </div>
         <div class="field" id="lab-propose-name-field">
           <label for="lab-propose-name">Nombre del componente</label>
           <p class="hint" id="lab-propose-name-hint">Da el nombre del archivo CSS y el título del pull request.</p>

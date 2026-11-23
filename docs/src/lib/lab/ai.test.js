@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { LabAiError, limitMessage, normalizeReview, PRESETS, proposeChange, removedApi, reviewWithAi, RULES_LIST, unwrapHtml } from './ai.js';
+import { LabAiError, PRESETS, RULES_LIST, describeComponent, limitMessage, normalizeReview, proposeChange, removedApi, reviewWithAi, unwrapHtml } from './ai.js';
 
 const files = {
   html: '<div class="nota"><button>Hola</button></div>',
@@ -122,6 +122,25 @@ describe('llamadas al modelo', () => {
     calls = fakeModel({ resumen: 'r', cambios: [], advertencias: [], ...files });
     p = await proposeChange({ ...config, instruction: 'cambia el color', component: null, files: conTest });
     expect(p.test).toBe(conTest.test);
+  });
+
+  it('rellena los textos de «Proponer»: nombre, resumen y notas, sin el test', async () => {
+    let calls = fakeModel({ nombre: ' Imagen revelada ', resumen: 'Se descubre al hacer scroll. ', accesibilidad: ['Lleva alt.', ' ', 'Respeta reducir movimiento.'] });
+    let r = await describeComponent({ ...config, component: null, files: { ...files, test: 'x' } });
+    expect(r).toEqual({ nombre: 'Imagen revelada', resumen: 'Se descubre al hacer scroll.', accesibilidad: ['Lleva alt.', 'Respeta reducir movimiento.'] });
+    expect(calls[0].body.system).toContain('"accesibilidad"');
+    expect(calls[0].body.output_config.format.schema.required).toEqual(['nombre', 'resumen', 'accesibilidad']);
+    expect(calls[0].body.messages[0].content).toContain('ponle nombre');
+    expect(calls[0].body.messages[0].content).not.toContain('<archivo_test>');
+
+    // Si parte de un componente, su nombre se respeta y recibe las notas de su página.
+    calls = fakeModel({ nombre: 'Otro', resumen: 'r', accesibilidad: [] });
+    r = await describeComponent({ ...config, component: { title: 'Tarjeta' }, files, notas: ['Nota vieja.'] });
+    expect(r.nombre).toBe('Tarjeta');
+    expect(calls[0].body.messages[0].content).toContain('<notas_actuales>\n- Nota vieja.\n</notas_actuales>');
+
+    fakeModel({ nombre: 'x', resumen: 1, accesibilidad: [] });
+    await expect(describeComponent({ ...config, component: null, files })).rejects.toThrow('formato esperado');
   });
 
   it('la revisión con IA no recibe el test (no lo revisa ni lo cambia)', async () => {

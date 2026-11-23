@@ -604,3 +604,62 @@ ${codeBlock(files)}`;
   const raw = await callModel({ url, apiKey, model, format, system: REVIEW_SYSTEM, schema: REVIEW_SCHEMA, user, signal });
   return normalizeReview(raw, files);
 }
+
+/* ---------- Textos para proponer ---------- */
+
+const DESCRIBE_SYSTEM = `${INTRO}
+
+Tu tarea: escribir, a partir de su código, los textos con los que se propone un componente al proyecto. Todo en español.
+
+- "nombre": como se muestra en la documentación. Corto (de 1 a 4 palabras), en español, con la primera letra en mayúscula y el resto en minúscula salvo siglas (por ejemplo «Imagen revelada», «Tarjeta de producto»). Sin la palabra «componente» y sin el nombre de la clase CSS.
+- "resumen": una o dos frases que dicen qué es y qué aporta. Es lo primero que lee quien revisa el pull request y la entradilla de su página. Si se apoya en una técnica nativa que lo distingue, nómbrala; si cambia sin soporte o con «reducir movimiento», dilo. Sin frases de marketing.
+- "accesibilidad": de 2 a 6 notas de una frase cada una con lo que hay que saber para usarlo bien y no se lee del código: nombre accesible, teclado, foco, estados, lectores de pantalla, movimiento reducido y qué tiene que hacer quien lo usa (por ejemplo, el alt de una imagen). Solo lo que es verdad para este código: no inventes comportamientos que no tiene.
+- Si te paso notas que ya tiene su página, consérvalas si siguen siendo ciertas y corrige o quita las que el código ya no cumple.`;
+
+const DESCRIBE_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['nombre', 'resumen', 'accesibilidad'],
+  properties: {
+    nombre: { type: 'string', description: 'Nombre del componente en la documentación.' },
+    resumen: { type: 'string', description: 'Una o dos frases: qué es y qué aporta.' },
+    accesibilidad: { type: 'array', items: { type: 'string' }, description: 'Notas de accesibilidad, una frase cada una.' },
+  },
+};
+
+/**
+ * Escribe el nombre, el resumen y las notas de accesibilidad de un componente a partir de su
+ * código, para el diálogo «Proponer».
+ * @param {{
+ *   url: string, apiKey: string, model: string, format: 'anthropic' | 'openai',
+ *   component: { title: string } | null,
+ *   files: { html: string, css: string, js: string },
+ *   notas?: string[], signal?: AbortSignal,
+ * }} input
+ *   component: el componente del que se parte (su nombre se respeta).
+ *   notas: las notas de accesibilidad que ya tiene su página.
+ * @returns {Promise<{ nombre: string, resumen: string, accesibilidad: string[] }>}
+ */
+export async function describeComponent({ url, apiKey, model, format, component, files, notas = [], signal }) {
+  const context = component
+    ? `Es el componente «${component.title}» de angela: el nombre es ese, no lo cambies.`
+    : 'Es un componente nuevo: ponle nombre.';
+  const previas = notas.length
+    ? `
+
+<notas_actuales>
+${fence(notas.map((n) => `- ${n}`).join('\n'))}
+</notas_actuales>`
+    : '';
+  const user = `${context}${previas}
+
+${codeBlock(files)}`;
+
+  const raw = await callModel({ url, apiKey, model, format, system: DESCRIBE_SYSTEM, schema: DESCRIBE_SCHEMA, user, signal });
+  if (!esTexto(raw?.nombre) || !esTexto(raw.resumen) || !esLista(raw.accesibilidad)) throw new LabAiError(FORMATO);
+  return {
+    nombre: component ? component.title : raw.nombre.trim(),
+    resumen: raw.resumen.trim(),
+    accesibilidad: raw.accesibilidad.map((n) => n.trim()).filter(Boolean),
+  };
+}
