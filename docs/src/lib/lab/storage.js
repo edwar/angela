@@ -43,6 +43,19 @@ export const drafts = {
 };
 
 /**
+ * Lo último que se propuso desde este navegador. El laboratorio se vacía al abrir el pull
+ * request; si luego hay que corregirlo, de aquí se recupera el código y lo escrito en el diálogo.
+ * @typedef {{ slug: string, name: string, summary: string, a11y: string, files: LabFiles, url: string, at: number }} SentProposal
+ */
+const LAST_PROPOSAL = `${PREFIX}ultima-propuesta`;
+export const lastProposal = {
+  /** @returns {SentProposal | null} */
+  get: () => read(local(), LAST_PROPOSAL),
+  /** @param {Omit<SentProposal, 'at'>} value */
+  set: (value) => write(local(), LAST_PROPOSAL, { ...value, at: Date.now() }),
+};
+
+/**
  * Credenciales: la clave de la IA y el token de GitHub.
  * Con "recordar" van a localStorage; si no, a sessionStorage y se borran al cerrar la pestaña.
  * Nunca salen de este navegador salvo hacia la API que tú configuras y hacia github.com.

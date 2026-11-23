@@ -17,7 +17,7 @@ import {
   riskyPatterns,
   splitComponents,
 } from './preview.js';
-import { aiKey, drafts, githubToken, settings, toComponentId } from './storage.js';
+import { aiKey, drafts, githubToken, lastProposal, settings, toComponentId } from './storage.js';
 import { getRenderedScheme } from '@angela-ui/angela/js/theme';
 import { selectTab } from '@angela-ui/angela/js/tabs';
 import { createCodeEditor } from './editor.js';
@@ -169,6 +169,12 @@ export function startLab() {
     done: $('lab-done'),
     doneTitle: $('lab-done-title'),
     doneLink: $('lab-done-link'),
+    recoverBox: $('lab-recover-box'),
+    recoverName: $('lab-recover-name'),
+    recoverLink: $('lab-recover-link'),
+    recoverOpen: $('lab-recover-open'),
+    recover: $('lab-recover'),
+    recoverDesc: $('lab-recover-desc'),
     aiReviewRun: $('lab-ai-review-run'),
     aiReviewCancel: $('lab-ai-review-cancel'),
     aiReviewProgress: $('lab-ai-review-progress'),
@@ -213,6 +219,7 @@ export function startLab() {
     port: null,
     logs: 0,
     request: null,
+    recovered: null,
     findings: [],
     ignoreReducedMotion: false,
   };
@@ -378,6 +385,7 @@ export function startLab() {
 
   function load(slug) {
     state.slug = components.some((c) => c.slug === slug) ? slug : '';
+    state.recovered = null;
     el.base.value = state.slug;
     const draft = drafts.get(state.slug);
     state.files = { ...original(state.slug), ...pickFiles(draft) };
@@ -1088,10 +1096,12 @@ export function startLab() {
 
   on(el.proposeOpen, 'click', () => {
     const info = componentInfo();
-    el.proposeName.value = info ? info.title : '';
-    el.proposeSummary.value = '';
+    // Si se recuperó una propuesta, vuelve lo que se escribió al enviarla.
+    const previa = state.recovered;
+    el.proposeName.value = previa ? previa.name : info ? info.title : '';
+    el.proposeSummary.value = previa ? previa.summary : '';
     // Si parte de un componente, vienen las notas de su página: lo que quede es lo que tendrá.
-    el.proposeA11y.value = info ? info.a11y.join('\n') : '';
+    el.proposeA11y.value = previa ? previa.a11y : info ? info.a11y.join('\n') : '';
     el.proposeStep.textContent = '';
     showProposeError(null);
     el.done.hidden = true;
@@ -1123,8 +1133,13 @@ export function startLab() {
     el.proposeError.focus();
   }
 
-  /** Tras abrir el pull request: se cierra el modal, se avisa con el enlace y el laboratorio empieza de cero. */
-  function proposalSent({ url, nuevo, partes }) {
+  /**
+   * Tras abrir el pull request: se guarda lo enviado para poder recuperarlo, se cierra el modal,
+   * se avisa con el enlace y el laboratorio empieza de cero.
+   */
+  function proposalSent({ url, nuevo, partes }, enviado) {
+    lastProposal.set({ ...enviado, url });
+    renderRecover();
     el.propose.close();
     drafts.clear(state.slug);
     load('');
@@ -1135,6 +1150,42 @@ export function startLab() {
     el.done.scrollIntoView({ block: 'nearest' });
     el.done.focus();
   }
+
+  /** Muestra (o esconde) el aviso con la última propuesta enviada desde este navegador. */
+  function renderRecover() {
+    const previa = lastProposal.get();
+    el.recoverBox.hidden = !previa;
+    if (!previa) return;
+    el.recoverName.textContent = previa.name;
+    el.recoverLink.href = previa.url;
+  }
+
+  /** Vuelve a poner en el editor el código enviado, partiendo del mismo componente. */
+  function recoverProposal(previa) {
+    drafts.set(previa.slug, previa.files);
+    load(previa.slug);
+    state.recovered = previa;
+    el.done.hidden = true;
+    setStatus(`Recuperado el código de «${previa.name}». Corrígelo y vuelve a proponerlo.`);
+  }
+
+  on(el.recoverOpen, 'click', () => {
+    const previa = lastProposal.get();
+    if (!previa) return renderRecover();
+    // Solo se pregunta si hay un borrador distinto que se sustituiría.
+    const borrador = drafts.get(previa.slug);
+    const pierde = borrador && FILES.some((f) => typeof borrador[f] === 'string' && borrador[f] !== previa.files[f]);
+    if (!pierde) return recoverProposal(previa);
+    const info = components.find((c) => c.slug === previa.slug);
+    el.recoverDesc.textContent = `Tienes un borrador ${info ? `de «${info.title}»` : 'de componente nuevo'} guardado en este navegador. Al recuperar la propuesta, ese borrador se sustituye por el código que enviaste.`;
+    el.recover.returnValue = '';
+    el.recover.showModal();
+  });
+
+  on(el.recover, 'close', () => {
+    const previa = lastProposal.get();
+    if (el.recover.returnValue === 'recuperar' && previa) recoverProposal(previa);
+  });
 
   /**
    * Página de documentación que acompaña al pull request. Si parte de un componente que ya
@@ -1191,6 +1242,13 @@ export function startLab() {
     el.proposeSend.disabled = true;
     showProposeError(null);
     state.request = new AbortController();
+    const enviado = {
+      slug: state.slug,
+      name: el.proposeName.value.trim(),
+      summary: el.proposeSummary.value.trim(),
+      a11y: el.proposeA11y.value,
+      files: { ...state.files },
+    };
     try {
       const { proposeComponent } = await import('./github.js');
       const result = await proposeComponent({
@@ -1206,7 +1264,7 @@ export function startLab() {
         onStep: (text) => (el.proposeStep.textContent = text),
         signal: state.request.signal,
       });
-      proposalSent(result);
+      proposalSent(result, enviado);
     } catch (error) {
       if (error?.name === 'AbortError') return;
       el.proposeStep.textContent = '';
@@ -1223,6 +1281,7 @@ export function startLab() {
   el.scheme.setAttribute('aria-pressed', String(state.scheme === 'dark'));
   el.scheme.dataset.scheme = state.scheme;
   refreshAiState();
+  renderRecover();
   load(new URLSearchParams(location.search).get('componente') ?? '');
 
   return () => {

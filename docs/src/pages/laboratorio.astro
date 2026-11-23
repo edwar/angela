@@ -355,9 +355,25 @@ const tabs = [
       <div>
         <p class="callout-title" id="lab-done-title">Pull request abierto</p>
         <p>
-          Lo que escribiste ya está en GitHub y el laboratorio empieza de cero.
+          Lo que escribiste ya está en GitHub y el laboratorio empieza de cero. Si hay que corregirlo,
+          «Recuperar lo que propuse» lo vuelve a poner en el editor.
           <a id="lab-done-link" href="#" target="_blank" rel="noopener">Ver el pull request</a>
         </p>
+      </div>
+    </div>
+    <div class="callout" data-tone="info" id="lab-recover-box" hidden>
+      <Fragment set:html={icon('info')} />
+      <div class="stack" style="--stack-gap: var(--space-2)">
+        <p class="callout-title">Tu última propuesta: «<span id="lab-recover-name"></span>»</p>
+        <p>
+          Si el pull request necesita cambios, vuelve a poner en el editor el código que enviaste y lo que escribiste al
+          proponerlo. <a id="lab-recover-link" href="#" target="_blank" rel="noopener">Ver el pull request</a>
+        </p>
+        <div class="cluster">
+          <button class="button" type="button" data-variant="outline" data-tone="neutral" id="lab-recover-open">
+            Recuperar lo que propuse
+          </button>
+        </div>
       </div>
     </div>
   </section>
@@ -572,6 +588,24 @@ const tabs = [
     <form class="dialog-footer" method="dialog">
       <button class="button" value="cancelar" data-variant="ghost" data-tone="neutral" autofocus>Cancelar</button>
       <button class="button" value="restablecer" data-tone="danger" id="lab-reset-confirm">Restablecer el código</button>
+    </form>
+  </dialog>
+
+  <dialog class="dialog" id="lab-recover" data-size="sm" aria-labelledby="lab-recover-title" aria-describedby="lab-recover-desc" closedby="any">
+    <div class="dialog-body stack" style="--stack-gap: var(--space-3)">
+      <h2 id="lab-recover-title" style="font-size: var(--fs-lg); margin: 0">¿Recuperar lo que propusiste?</h2>
+      <p id="lab-recover-desc"></p>
+      <div class="callout" data-tone="warning">
+        <Fragment set:html={icon('alert')} />
+        <div>
+          <p class="callout-title">No se puede deshacer</p>
+          <p>Si quieres conservar el borrador, cópialo antes de continuar.</p>
+        </div>
+      </div>
+    </div>
+    <form class="dialog-footer" method="dialog">
+      <button class="button" value="cancelar" data-variant="ghost" data-tone="neutral" autofocus>Cancelar</button>
+      <button class="button" value="recuperar">Recuperar</button>
     </form>
   </dialog>
 </Layout>
