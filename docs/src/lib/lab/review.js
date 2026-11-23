@@ -7,8 +7,10 @@
  * Cada regla devuelve null si está bien, o un texto explicando qué falta.
  *  - level 'error': incumple una regla del proyecto; corrígelo antes de proponerlo.
  *  - level 'warn':  probablemente sobra o falta algo; revísalo y decide.
+ *  - bloquea: true: además impide proponerlo (rompería el build y el deploy).
  */
 
+import { cssSyntaxError } from './css-sintaxis.js';
 import { findEntryFunction, jsSinEfecto } from './js-entry.js';
 
 /** Quita comentarios y cadenas para no dar falsos positivos con el texto de ejemplo. */
@@ -25,6 +27,16 @@ function declarations(css) {
 }
 
 const CSS_RULES = [
+  {
+    // Un CSS que no se puede leer rompe el minificador del build y con él el deploy.
+    id: 'sintaxis',
+    level: 'error',
+    bloquea: true,
+    check: (css) => {
+      const fallo = cssSyntaxError(css);
+      return fallo ? `El CSS tiene un error de sintaxis y rompería el build del sitio. ${fallo}` : null;
+    },
+  },
   {
     id: 'capa',
     level: 'error',
@@ -300,13 +312,13 @@ const JS_RULES = [
 /**
  * Revisa un componente.
  * @param {{ html: string, css: string, js: string, test?: string }} files
- * @returns {{ level: 'error' | 'warn', id: string, text: string }[]}
+ * @returns {{ level: 'error' | 'warn', id: string, text: string, bloquea?: boolean }[]}
  */
 export function reviewComponent({ html, css, js, test = '' }) {
   const hallazgos = [];
   for (const rule of CSS_RULES) {
     const text = rule.check(css, { html, js });
-    if (text) hallazgos.push({ level: rule.level, id: rule.id, text });
+    if (text) hallazgos.push({ level: rule.level, id: rule.id, text, ...(rule.bloquea && { bloquea: true }) });
   }
   for (const rule of HTML_RULES) {
     const text = rule.check(html, { css, js });

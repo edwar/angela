@@ -1099,8 +1099,11 @@ export function startLab() {
       ? `Partes de «${info.title}», así que se propondrá como un cambio sobre ese componente.`
       : 'Se comprobará en el repositorio si el componente ya existe, para proponerlo como nuevo o como un cambio.';
     const errores = state.findings.filter((h) => h.level === 'error').length;
+    const bloqueo = state.findings.find((h) => h.bloquea);
     el.proposeWarnings.hidden = state.findings.length === 0;
-    el.proposeWarningsText.textContent = errores
+    el.proposeWarningsText.textContent = bloqueo
+      ? `No se puede proponer todavía: ${bloqueo.text}`
+      : errores
       ? `Hay ${errores} ${errores === 1 ? 'cosa' : 'cosas'} que corregir en la revisión. Puedes proponerlo igual, pero es probable que te lo pidan antes de mezclarlo.`
       : `Hay ${state.findings.length} ${state.findings.length === 1 ? 'aviso' : 'avisos'} por revisar. Irán anotados en el pull request.`;
     renderProposeParts();
@@ -1185,6 +1188,12 @@ export function startLab() {
     const id = validateProposeName();
     if (!id) {
       el.proposeName.reportValidity();
+      return;
+    }
+    // Lo que rompería el build (CSS que no se puede leer) no sale del laboratorio.
+    const bloqueo = reviewComponent(state.files).find((h) => h.bloquea);
+    if (bloqueo) {
+      showProposeError(new Error(`Corrígelo antes de proponerlo: ${bloqueo.text}`));
       return;
     }
 
