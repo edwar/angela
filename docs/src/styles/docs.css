@@ -1886,7 +1886,7 @@ html[data-tema-usuario] .example-label .sin-tema {
 /* Laboratorio */
 
 /* Los componentes fijan su display; el atributo hidden debe ganar igualmente. */
-:is(.lab-step, #lab-settings, #lab-propose, #lab-reset, #lab-imagenes, #ed-proponer, .ed-propiedades) [hidden]:not([hidden="until-found"]) {
+:is(.lab-step, #lab-settings, #lab-propose, #lab-reset, #lab-pr, #lab-imagenes, #ed-proponer, .ed-propiedades) [hidden]:not([hidden="until-found"]) {
   display: none;
 }
 
