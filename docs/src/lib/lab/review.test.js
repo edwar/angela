@@ -134,3 +134,39 @@ describe('test', () => {
     }
   });
 });
+
+describe('regla de sintaxis del CSS', () => {
+  const sintaxis = (css) => reviewComponent({ html: '', css, js: '' }).find((h) => h.id === 'sintaxis');
+
+  it('bloquea el CSS que rompió el build de imagen-revelada (dos @media unidos por una coma)', () => {
+    const css = `@layer angela.components {
+  @media (preference-reduce-motion: reduce),
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal-image: {
+      clip-path: none;
+    }
+  }
+}`;
+    expect(sintaxis(css)).toMatchObject({ level: 'error', bloquea: true });
+    expect(sintaxis(css).text).toContain('Línea 2');
+  });
+
+  it('explica las condiciones de @media mal escritas, los selectores con «:» de más y las llaves', () => {
+    expect(sintaxis('@media (preference-reduce-motion: reduce) { .a { color: red; } }').text).toContain('prefers-reduced-motion');
+    expect(sintaxis('@media (prefers-reduced-motion: reduc) { .a { color: red; } }').text).toContain('no-preference, reduce');
+    expect(sintaxis('.a: { color: red; }').text).toContain('termina en «:»');
+    expect(sintaxis('.a { color: red;').text).toContain('llave');
+    expect(sintaxis('.a { color: red; } }').text).toContain('Sobra');
+    expect(sintaxis('.a { color red; }').text).toContain('propiedad: valor');
+  });
+
+  it('no marca el CSS de angela ni del sitio', async () => {
+    const { globSync } = await import('node:fs');
+    const raiz = new URL('../../../../', import.meta.url);
+    const archivos = globSync(['packages/angela/src/**/*.css', 'docs/src/**/*.css'], { cwd: raiz });
+    expect(archivos.length).toBeGreaterThan(20);
+    for (const archivo of archivos) {
+      expect(sintaxis(readFileSync(new URL(archivo, raiz), 'utf8')), archivo).toBeUndefined();
+    }
+  });
+});

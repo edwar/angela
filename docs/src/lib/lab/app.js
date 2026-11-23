@@ -22,6 +22,7 @@ import { getRenderedScheme } from '@angela-ui/angela/js/theme';
 import { selectTab } from '@angela-ui/angela/js/tabs';
 import { createCodeEditor } from './editor.js';
 import { reviewComponent } from './review.js';
+import { cssBuildError } from './css-build.js';
 import { buildDocsEntry, componentTitle, mergeDocsEntry, serializeDocsEntry } from './docs-entry.js';
 import { guessFormat } from './ai.js';
 import { diffStats, lineDiff, withContext } from './diff.js';
@@ -213,6 +214,8 @@ export function startLab() {
     port: null,
     logs: 0,
     request: null,
+    /** Respuesta del parser del build para un CSS: { css, error }. */
+    cssBuild: null,
     findings: [],
     ignoreReducedMotion: false,
   };
@@ -408,7 +411,17 @@ export function startLab() {
   const TONES = { error: 'danger', warn: 'warning' };
 
   function renderReview() {
-    const hallazgos = reviewComponent(state.files);
+    const { css } = state.files;
+    const cssBuild = state.cssBuild?.css === css ? state.cssBuild.error : null;
+    // El parser del build es asíncrono: al tener su respuesta para este CSS, se vuelve a pintar.
+    if (state.cssBuild?.css !== css) {
+      cssBuildError(css).then((error) => {
+        if (state.files.css !== css) return;
+        state.cssBuild = { css, error };
+        renderReview();
+      });
+    }
+    const hallazgos = reviewComponent({ ...state.files, cssBuild });
     state.findings = hallazgos;
     const errores = hallazgos.filter((h) => h.level === 'error').length;
     el.reviewCount.textContent = hallazgos.length ? `${hallazgos.length}` : 'Sin avisos';
@@ -1099,8 +1112,11 @@ export function startLab() {
       ? `Partes de «${info.title}», así que se propondrá como un cambio sobre ese componente.`
       : 'Se comprobará en el repositorio si el componente ya existe, para proponerlo como nuevo o como un cambio.';
     const errores = state.findings.filter((h) => h.level === 'error').length;
+    const bloqueo = state.findings.find((h) => h.bloquea);
     el.proposeWarnings.hidden = state.findings.length === 0;
-    el.proposeWarningsText.textContent = errores
+    el.proposeWarningsText.textContent = bloqueo
+      ? `No se puede proponer todavía: ${bloqueo.text}`
+      : errores
       ? `Hay ${errores} ${errores === 1 ? 'cosa' : 'cosas'} que corregir en la revisión. Puedes proponerlo igual, pero es probable que te lo pidan antes de mezclarlo.`
       : `Hay ${state.findings.length} ${state.findings.length === 1 ? 'aviso' : 'avisos'} por revisar. Irán anotados en el pull request.`;
     renderProposeParts();
@@ -1185,6 +1201,13 @@ export function startLab() {
     const id = validateProposeName();
     if (!id) {
       el.proposeName.reportValidity();
+      return;
+    }
+    // Lo que rompería el build (CSS que no se puede leer) no sale del laboratorio.
+    const cssBuild = await cssBuildError(state.files.css);
+    const bloqueo = reviewComponent({ ...state.files, cssBuild }).find((h) => h.bloquea);
+    if (bloqueo) {
+      showProposeError(new Error(`Corrígelo antes de proponerlo: ${bloqueo.text}`));
       return;
     }
 
