@@ -41,7 +41,9 @@ const ICONOS = {
  * @typedef {{ nombre: string, etiqueta: string, tipo: 'opciones' | 'booleano' | 'texto' | 'numero' | 'lista',
  *   valores?: string[], defecto?: unknown, inicial?: unknown, min?: number, max?: number, ayuda?: string,
  *   descripcion?: string, slot?: string, demo?: boolean, separador?: string }} Control
- * @typedef {{ slug: string, centrar?: boolean, altoMinimo?: number, controles: Control[],
+ * `desplazar`: el componente reacciona al scroll (animation-timeline: view()…). La vista previa es
+ * entonces una ventana de ese alto (px) con espacio antes y después para desplazarse dentro.
+ * @typedef {{ slug: string, centrar?: boolean, altoMinimo?: number, desplazar?: number, controles: Control[],
  *   componente: { nombre: string, slots?: Record<string, string>, eventos?: Record<string, string>, raiz: object[] },
  *   slots: (v: Record<string, unknown>) => Record<string, string> }} Definicion
  */
@@ -221,6 +223,20 @@ export const DEFINICIONES = [
           el('div', { class: 'spotlight-overlay' }),
         ]),
       ],
+    },
+    slots: () => ({}),
+  },
+
+  {
+    slug: 'imagen-revelada',
+    desplazar: 400,
+    controles: [
+      { nombre: 'src', etiqueta: 'Imagen', tipo: 'opciones', valores: ['/img/naturaleza/lago-de-montana.webp', '/img/naturaleza/volcan.webp', '/img/ciudad/ciudad-de-noche.webp'], inicial: '/img/naturaleza/lago-de-montana.webp', ayuda: 'Desplázate dentro de la vista previa: la imagen se descubre de abajo arriba al entrar en pantalla.', descripcion: 'La imagen que se revela.' },
+      { nombre: 'alt', etiqueta: 'Texto alternativo', tipo: 'texto', inicial: 'Lago entre montañas nevadas', ayuda: 'Describe lo que se ve en la imagen que elijas: el efecto es solo visual y el lector la lee entera desde el principio.', descripcion: 'Descripción de la imagen (vacío si es decorativa).' },
+    ],
+    componente: {
+      nombre: 'RevealImage',
+      raiz: [el('img', { class: 'reveal-image', src: prop('src'), alt: prop('alt'), width: '720', height: '480' })],
     },
     slots: () => ({}),
   },

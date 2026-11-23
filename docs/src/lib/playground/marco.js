@@ -4,7 +4,8 @@
  * - el ancho lo pone el iframe, así que las media queries ven un móvil o una tablet de verdad;
  * - dir en <html> (RTL); data-scheme (claro/oscuro) y los colores que se cambien, en la zona;
  * - «reducir movimiento» se simula cambiando las media queries prefers-reduced-motion del CSSOM.
- * Avisa de su alto a la página para que el iframe crezca con el contenido.
+ * Avisa de su alto a la página para que el iframe crezca con el contenido. Con `desplazar`, el
+ * alto es fijo y el contenido lleva espacio antes y después: se desplaza dentro del marco.
  */
 
 /** Recorre todas las reglas @media, también dentro de @layer, @supports y CSS anidado. */
@@ -47,14 +48,16 @@ export function marco() {
   let reducido = false;
   /** Las variables de color puestas en la zona, para quitarlas cuando ya no cambien. */
   let puestas = [];
+  /** Alto fijo del marco para los componentes que reaccionan al scroll (0: crece con el contenido). */
+  let desplazable = 0;
 
   window.pruebalo = {
     /**
      * @param {{ html: string, dir?: 'ltr' | 'rtl', esquema?: '' | 'light' | 'dark', movimiento?: 'normal' | 'reducido',
-     *   variables?: [string, number][] | null, centrar?: boolean }} opciones
+     *   variables?: [string, number][] | null, centrar?: boolean, desplazar?: number }} opciones
      *   variables: las --angela-* que cambian; sin ellas, la zona usa el tema guardado del taller (o el de angela).
      */
-    pintar({ html: nuevo, dir = 'ltr', esquema = '', movimiento = 'normal', variables = null, centrar = false }) {
+    pintar({ html: nuevo, dir = 'ltr', esquema = '', movimiento = 'normal', variables = null, centrar = false, desplazar = 0 }) {
       // Solo si cambia: un diálogo abierto no se cierra al mover el color o el esquema.
       if (nuevo !== html) {
         contenido.innerHTML = nuevo;
@@ -71,6 +74,12 @@ export function marco() {
       });
       if (centrar) lienzo.dataset.centrar = '';
       else delete lienzo.dataset.centrar;
+      if (desplazar !== desplazable) {
+        desplazable = desplazar;
+        if (desplazar) lienzo.dataset.desplazar = '';
+        else delete lienzo.dataset.desplazar;
+        avisarAlto();
+      }
       if ((movimiento === 'reducido') !== reducido) {
         reducido = movimiento === 'reducido';
         simularMovimientoReducido(reducido);
@@ -79,11 +88,15 @@ export function marco() {
   };
 
   // El alto del contenido (no del marco, que ocupa toda la ventana): la página ajusta el iframe.
-  const avisarAlto = () => {
+  function avisarAlto() {
+    if (desplazable) {
+      parent.postMessage({ pruebalo: 'alto', alto: desplazable }, location.origin);
+      return;
+    }
     const estilo = getComputedStyle(lienzo);
     const alto = contenido.getBoundingClientRect().height + parseFloat(estilo.paddingBlockStart) + parseFloat(estilo.paddingBlockEnd);
     parent.postMessage({ pruebalo: 'alto', alto: Math.ceil(alto) }, location.origin);
-  };
+  }
   new ResizeObserver(avisarAlto).observe(contenido);
   parent.postMessage({ pruebalo: 'listo' }, location.origin);
 }

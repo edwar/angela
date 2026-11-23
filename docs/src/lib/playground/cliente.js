@@ -177,7 +177,7 @@ export function iniciarPlaygrounds(root = document) {
       const vista = leerVista();
       ajustarAncho(vista.ancho);
       // Solo si se mueve el color: si no, el marco usa el tema guardado del taller (o el de angela).
-      marco.contentWindow?.pruebalo?.pintar({ html, dir: vista.dir, esquema: vista.esquema, movimiento: vista.movimiento, variables: css ? variablesTema(colores) : null, centrar: def.centrar });
+      marco.contentWindow?.pruebalo?.pintar({ html, dir: vista.dir, esquema: vista.esquema, movimiento: vista.movimiento, variables: css ? variablesTema(colores) : null, centrar: def.centrar, desplazar: def.desplazar });
 
       for (const salida of form.querySelectorAll('output[data-salida]')) {
         salida.textContent = String(new FormData(form).get(salida.dataset.salida) ?? '');
