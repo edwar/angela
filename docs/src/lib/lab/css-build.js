@@ -23,28 +23,39 @@ function cargar() {
 }
 
 /**
+ * Lo que hace el build con el CSS: el error si no puede leerlo, o el CSS minificado (lo que
+ * llega al navegador). Null en los dos si el parser no se pudo cargar.
  * @param {string} css
- * @returns {Promise<string | null>} el error que daría el build, con su línea, o null.
+ * @returns {Promise<{ error: string | null, minificado: string | null }>}
  */
-export async function cssBuildError(css) {
-  if (!css.trim()) return null;
+export async function cssBuildResult(css) {
+  if (!css.trim()) return { error: null, minificado: null };
   if (cache.has(css)) return cache.get(css);
   const lightningcss = await cargar();
-  if (!lightningcss) return null;
+  if (!lightningcss) return { error: null, minificado: null };
 
-  let error = null;
+  let resultado;
   try {
-    lightningcss.transform({
+    const { code } = lightningcss.transform({
       filename: 'componente.css',
       code: new TextEncoder().encode(css),
       minify: true,
       errorRecovery: false,
     });
+    resultado = { error: null, minificado: new TextDecoder().decode(code) };
   } catch (fallo) {
     const linea = fallo?.loc?.line;
-    error = `${linea ? `Línea ${linea}: ` : ''}el build no puede leerlo (lightningcss: ${fallo?.message ?? fallo}).`;
+    resultado = { error: `${linea ? `Línea ${linea}: ` : ''}el build no puede leerlo (lightningcss: ${fallo?.message ?? fallo}).`, minificado: null };
   }
   if (cache.size > 50) cache.clear();
-  cache.set(css, error);
-  return error;
+  cache.set(css, resultado);
+  return resultado;
+}
+
+/**
+ * @param {string} css
+ * @returns {Promise<string | null>} el error que daría el build, con su línea, o null.
+ */
+export async function cssBuildError(css) {
+  return (await cssBuildResult(css)).error;
 }

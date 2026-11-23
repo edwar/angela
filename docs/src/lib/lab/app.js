@@ -22,7 +22,7 @@ import { getRenderedScheme } from '@angela-ui/angela/js/theme';
 import { selectTab } from '@angela-ui/angela/js/tabs';
 import { createCodeEditor } from './editor.js';
 import { reviewComponent } from './review.js';
-import { cssBuildError } from './css-build.js';
+import { cssBuildResult } from './css-build.js';
 import { buildDocsEntry, componentTitle, mergeDocsEntry, serializeDocsEntry } from './docs-entry.js';
 import { guessFormat } from './ai.js';
 import { diffStats, lineDiff, withContext } from './diff.js';
@@ -243,7 +243,7 @@ export function startLab() {
     pr: null,
     /** Pull request traído que espera confirmación porque sustituiría un borrador. */
     prPendiente: null,
-    /** Respuesta del parser del build para un CSS: { css, error }. */
+    /** Respuesta del parser del build para un CSS: { css, error, minificado }. */
     cssBuild: null,
     findings: [],
     ignoreReducedMotion: false,
@@ -444,16 +444,20 @@ export function startLab() {
 
   function renderReview() {
     const { css } = state.files;
-    const cssBuild = state.cssBuild?.css === css ? state.cssBuild.error : null;
+    const listo = state.cssBuild?.css === css;
     // El parser del build es asíncrono: al tener su respuesta para este CSS, se vuelve a pintar.
-    if (state.cssBuild?.css !== css) {
-      cssBuildError(css).then((error) => {
+    if (!listo) {
+      cssBuildResult(css).then(({ error, minificado }) => {
         if (state.files.css !== css) return;
-        state.cssBuild = { css, error };
+        state.cssBuild = { css, error, minificado };
         renderReview();
       });
     }
-    const hallazgos = reviewComponent({ ...state.files, cssBuild });
+    const hallazgos = reviewComponent({
+      ...state.files,
+      cssBuild: listo ? state.cssBuild.error : null,
+      cssMinificado: listo ? state.cssBuild.minificado : null,
+    });
     state.findings = hallazgos;
     const errores = hallazgos.filter((h) => h.level === 'error').length;
     el.reviewCount.textContent = hallazgos.length ? `${hallazgos.length}` : 'Sin avisos';
@@ -1477,7 +1481,7 @@ export function startLab() {
       return;
     }
     // Lo que rompería el build (CSS que no se puede leer) no sale del laboratorio.
-    const cssBuild = await cssBuildError(state.files.css);
+    const { error: cssBuild } = await cssBuildResult(state.files.css);
     const bloqueo = reviewComponent({ ...state.files, cssBuild }).find((h) => h.bloquea);
     if (bloqueo) {
       showProposeError(new Error(`Corrígelo antes de proponerlo: ${bloqueo.text}`));

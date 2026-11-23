@@ -6,7 +6,11 @@
   @supports (animation-timeline: view()) {
     .reveal-image {
       clip-path: inset(100% 0 0);
-      animation: reveal-image linear both;
+      /* Propiedades sueltas: al minificar, «animation: … » + animation-timeline se juntan en
+         «animation: … view()», que los navegadores descartan entera. */
+      animation-name: reveal-image;
+      animation-timing-function: linear;
+      animation-fill-mode: both;
       animation-timeline: view();
       animation-range: entry 25% cover 50%;
     }

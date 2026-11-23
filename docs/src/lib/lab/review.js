@@ -150,6 +150,18 @@ const CSS_RULES = [
     },
   },
   {
+    // Pasó con imagen-revelada: «animation: x linear both» + «animation-timeline: view()» se
+    // minifican en «animation: linear both x view()», que los navegadores descartan entera.
+    id: 'linea-de-tiempo',
+    level: 'error',
+    check(css, { cssMinificado }) {
+      if (!cssMinificado) return null;
+      return /animation:[^;{}]*\b(view|scroll)\(/.test(cssMinificado)
+        ? 'Escribe la animación con propiedades sueltas (animation-name, animation-timing-function, animation-fill-mode…) junto a animation-timeline: al minificar, el build junta «animation: …» y la línea de tiempo en «animation: … view()», y los navegadores descartan esa declaración. La animación no se ejecuta nunca.'
+        : null;
+    },
+  },
+  {
     id: 'foco',
     level: 'warn',
     check(css, { html }) {
@@ -344,14 +356,15 @@ const JS_RULES = [
 
 /**
  * Revisa un componente.
- * @param {{ html: string, css: string, js: string, test?: string, cssBuild?: string | null }} files
+ * @param {{ html: string, css: string, js: string, test?: string, cssBuild?: string | null, cssMinificado?: string | null }} files
  *   cssBuild: el error del parser del build para este CSS (cssBuildError), si ya se tiene.
+ *   cssMinificado: el CSS tal como lo deja el build (cssBuildResult), si ya se tiene.
  * @returns {{ level: 'error' | 'warn', id: string, text: string, bloquea?: boolean }[]}
  */
-export function reviewComponent({ html, css, js, test = '', cssBuild = null }) {
+export function reviewComponent({ html, css, js, test = '', cssBuild = null, cssMinificado = null }) {
   const hallazgos = [];
   for (const rule of CSS_RULES) {
-    const text = rule.check(css, { html, js, cssBuild });
+    const text = rule.check(css, { html, js, cssBuild, cssMinificado });
     if (text) hallazgos.push({ level: rule.level, id: rule.id, text, ...(rule.bloquea && { bloquea: true }) });
   }
   for (const rule of HTML_RULES) {
