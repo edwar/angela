@@ -59,6 +59,21 @@ const tabs = [
             {components.map((c) => <option value={c.slug}>{c.title}</option>)}
           </select>
         </div>
+        <div class="cluster">
+          <button class="button" type="button" data-variant="outline" data-tone="neutral" id="lab-pr-open" aria-haspopup="dialog">
+            Traer un pull request
+          </button>
+        </div>
+        <div class="callout" data-tone="info" id="lab-pr-state" hidden>
+          <Fragment set:html={icon('info')} />
+          <div>
+            <p class="callout-title" id="lab-pr-state-title"></p>
+            <p>
+              <span id="lab-pr-state-text"></span>
+              <a id="lab-pr-state-link" href="#" target="_blank" rel="noopener">Ver en GitHub</a>
+            </p>
+          </div>
+        </div>
         <p class="muted lab-status" id="lab-status" role="status"></p>
       </div>
 
@@ -551,6 +566,44 @@ const tabs = [
       <a class="button" data-variant="ghost" data-tone="neutral" href={href('/imagenes')} target="_blank">Ver todas y sus créditos</a>
       <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-imagenes" command="close">Cancelar</button>
     </footer>
+  </dialog>
+
+  <dialog class="dialog" id="lab-pr" aria-labelledby="lab-pr-title" closedby="any">
+    <form class="dialog-form" method="dialog" id="lab-pr-form">
+      <header class="dialog-header">
+        <h2 id="lab-pr-title">Traer un pull request</h2>
+        <button class="button" type="button" data-variant="ghost" data-tone="neutral" data-icon-only commandfor="lab-pr" command="close" aria-label="Cerrar" set:html={icon('x')} />
+      </header>
+      <div class="dialog-body stack">
+        <p>
+          Trae al editor el código de un pull request de angela: su CSS, los ejemplos de su página, su JavaScript y su test.
+          Si sigue abierto y es tuyo, al proponer se actualiza ese mismo pull request.
+        </p>
+        <div class="field">
+          <label for="lab-pr-ref">Número o enlace del pull request</label>
+          <input class="input" id="lab-pr-ref" name="pr" type="text" inputmode="url" autocomplete="off" required placeholder="58" />
+        </div>
+        <div class="callout" data-tone="warning" id="lab-pr-draft" hidden>
+          <Fragment set:html={icon('alert')} />
+          <div>
+            <p class="callout-title">Se sustituirá tu borrador</p>
+            <p id="lab-pr-draft-text"></p>
+          </div>
+        </div>
+        <div class="callout" data-tone="danger" id="lab-pr-error" tabindex="-1" hidden>
+          <Fragment set:html={icon('error')} />
+          <div>
+            <p class="callout-title">No se pudo traer</p>
+            <p id="lab-pr-error-text"></p>
+          </div>
+        </div>
+        <p class="muted" id="lab-pr-step" role="status"></p>
+      </div>
+      <footer class="dialog-footer">
+        <button class="button" type="button" data-variant="ghost" data-tone="neutral" commandfor="lab-pr" command="close">Cancelar</button>
+        <button class="button" type="submit" id="lab-pr-send">Traer el código</button>
+      </footer>
+    </form>
   </dialog>
 
   <dialog class="dialog" id="lab-reset" data-size="sm" aria-labelledby="lab-reset-title" aria-describedby="lab-reset-desc" closedby="any">

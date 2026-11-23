@@ -303,3 +303,132 @@ export function mergeDocsEntry(existing, { html, css, oldCss, a11y = [] }) {
     resumen,
   };
 }
+
+/* ---------- Leer una página de otra rama ---------- */
+
+/**
+ * Lee el archivo de una página de documentación (`export default { … }`) sin ejecutarlo: viene
+ * de GitHub y en el navegador no se ejecuta código ajeno. Entiende el formato que escribe
+ * serializeDocsEntry y lo habitual a mano (comillas simples o dobles, plantillas sin ${…},
+ * comentarios y comas finales). Si encuentra otra cosa, devuelve null.
+ * @param {string} source
+ * @returns {{ slug: string, title: string, summary: string,
+ *   examples: { title: string, note?: string, code: string }[],
+ *   api: [string, string][], a11y: string[] } | null}
+ */
+export function parseDocsEntry(source) {
+  const inicio = /export\s+default\s*/.exec(source ?? '');
+  if (!inicio) return null;
+  let i = inicio.index + inicio[0].length;
+
+  const fallo = () => {
+    throw new SyntaxError(`Formato no reconocido en la posición ${i}`);
+  };
+  const espacios = () => {
+    for (;;) {
+      if (/\s/.test(source[i] ?? '')) i += 1;
+      else if (source.startsWith('//', i)) i = source.indexOf('\n', i) === -1 ? source.length : source.indexOf('\n', i);
+      else if (source.startsWith('/*', i)) {
+        const fin = source.indexOf('*/', i + 2);
+        if (fin === -1) fallo();
+        i = fin + 2;
+      } else return;
+    }
+  };
+  const ESCAPES = { n: '\n', t: '\t', r: '\r', b: '\b', f: '\f', v: '\v', 0: '\0' };
+  const cadena = () => {
+    const comilla = source[i];
+    i += 1;
+    let texto = '';
+    while (source[i] !== comilla) {
+      if (i >= source.length) fallo();
+      if (comilla === '`' && source.startsWith('${', i)) fallo();
+      if (comilla !== '`' && source[i] === '\n') fallo();
+      if (source[i] === '\\') {
+        const c = source[i + 1];
+        if (c === 'u') {
+          const llaves = source[i + 2] === '{';
+          const hex = llaves ? source.slice(i + 3, source.indexOf('}', i)) : source.slice(i + 2, i + 6);
+          texto += String.fromCodePoint(parseInt(hex, 16));
+          i += llaves ? hex.length + 4 : 6;
+          continue;
+        }
+        if (c === '\n') texto += '';
+        else texto += ESCAPES[c] ?? c;
+        i += 2;
+        continue;
+      }
+      texto += source[i];
+      i += 1;
+    }
+    i += 1;
+    return texto;
+  };
+  const valor = () => {
+    espacios();
+    const c = source[i];
+    if (c === '"' || c === "'" || c === '`') return cadena();
+    if (c === '[') {
+      i += 1;
+      const lista = [];
+      for (;;) {
+        espacios();
+        if (source[i] === ']') break;
+        lista.push(valor());
+        espacios();
+        if (source[i] === ',') i += 1;
+        else if (source[i] !== ']') fallo();
+      }
+      i += 1;
+      return lista;
+    }
+    if (c === '{') {
+      i += 1;
+      const objeto = {};
+      for (;;) {
+        espacios();
+        if (source[i] === '}') break;
+        let clave;
+        if (source[i] === '"' || source[i] === "'") clave = cadena();
+        else {
+          const m = /^[A-Za-z_$][\w$]*/.exec(source.slice(i));
+          if (!m) fallo();
+          clave = m[0];
+          i += clave.length;
+        }
+        espacios();
+        if (source[i] !== ':') fallo();
+        i += 1;
+        objeto[clave] = valor();
+        espacios();
+        if (source[i] === ',') i += 1;
+        else if (source[i] !== '}') fallo();
+      }
+      i += 1;
+      return objeto;
+    }
+    const m = /^(true|false|null|-?\d+(\.\d+)?)/.exec(source.slice(i));
+    if (!m) fallo();
+    i += m[0].length;
+    return JSON.parse(m[0]);
+  };
+
+  try {
+    const entry = valor();
+    const textos = (lista) => Array.isArray(lista) && lista.every((t) => typeof t === 'string');
+    const valido =
+      typeof entry?.slug === 'string' &&
+      typeof entry.title === 'string' &&
+      Array.isArray(entry.examples) &&
+      entry.examples.every((ex) => typeof ex?.title === 'string' && typeof ex.code === 'string');
+    if (!valido) return null;
+    return {
+      ...entry,
+      summary: typeof entry.summary === 'string' ? entry.summary : '',
+      api: Array.isArray(entry.api) ? entry.api.filter(textos) : [],
+      a11y: textos(entry.a11y) ? entry.a11y : [],
+    };
+  } catch {
+    return null;
+  }
+}
